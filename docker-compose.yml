@@ -1,0 +1,41 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: athletics
+      POSTGRES_USER: athletics
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-athletics}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U athletics -d athletics"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://athletics:${DB_PASSWORD:-athletics}@db:5432/athletics
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?set BETTER_AUTH_SECRET in .env}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+      SEED_USER_EMAIL: ${SEED_USER_EMAIL:-athlete@example.com}
+      SEED_USER_NAME: ${SEED_USER_NAME:-Athlete}
+      SEED_USER_PASSWORD: ${SEED_USER_PASSWORD:-changeme}
+      FIDAL_ATHLETE_URL: ${FIDAL_ATHLETE_URL:-}
+      NODE_ENV: production
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

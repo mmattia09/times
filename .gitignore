@@ -1,0 +1,15 @@
+node_modules
+.next
+.env
+.env.*
+!.env.example
+*.log
+dist
+.DS_Store
+.turbo
+coverage
+
+# Private data — the real Notion export (personal performance history + locations).
+# Only the anonymized sample is committed.
+apps/web/lib/db/seed-data/*.csv
+!apps/web/lib/db/seed-data/*.sample.csv
