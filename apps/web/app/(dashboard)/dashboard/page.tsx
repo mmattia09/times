@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { db } from "@/lib/db";
 import { performances, personalBests, sessions } from "@/lib/db/schema";
 import { requireUser } from "@/lib/current-user";
-import { eventLabel, formatResult } from "@/lib/athletics";
+import { eventKey, eventLabel, formatResult, lowerIsBetter } from "@/lib/athletics";
 import { formatDate } from "@/lib/format";
 import { currentSeason, seasonLabel, seasonRange } from "@/lib/season";
 import { listSessions } from "@/lib/services";
@@ -39,19 +39,22 @@ export default async function DashboardPage() {
     .innerJoin(sessions, eq(performances.sessionId, sessions.id))
     .where(and(eq(performances.userId, user.id), gte(sessions.date, start), lte(sessions.date, end)));
 
-  const seasonBest = new Map<string, { label: string; result: number; ek: any }>();
+  const seasonBest = new Map<
+    string,
+    { label: string; result: number; ek: { discipline: typeof seasonPerfs[number]["discipline"]; distance: number | null; event: string | null } }
+  >();
   for (const p of seasonPerfs) {
     const ek = { discipline: p.discipline, distance: p.distance, event: p.event };
-    const key = `${p.distance ?? ""}-${p.event ?? ""}`;
+    const key = eventKey(ek);
     const r = Number(p.result);
-    const lower = p.discipline === "sprint" || p.discipline === "middle_distance";
+    const lower = lowerIsBetter(p.discipline);
     const cur = seasonBest.get(key);
     if (!cur || (lower ? r < cur.result : r > cur.result)) {
       seasonBest.set(key, { label: eventLabel(ek), result: r, ek });
     }
   }
-  const seasonBests = [...seasonBest.values()].sort((a, b) =>
-    (a.ek.distance ?? 9999) - (b.ek.distance ?? 9999),
+  const seasonBests = [...seasonBest.values()].sort(
+    (a, b) => (a.ek.distance ?? 9999) - (b.ek.distance ?? 9999),
   );
 
   const stats = [

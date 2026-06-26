@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gte, inArray, lte, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, lt, lte, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   performances,
@@ -7,7 +7,7 @@ import {
   type SessionWithPerformances,
 } from "@/lib/db/schema";
 import { recomputePersonalBests } from "@/lib/records";
-import { seasonRange } from "@/lib/season";
+import { parseSeasonKey, seasonRange } from "@/lib/season";
 import type { SessionInput } from "@/lib/validation";
 
 export type SessionFilters = {
@@ -18,7 +18,13 @@ export type SessionFilters = {
   organizzatore?: "fidal" | "csi" | "altro";
   livello?: "regionale" | "provinciale" | "nazionale" | "internazionale";
   tipo?: "outdoor" | "indoor";
-  season?: number;
+  season?: string; // season key, e.g. "estiva-2025"
+};
+
+export type CreateSessionOptions = {
+  fidalId?: string | null;
+  /** Skip the PB recompute (callers doing bulk inserts recompute once at the end). */
+  recompute?: boolean;
 };
 
 function toDate(value?: string | null): Date | null {
@@ -27,12 +33,13 @@ function toDate(value?: string | null): Date | null {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
-/** Create a session and its performances, then recompute PBs. */
+/** Create a session and its performances, then recompute PBs (unless opted out). */
 export async function createSession(
   userId: string,
   input: SessionInput,
-  fidalId?: string | null,
+  opts: CreateSessionOptions = {},
 ): Promise<string> {
+  const { fidalId = null, recompute = true } = opts;
   const date = toDate(input.date);
   if (!date) throw new Error("Invalid date");
 
@@ -71,7 +78,7 @@ export async function createSession(
     return row.id;
   });
 
-  await recomputePersonalBests(userId);
+  if (recompute) await recomputePersonalBests(userId);
   return sessionId;
 }
 
@@ -164,9 +171,14 @@ export async function listSessions(
 ): Promise<SessionWithPerformances[]> {
   const conds = [eq(sessions.userId, userId)];
 
-  if (filters.season != null) {
-    const { start, end } = seasonRange(filters.season);
-    conds.push(gte(sessions.date, start), lte(sessions.date, end));
+  if (filters.season) {
+    const season = parseSeasonKey(filters.season);
+    if (season) {
+      const { start, end } = seasonRange(season);
+      // Half-open [start, end): lt(end) so a session at the next season's first
+      // instant doesn't fall into both seasons.
+      conds.push(gte(sessions.date, start), lt(sessions.date, end));
+    }
   }
   const from = toDate(filters.from);
   const to = toDate(filters.to);

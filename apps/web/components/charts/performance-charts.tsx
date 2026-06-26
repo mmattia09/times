@@ -15,11 +15,12 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { seasonLabel } from "@/lib/season";
 
 export type ChartPoint = {
   date: string; // ISO
-  season: number;
+  seasonKey: string;
+  seasonLabel: string;
+  seasonSort: number; // season start timestamp, for ordering
   type: "training" | "competition";
   key: string; // event key
   label: string; // event label
@@ -37,10 +38,11 @@ export function PerformanceCharts({ points }: { points: ChartPoint[] }) {
     return [...m.entries()].map(([key, label]) => ({ key, label }));
   }, [points]);
 
-  const seasons = useMemo(
-    () => [...new Set(points.map((p) => p.season))].sort((a, b) => b - a),
-    [points],
-  );
+  const seasons = useMemo(() => {
+    const m = new Map<string, { key: string; label: string; sort: number }>();
+    for (const p of points) m.set(p.seasonKey, { key: p.seasonKey, label: p.seasonLabel, sort: p.seasonSort });
+    return [...m.values()].sort((a, b) => b.sort - a.sort);
+  }, [points]);
 
   const [eventKey, setEventKey] = useState(eventKeys[0]?.key ?? "");
   const [seasonSel, setSeasonSel] = useState<string>("all");
@@ -52,7 +54,7 @@ export function PerformanceCharts({ points }: { points: ChartPoint[] }) {
   const filtered = useMemo(() => {
     return points
       .filter((p) => p.key === eventKey)
-      .filter((p) => seasonSel === "all" || p.season === Number(seasonSel))
+      .filter((p) => seasonSel === "all" || p.seasonKey === seasonSel)
       .filter((p) => ctx === "all" || p.type === ctx)
       .sort((a, b) => a.date.localeCompare(b.date));
   }, [points, eventKey, seasonSel, ctx]);
@@ -67,14 +69,14 @@ export function PerformanceCharts({ points }: { points: ChartPoint[] }) {
 
   // Season comparison (best per season for the selected event).
   const seasonBest = useMemo(() => {
-    const m = new Map<number, number>();
+    const m = new Map<string, { label: string; sort: number; best: number }>();
     for (const p of points.filter((x) => x.key === eventKey)) {
-      const cur = m.get(p.season);
-      if (cur == null || (lowerIsBetter ? p.result < cur : p.result > cur)) m.set(p.season, p.result);
+      const cur = m.get(p.seasonKey);
+      if (!cur || (lowerIsBetter ? p.result < cur.best : p.result > cur.best)) {
+        m.set(p.seasonKey, { label: p.seasonLabel, sort: p.seasonSort, best: p.result });
+      }
     }
-    return [...m.entries()]
-      .sort((a, b) => a[0] - b[0])
-      .map(([s, best]) => ({ season: seasonLabel(s), best }));
+    return [...m.values()].sort((a, b) => a.sort - b.sort).map((e) => ({ season: e.label, best: e.best }));
   }, [points, eventKey, lowerIsBetter]);
 
   // Improvement curve (% improvement from first recorded result).
@@ -130,8 +132,8 @@ export function PerformanceCharts({ points }: { points: ChartPoint[] }) {
           <SelectContent>
             <SelectItem value="all">Tutte le stagioni</SelectItem>
             {seasons.map((s) => (
-              <SelectItem key={s} value={String(s)}>
-                {seasonLabel(s)}
+              <SelectItem key={s.key} value={s.key}>
+                {s.label}
               </SelectItem>
             ))}
           </SelectContent>

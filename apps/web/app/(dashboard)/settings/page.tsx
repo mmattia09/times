@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { db } from "@/lib/db";
 import { userSettings } from "@/lib/db/schema";
 import { requireUser } from "@/lib/current-user";
-import { seasonLabel } from "@/lib/season";
+import { currentSeason, seasonLabel } from "@/lib/season";
 
 export default async function SettingsPage() {
   const user = await requireUser();
@@ -19,7 +19,6 @@ export default async function SettingsPage() {
     .from(userSettings)
     .where(eq(userSettings.userId, user.id))
     .limit(1);
-  const startMonth = settings?.seasonStartMonth ?? 10;
 
   return (
     <div className="mx-auto max-w-3xl space-y-8">
@@ -86,8 +85,9 @@ export default async function SettingsPage() {
         </CardHeader>
         <CardContent className="space-y-3 text-sm text-muted-foreground">
           <p>
-            La stagione corrente è <strong className="text-foreground">{seasonLabel(new Date().getUTCMonth() + 1 >= startMonth ? new Date().getUTCFullYear() : new Date().getUTCFullYear() - 1)}</strong>{" "}
-            (inizio: mese {startMonth}, ottobre).
+            La stagione corrente è{" "}
+            <strong className="text-foreground">{seasonLabel(currentSeason())}</strong>. Le
+            stagioni sono due per anno: estiva (apr–set, outdoor) e invernale (ott–mar, indoor).
           </p>
           <p>Il tema chiaro/scuro/sistema si cambia dall&apos;icona in alto a destra ed è memorizzato nel browser.</p>
         </CardContent>

@@ -11,7 +11,7 @@ import { sessions } from "@/lib/db/schema";
 import { requireUser } from "@/lib/current-user";
 import { eventLabel, formatResult } from "@/lib/athletics";
 import { formatDate } from "@/lib/format";
-import { seasonsBetween } from "@/lib/season";
+import { listSeasons, seasonKey, seasonLabel } from "@/lib/season";
 import { listSessions, type SessionFilters as Filters } from "@/lib/services";
 
 export default async function SessionsPage({
@@ -23,7 +23,7 @@ export default async function SessionsPage({
   const sp = await searchParams;
 
   const filters: Filters = {
-    season: sp.season ? Number(sp.season) : undefined,
+    season: sp.season || undefined,
     type: sp.type as Filters["type"],
     distance: sp.distance ? Number(sp.distance) : undefined,
     organizzatore: sp.organizzatore as Filters["organizzatore"],
@@ -41,7 +41,9 @@ export default async function SessionsPage({
       .limit(1),
   ]);
 
-  const seasons = earliest[0] ? seasonsBetween(earliest[0].date) : [];
+  const seasons = earliest[0]
+    ? listSeasons(earliest[0].date).map((s) => ({ key: seasonKey(s), label: seasonLabel(s) }))
+    : [];
 
   const rows: SessionRow[] = data.map((s) => ({
     id: s.id,

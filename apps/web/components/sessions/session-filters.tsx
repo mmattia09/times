@@ -3,12 +3,11 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { seasonLabel } from "@/lib/season";
 import { RUN_DISTANCES } from "@/lib/athletics";
 
 const ALL = "__all__";
 
-export function SessionFilters({ seasons }: { seasons: number[] }) {
+export function SessionFilters({ seasons }: { seasons: { key: string; label: string }[] }) {
   const router = useRouter();
   const params = useSearchParams();
 
@@ -44,7 +43,7 @@ export function SessionFilters({ seasons }: { seasons: number[] }) {
       {filter(
         "season",
         "Tutte le stagioni",
-        seasons.map((s) => ({ value: String(s), label: seasonLabel(s) })),
+        seasons.map((s) => ({ value: s.key, label: s.label })),
       )}
       {filter("type", "Tipo", [
         { value: "training", label: "Allenamento" },

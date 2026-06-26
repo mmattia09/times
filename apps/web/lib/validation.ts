@@ -1,6 +1,16 @@
 import { z } from "zod";
 
-export const disciplineSchema = z.enum(["sprint", "jump", "throw", "middle_distance"]);
+export const disciplineSchema = z.enum([
+  "sprint",
+  "hurdles",
+  "middle_distance",
+  "long_distance",
+  "relay",
+  "walk",
+  "jump",
+  "throw",
+  "combined",
+]);
 export const sessionTypeSchema = z.enum(["training", "competition"]);
 export const tempoSchema = z.enum(["elettronico", "cronometro", "manuale"]);
 export const livelloSchema = z.enum([
@@ -26,9 +36,14 @@ export const performanceInputSchema = z.object({
   heat: emptyToNull(z.string().max(32)),
 });
 
+const dateString = z
+  .string()
+  .min(1, { message: "Data richiesta" })
+  .refine((s) => !Number.isNaN(Date.parse(s)), { message: "Data non valida" });
+
 export const sessionInputSchema = z.object({
-  date: z.string().min(1, { message: "Data richiesta" }),
-  endDate: emptyToNull(z.string()),
+  date: dateString,
+  endDate: emptyToNull(dateString),
   type: sessionTypeSchema.default("training"),
   tempo: emptyToNull(tempoSchema),
   livello: emptyToNull(livelloSchema),
@@ -52,7 +67,7 @@ export const sessionQuerySchema = z.object({
   organizzatore: organizzatoreSchema.optional(),
   livello: livelloSchema.optional(),
   tipo: tipoSchema.optional(),
-  season: z.coerce.number().int().optional(),
+  season: z.string().optional(), // season key, e.g. "estiva-2025"
 });
 
 export const apiKeyInputSchema = z.object({

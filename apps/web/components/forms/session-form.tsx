@@ -19,23 +19,42 @@ import {
 } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { RUN_DISTANCES } from "@/lib/athletics";
+import {
+  DISCIPLINES,
+  JUMP_EVENTS,
+  RELAY_EVENTS,
+  RUN_DISTANCES,
+  THROW_EVENTS,
+  isTimed,
+} from "@/lib/athletics";
 import { sessionInputSchema, type SessionInput } from "@/lib/validation";
-
-const DISCIPLINE_OPTS = [
-  { value: "sprint", label: "Corsa (sprint)" },
-  { value: "middle_distance", label: "Mezzofondo / campestre" },
-  { value: "jump", label: "Salto" },
-  { value: "throw", label: "Lancio" },
-] as const;
-
-const FIELD_EVENT_OPTS = [
-  { value: "alto", label: "Salto in alto" },
-  { value: "lungo", label: "Salto in lungo" },
-  { value: "giavellotto", label: "Giavellotto" },
-] as const;
+import type { Discipline } from "@/lib/db/schema";
 
 const NONE = "__none__";
+
+/** Default per-discipline event and distance when the discipline changes. */
+function disciplineDefaults(d: Discipline): { distance: number | null; event: string | null } {
+  switch (d) {
+    case "jump":
+      return { distance: null, event: "lungo" };
+    case "throw":
+      return { distance: null, event: "giavellotto" };
+    case "relay":
+      return { distance: null, event: "4x100" };
+    case "combined":
+      return { distance: null, event: "" };
+    case "hurdles":
+      return { distance: 100, event: null };
+    case "middle_distance":
+      return { distance: 800, event: null };
+    case "long_distance":
+      return { distance: 3000, event: null };
+    case "walk":
+      return { distance: 5000, event: null };
+    default:
+      return { distance: 100, event: null };
+  }
+}
 
 type FormValues = SessionInput;
 
@@ -285,9 +304,15 @@ function PerformanceRow({
   canRemove: boolean;
 }) {
   const discipline = form.watch(`performances.${index}.discipline`);
-  const isField = discipline === "jump" || discipline === "throw";
-  const isCross = discipline === "middle_distance";
+  const isJump = discipline === "jump";
+  const isThrow = discipline === "throw";
+  const isRelay = discipline === "relay";
+  const isCombined = discipline === "combined";
+  const timed = isTimed(discipline);
+  const eventOptions = isJump ? JUMP_EVENTS : isThrow ? THROW_EVENTS : isRelay ? RELAY_EVENTS : null;
   const resultErr = form.formState.errors.performances?.[index]?.result;
+
+  const resultLabel = isThrow ? "(m)" : isJump ? "(cm)" : isCombined ? "(punti)" : "(tempo, s)";
 
   return (
     <Card>
@@ -297,24 +322,18 @@ function PerformanceRow({
           <Select
             value={discipline}
             onValueChange={(v) => {
-              form.setValue(`performances.${index}.discipline`, v as FormValues["performances"][number]["discipline"]);
-              if (v === "jump" || v === "throw") {
-                form.setValue(`performances.${index}.distance`, null);
-                form.setValue(`performances.${index}.event`, v === "throw" ? "giavellotto" : "lungo");
-              } else if (v === "middle_distance") {
-                form.setValue(`performances.${index}.distance`, 2000);
-                form.setValue(`performances.${index}.event`, null);
-              } else {
-                form.setValue(`performances.${index}.event`, null);
-                form.setValue(`performances.${index}.distance`, 100);
-              }
+              const d = v as Discipline;
+              const def = disciplineDefaults(d);
+              form.setValue(`performances.${index}.discipline`, d);
+              form.setValue(`performances.${index}.distance`, def.distance);
+              form.setValue(`performances.${index}.event`, def.event);
             }}
           >
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {DISCIPLINE_OPTS.map((o) => (
+              {DISCIPLINES.map((o) => (
                 <SelectItem key={o.value} value={o.value}>
                   {o.label}
                 </SelectItem>
@@ -323,7 +342,7 @@ function PerformanceRow({
           </Select>
         </div>
 
-        {isField ? (
+        {eventOptions ? (
           <div className="space-y-1.5">
             <Label>Specialità</Label>
             <Select
@@ -334,49 +353,39 @@ function PerformanceRow({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {FIELD_EVENT_OPTS.map((o) => (
-                  <SelectItem key={o.value} value={o.value}>
+                {eventOptions.map((o) => (
+                  <SelectItem key={o.event} value={o.event}>
                     {o.label}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
-        ) : isCross ? (
+        ) : isCombined ? (
           <div className="space-y-1.5">
-            <Label>Distanza</Label>
-            <Input type="number" placeholder="metri" {...form.register(`performances.${index}.distance`)} />
+            <Label>Specialità</Label>
+            <Input placeholder="es. Eptathlon" {...form.register(`performances.${index}.event`)} />
           </div>
         ) : (
           <div className="space-y-1.5">
             <Label>Distanza (m)</Label>
-            <Select
-              value={String(form.watch(`performances.${index}.distance`) ?? "")}
-              onValueChange={(v) => form.setValue(`performances.${index}.distance`, Number(v))}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="—" />
-              </SelectTrigger>
-              <SelectContent>
-                {RUN_DISTANCES.map((d) => (
-                  <SelectItem key={d} value={String(d)}>
-                    {d}m
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Input
+              type="number"
+              list={`distances-${index}`}
+              placeholder="metri"
+              {...form.register(`performances.${index}.distance`)}
+            />
+            <datalist id={`distances-${index}`}>
+              {RUN_DISTANCES.map((d) => (
+                <option key={d} value={d} />
+              ))}
+            </datalist>
           </div>
         )}
 
         <div className="space-y-1.5">
-          <Label>
-            Risultato {isField ? (discipline === "throw" ? "(m)" : "(cm)") : isCross ? "(min)" : "(s)"}
-          </Label>
-          <Input
-            type="number"
-            step="0.01"
-            {...form.register(`performances.${index}.result`)}
-          />
+          <Label>Risultato {resultLabel}</Label>
+          <Input type="number" step="0.01" {...form.register(`performances.${index}.result`)} />
           {resultErr && <p className="text-xs text-destructive">{resultErr.message}</p>}
         </div>
 

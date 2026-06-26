@@ -7,6 +7,7 @@ import {
   toImportItems,
   type FidalImportItem,
 } from "@/lib/fidal";
+import { recomputePersonalBests } from "@/lib/records";
 import { createSession } from "@/lib/services";
 
 export type FidalPreview = {
@@ -73,9 +74,11 @@ export async function commitFidalSync(userId: string): Promise<{ imported: numbe
   let imported = 0;
   for (const item of items) {
     if (existing.has(item.fidalId)) continue;
-    await createSession(userId, item.session, item.fidalId);
+    // Defer PB recompute until all rows are inserted (one recompute, not N).
+    await createSession(userId, item.session, { fidalId: item.fidalId, recompute: false });
     imported++;
   }
+  if (imported > 0) await recomputePersonalBests(userId);
 
   await db
     .update(userSettings)

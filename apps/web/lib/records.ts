@@ -1,12 +1,12 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { performances, personalBests, sessions } from "@/lib/db/schema";
+import { performances, personalBests, sessions, type Discipline } from "@/lib/db/schema";
 import { eventKey, isBetter } from "@/lib/athletics";
 
 type Row = {
   performanceId: string;
   sessionId: string;
-  discipline: "sprint" | "jump" | "throw" | "middle_distance";
+  discipline: Discipline;
   distance: number | null;
   event: string | null;
   result: number;

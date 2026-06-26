@@ -26,9 +26,14 @@ export const organizzatoreEnum = pgEnum("organizzatore", ["fidal", "csi", "altro
 export const tipoEnum = pgEnum("tipo", ["outdoor", "indoor"]);
 export const disciplineEnum = pgEnum("discipline", [
   "sprint",
+  "hurdles",
+  "middle_distance",
+  "long_distance",
+  "relay",
+  "walk",
   "jump",
   "throw",
-  "middle_distance",
+  "combined",
 ]);
 
 // ── Auth: users + Better Auth tables ────────────────────────────────────────
@@ -158,8 +163,9 @@ export const personalBests = pgTable(
     achievedAt: timestamp("achieved_at", { withTimezone: true }).notNull(),
   },
   (t) => ({
-    // One PB per user per event key (distance + event).
-    pbKey: uniqueIndex("pb_user_event_key").on(t.userId, t.distance, t.event),
+    // One PB per user per event key (discipline + distance + event) — discipline
+    // is part of the key so e.g. 100m flat and 100m hurdles don't collide.
+    pbKey: uniqueIndex("pb_user_event_key").on(t.userId, t.discipline, t.distance, t.event),
   }),
 );
 

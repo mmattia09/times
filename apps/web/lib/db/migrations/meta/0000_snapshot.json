@@ -1,5 +1,5 @@
 {
-  "id": "08d9920c-e9ef-4287-a3b5-fe4adf422d04",
+  "id": "7ab3cefe-e7fc-460f-a70d-e85eece4a193",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -480,6 +480,12 @@
               "nulls": "last"
             },
             {
+              "expression": "discipline",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
               "expression": "distance",
               "isExpression": false,
               "asc": true,
@@ -869,9 +875,14 @@
       "schema": "public",
       "values": [
         "sprint",
+        "hurdles",
+        "middle_distance",
+        "long_distance",
+        "relay",
+        "walk",
         "jump",
         "throw",
-        "middle_distance"
+        "combined"
       ]
     },
     "public.livello": {

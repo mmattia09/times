@@ -1,4 +1,4 @@
-CREATE TYPE "public"."discipline" AS ENUM('sprint', 'jump', 'throw', 'middle_distance');--> statement-breakpoint
+CREATE TYPE "public"."discipline" AS ENUM('sprint', 'hurdles', 'middle_distance', 'long_distance', 'relay', 'walk', 'jump', 'throw', 'combined');--> statement-breakpoint
 CREATE TYPE "public"."livello" AS ENUM('regionale', 'provinciale', 'nazionale', 'internazionale');--> statement-breakpoint
 CREATE TYPE "public"."organizzatore" AS ENUM('fidal', 'csi', 'altro');--> statement-breakpoint
 CREATE TYPE "public"."session_type" AS ENUM('training', 'competition');--> statement-breakpoint
@@ -131,4 +131,4 @@ ALTER TABLE "personal_bests" ADD CONSTRAINT "personal_bests_session_id_sessions_
 ALTER TABLE "personal_bests" ADD CONSTRAINT "personal_bests_performance_id_performances_id_fk" FOREIGN KEY ("performance_id") REFERENCES "public"."performances"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "sessions" ADD CONSTRAINT "sessions_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "user_settings" ADD CONSTRAINT "user_settings_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-CREATE UNIQUE INDEX "pb_user_event_key" ON "personal_bests" USING btree ("user_id","distance","event");
+CREATE UNIQUE INDEX "pb_user_event_key" ON "personal_bests" USING btree ("user_id","discipline","distance","event");

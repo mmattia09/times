@@ -16,7 +16,7 @@ import { performances, sessions } from "@/lib/db/schema";
 import { requireUser } from "@/lib/current-user";
 import { eventKey, eventLabel, formatResult, isBetter, lowerIsBetter } from "@/lib/athletics";
 import { formatDate } from "@/lib/format";
-import { seasonOf } from "@/lib/season";
+import { seasonKey, seasonLabel, seasonOf, seasonStart } from "@/lib/season";
 
 export default async function RecordsPage() {
   const user = await requireUser();
@@ -63,15 +63,20 @@ export default async function RecordsPage() {
     })
     .sort((a, b) => (a.best.distance ?? 9999) - (b.best.distance ?? 9999));
 
-  const points: ChartPoint[] = all.map((r) => ({
-    date: r.date.toISOString(),
-    season: seasonOf(r.date),
-    type: r.type,
-    key: eventKey(r),
-    label: eventLabel(r),
-    lowerIsBetter: lowerIsBetter(r.discipline),
-    result: r.resultNum,
-  }));
+  const points: ChartPoint[] = all.map((r) => {
+    const season = seasonOf(r.date);
+    return {
+      date: r.date.toISOString(),
+      seasonKey: seasonKey(season),
+      seasonLabel: seasonLabel(season),
+      seasonSort: seasonStart(season).getTime(),
+      type: r.type,
+      key: eventKey(r),
+      label: eventLabel(r),
+      lowerIsBetter: lowerIsBetter(r.discipline),
+      result: r.resultNum,
+    };
+  });
 
   return (
     <>

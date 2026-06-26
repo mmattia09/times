@@ -68,7 +68,8 @@ const RUN_COLS: Record<string, number> = {
 };
 function columnToEvent(col: string): ColMap | null {
   if (RUN_COLS[col] != null) return { discipline: "sprint", distance: RUN_COLS[col], event: null };
-  if (col === "2km campestre") return { discipline: "middle_distance", distance: 2000, event: null };
+  if (col === "2km campestre")
+    return { discipline: "long_distance", distance: 2000, event: "campestre" };
   if (col === "alto") return { discipline: "jump", distance: null, event: "alto" };
   if (col === "lungo") return { discipline: "jump", distance: null, event: "lungo" };
   if (col === "giavellotto") return { discipline: "throw", distance: null, event: "giavellotto" };
@@ -203,13 +204,12 @@ async function main() {
     console.log("Sessions already present — skipping data seed (idempotent).");
   } else {
     const inputs = buildSessionInputs();
-    console.log(`Seeding ${inputs.length} sessions from Notion export…`);
-    // Insert directly (bulk) rather than through the service to avoid recomputing
-    // PBs on every row; recompute once at the end.
+    console.log(`Seeding ${inputs.length} sessions…`);
+    // Insert with PB recompute deferred, then recompute once at the end.
     const { createSession } = await import("../services");
     let n = 0;
     for (const input of inputs) {
-      await createSession(userId, input);
+      await createSession(userId, input, { recompute: false });
       n++;
     }
     console.log(`Inserted ${n} sessions.`);
