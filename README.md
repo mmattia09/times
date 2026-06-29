@@ -27,6 +27,17 @@ On boot the `app` container runs migrations, seeds the database (idempotent) and
 the server at <http://localhost:3000>. Log in with the seed user
 (`SEED_USER_EMAIL` / `SEED_USER_PASSWORD`, default `changeme` — change it after first login).
 
+### Using the published image
+
+CI ([`.github/workflows/docker-image.yml`](.github/workflows/docker-image.yml)) builds and
+pushes a multi-arch image to GHCR on every push to `main` and on `v*.*.*` tags. To run that
+instead of building locally, set `APP_IMAGE` in `.env` and pull:
+
+```bash
+echo "APP_IMAGE=ghcr.io/<owner>/<repo>:latest" >> .env
+docker compose pull app && docker compose up -d
+```
+
 ## Local development
 
 ```bash
@@ -103,11 +114,18 @@ docker/             Dockerfile + entrypoint
 docker-compose.yml  db + app
 ```
 
+## Multi-user
+
+The app is multi-user: every record (sessions, performances, PBs, API keys, settings,
+FIDAL URL) is scoped to a `userId`, and each request only ever reads its owner's rows, so
+registered accounts are fully isolated from one another. Registration is open by default;
+set `DISABLE_REGISTRATION=true` to block new sign-ups (the `/register` page and the
+`sign-up` API return to login / 403) after you've created your account(s).
+
 ## Notes
 
 - All timestamps are stored UTC; the UI formats them in `Europe/Rome` with the Italian locale.
 - The FIDAL scraper never runs client-side.
 - API-key auth (`/api/v1/*`) is independent from session auth (everything else).
-- To lock down registration after creating your account, remove the `/register` route or
-  put the app behind your own auth proxy.
-```
+- No personal data is committed: `.env*`, the real Notion export and local build artifacts
+  are git/Docker-ignored; only an anonymized sample CSV ships for seeding demos.

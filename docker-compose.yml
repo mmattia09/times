@@ -17,6 +17,10 @@ services:
       retries: 10
 
   app:
+    # By default uses the image built by CI (set APP_IMAGE in .env to the
+    # published tag, e.g. ghcr.io/<owner>/<repo>:latest). For a local build run:
+    #   docker compose up --build
+    image: ${APP_IMAGE:-athletics-tracker:local}
     build:
       context: .
       dockerfile: docker/Dockerfile

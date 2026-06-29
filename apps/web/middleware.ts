@@ -13,6 +13,18 @@ export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const hasSession = !!getSessionCookie(req);
 
+  // Optionally lock down open registration (recommended for public deployments
+  // once your own account exists): set DISABLE_REGISTRATION=true.
+  const registrationDisabled = process.env.DISABLE_REGISTRATION === "true";
+  if (registrationDisabled) {
+    if (pathname.startsWith("/api/auth/sign-up")) {
+      return NextResponse.json({ error: "registration_disabled" }, { status: 403 });
+    }
+    if (pathname === "/register") {
+      return NextResponse.redirect(new URL("/login", req.url));
+    }
+  }
+
   const isAuthPage = pathname === "/login" || pathname === "/register";
   if (isAuthPage) {
     if (hasSession) return NextResponse.redirect(new URL("/dashboard", req.url));
@@ -43,6 +55,7 @@ export const config = {
     "/settings/:path*",
     "/api/internal/:path*",
     "/api/keys/:path*",
+    "/api/auth/sign-up/:path*",
     "/login",
     "/register",
   ],

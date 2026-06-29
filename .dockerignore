@@ -1,0 +1,18 @@
+# Keep the build context small and free of secrets/personal data.
+**/node_modules
+**/.next
+.git
+.github
+**/.env
+**/.env.*
+*.log
+.DS_Store
+.turbo
+coverage
+
+# Local plan/preview/editor cruft
+.claude
+
+# Private Notion export (personal data) — only the sample is shipped for seeding.
+apps/web/lib/db/seed-data/notion-times.csv
+!apps/web/lib/db/seed-data/*.sample.csv
