@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/table";
 import { requireUser } from "@/lib/current-user";
 import { getSessionById } from "@/lib/services";
-import { eventLabel, formatResult } from "@/lib/athletics";
+import { eventLabel, formatResult, isWindLegal } from "@/lib/athletics";
 import { formatDateLong } from "@/lib/format";
 
 function meta(label: string, value?: string | null) {
@@ -85,7 +85,10 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
               </TableRow>
             </TableHeader>
             <TableBody>
-              {session.performances.map((p) => (
+              {session.performances.map((p) => {
+                const wind = p.wind != null ? Number(p.wind) : null;
+                const windy = !isWindLegal(p, wind);
+                return (
                 <TableRow key={p.id}>
                   <TableCell className="font-medium">
                     {eventLabel(p)}
@@ -94,14 +97,25 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
                         PB
                       </Badge>
                     )}
+                    {windy && (
+                      <Badge variant="muted" className="ml-2" title="Vento oltre +2.0 m/s: non valida come record">
+                        ventosa
+                      </Badge>
+                    )}
                   </TableCell>
-                  <TableCell className="tabular-nums">{formatResult(p.result, p)}</TableCell>
-                  <TableCell className="tabular-nums">{p.wind ?? "—"}</TableCell>
+                  <TableCell className="tabular-nums">
+                    {formatResult(p.result, p)}
+                    {windy && <sup className="ml-0.5 text-muted-foreground">w</sup>}
+                  </TableCell>
+                  <TableCell className="tabular-nums">
+                    {wind != null ? `${wind > 0 ? "+" : ""}${wind.toFixed(1)}` : "—"}
+                  </TableCell>
                   <TableCell className="tabular-nums">{p.lane ?? "—"}</TableCell>
                   <TableCell className="tabular-nums">{p.position ?? "—"}</TableCell>
                   <TableCell>{p.heat ?? "—"}</TableCell>
                 </TableRow>
-              ))}
+                );
+              })}
             </TableBody>
           </Table>
         </CardContent>

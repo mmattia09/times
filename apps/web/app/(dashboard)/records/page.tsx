@@ -1,7 +1,8 @@
+import Link from "next/link";
 import { asc, eq } from "drizzle-orm";
-import { ArrowDown, ArrowUp } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { PerformanceCharts, type ChartPoint } from "@/components/charts/performance-charts";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
@@ -14,9 +15,29 @@ import {
 import { db } from "@/lib/db";
 import { performances, sessions } from "@/lib/db/schema";
 import { requireUser } from "@/lib/current-user";
-import { eventKey, eventLabel, formatResult, isBetter, lowerIsBetter } from "@/lib/athletics";
+import {
+  eventKey,
+  eventLabel,
+  formatResult,
+  isBetter,
+  isWindLegal,
+  lowerIsBetter,
+  resultUnit,
+  type EventKey,
+} from "@/lib/athletics";
 import { formatDate } from "@/lib/format";
-import { seasonKey, seasonLabel, seasonOf, seasonStart } from "@/lib/season";
+import { currentSeason, seasonKey, seasonLabel, seasonOf, seasonStart } from "@/lib/season";
+
+/** Gap between season best and PB, formatted per unit ("" when SB equals the PB). */
+function sbGap(pb: number, sb: number, ek: EventKey, lower: boolean): string {
+  const gap = lower ? sb - pb : pb - sb;
+  if (gap <= 1e-6) return "";
+  const unit = resultUnit(ek);
+  if (unit === "s" || unit === "min") return `+${gap.toFixed(2)}`;
+  if (unit === "cm") return `−${gap.toFixed(0)} cm`;
+  if (unit === "pts") return `−${gap.toFixed(0)} pti`;
+  return `−${gap.toFixed(2)} m`;
+}
 
 export default async function RecordsPage() {
   const user = await requireUser();
@@ -39,10 +60,22 @@ export default async function RecordsPage() {
     .where(eq(performances.userId, user.id))
     .orderBy(asc(sessions.date));
 
-  type Row = (typeof rows)[number] & { resultNum: number };
-  const all: Row[] = rows.map((r) => ({ ...r, resultNum: Number(r.result) }));
+  type Row = (typeof rows)[number] & { resultNum: number; windNum: number | null; legal: boolean };
+  const all: Row[] = rows.map((r) => {
+    const windNum = r.wind != null ? Number(r.wind) : null;
+    return {
+      ...r,
+      resultNum: Number(r.result),
+      windNum,
+      legal: isWindLegal(r, windNum),
+    };
+  });
 
-  // Group by event key → compute best & previous-best for improvement display.
+  const season = currentSeason();
+  const seasonLbl = seasonLabel(season);
+  const seasonK = seasonKey(season);
+
+  // Group by event key → PB (best wind-legal) + SB (best legal in current season).
   const groups = new Map<string, Row[]>();
   for (const r of all) {
     const k = eventKey(r);
@@ -53,34 +86,45 @@ export default async function RecordsPage() {
 
   const pbRows = [...groups.values()]
     .map((list) => {
-      const sorted = [...list].sort((a, b) =>
-        isBetter(a.resultNum, b.resultNum, a.discipline) ? -1 : 1,
-      );
-      const best = sorted[0];
-      const previous = sorted.find((r) => r.resultNum !== best.resultNum);
-      const delta = previous ? best.resultNum - previous.resultNum : null;
-      return { best, previous, delta };
+      const legal = list.filter((r) => r.legal);
+      if (legal.length === 0) return null;
+      const best = legal.reduce((a, b) => (isBetter(b.resultNum, a.resultNum, b.discipline) ? b : a));
+      const inSeason = legal.filter((r) => seasonKey(seasonOf(r.date)) === seasonK);
+      const sb =
+        inSeason.length > 0
+          ? inSeason.reduce((a, b) => (isBetter(b.resultNum, a.resultNum, b.discipline) ? b : a))
+          : null;
+      return { best, sb };
     })
+    .filter((x): x is NonNullable<typeof x> => x !== null)
     .sort((a, b) => (a.best.distance ?? 9999) - (b.best.distance ?? 9999));
 
   const points: ChartPoint[] = all.map((r) => {
-    const season = seasonOf(r.date);
+    const s = seasonOf(r.date);
     return {
       date: r.date.toISOString(),
-      seasonKey: seasonKey(season),
-      seasonLabel: seasonLabel(season),
-      seasonSort: seasonStart(season).getTime(),
+      seasonKey: seasonKey(s),
+      seasonLabel: seasonLabel(s),
+      seasonSort: seasonStart(s).getTime(),
       type: r.type,
       key: eventKey(r),
       label: eventLabel(r),
+      discipline: r.discipline,
+      distance: r.distance,
+      event: r.event,
       lowerIsBetter: lowerIsBetter(r.discipline),
       result: r.resultNum,
+      wind: r.windNum,
+      legal: r.legal,
     };
   });
 
   return (
     <>
-      <PageHeader title="Record" description="Migliori prestazioni personali e andamento." />
+      <PageHeader
+        title="Record"
+        description={`Migliori prestazioni regolari (vento ≤ +2.0) e stagione ${seasonLbl}.`}
+      />
 
       <Card>
         <CardContent className="p-0">
@@ -89,39 +133,53 @@ export default async function RecordsPage() {
               <TableRow>
                 <TableHead>Specialità</TableHead>
                 <TableHead>Record</TableHead>
-                <TableHead>Miglioramento</TableHead>
+                <TableHead>Vento</TableHead>
                 <TableHead>Data</TableHead>
                 <TableHead>Luogo</TableHead>
-                <TableHead>Vento</TableHead>
+                <TableHead>{seasonLbl} (SB)</TableHead>
+                <TableHead>Δ vs PB</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {pbRows.map(({ best, delta }) => {
+              {pbRows.map(({ best, sb }) => {
                 const lower = lowerIsBetter(best.discipline);
-                const improved = delta != null && (lower ? delta < 0 : delta > 0);
+                const gap = sb ? sbGap(best.resultNum, sb.resultNum, best, lower) : null;
+                const sbIsPb = sb != null && gap === "";
                 return (
                   <TableRow key={best.id}>
-                    <TableCell className="font-medium">{eventLabel(best)}</TableCell>
+                    <TableCell className="font-medium">
+                      <Link href={`/sessions/${best.sessionId}`} className="hover:underline">
+                        {eventLabel(best)}
+                      </Link>
+                    </TableCell>
                     <TableCell className="tabular-nums font-semibold">
                       {formatResult(best.resultNum, best)}
                     </TableCell>
-                    <TableCell>
-                      {delta == null ? (
-                        <span className="text-xs text-muted-foreground">—</span>
-                      ) : (
-                        <span
-                          className={`inline-flex items-center gap-1 text-xs ${
-                            improved ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"
-                          }`}
-                        >
-                          {lower ? <ArrowDown className="h-3 w-3" /> : <ArrowUp className="h-3 w-3" />}
-                          {Math.abs(delta).toFixed(2)}
-                        </span>
-                      )}
+                    <TableCell className="tabular-nums text-muted-foreground">
+                      {best.windNum != null
+                        ? `${best.windNum > 0 ? "+" : ""}${best.windNum.toFixed(1)}`
+                        : "—"}
                     </TableCell>
                     <TableCell className="text-muted-foreground">{formatDate(best.date)}</TableCell>
                     <TableCell className="text-muted-foreground">{best.luogo ?? "—"}</TableCell>
-                    <TableCell className="tabular-nums text-muted-foreground">{best.wind ?? "—"}</TableCell>
+                    <TableCell className="tabular-nums">
+                      {sb ? (
+                        <Link href={`/sessions/${sb.sessionId}`} className="hover:underline">
+                          {formatResult(sb.resultNum, sb)}
+                        </Link>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {sb == null ? (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      ) : sbIsPb ? (
+                        <Badge variant="success">= PB</Badge>
+                      ) : (
+                        <span className="text-xs tabular-nums text-muted-foreground">{gap}</span>
+                      )}
+                    </TableCell>
                   </TableRow>
                 );
               })}

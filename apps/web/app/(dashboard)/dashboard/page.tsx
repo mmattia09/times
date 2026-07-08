@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { db } from "@/lib/db";
 import { performances, personalBests, sessions } from "@/lib/db/schema";
 import { requireUser } from "@/lib/current-user";
-import { eventKey, eventLabel, formatResult, lowerIsBetter } from "@/lib/athletics";
+import { eventKey, eventLabel, formatResult, isWindLegal, lowerIsBetter } from "@/lib/athletics";
 import { formatDate } from "@/lib/format";
 import { currentSeason, seasonLabel, seasonRange } from "@/lib/season";
 import { listSessions } from "@/lib/services";
@@ -34,6 +34,7 @@ export default async function DashboardPage() {
       distance: performances.distance,
       event: performances.event,
       result: performances.result,
+      wind: performances.wind,
     })
     .from(performances)
     .innerJoin(sessions, eq(performances.sessionId, sessions.id))
@@ -45,6 +46,7 @@ export default async function DashboardPage() {
   >();
   for (const p of seasonPerfs) {
     const ek = { discipline: p.discipline, distance: p.distance, event: p.event };
+    if (!isWindLegal(ek, p.wind != null ? Number(p.wind) : null)) continue;
     const key = eventKey(ek);
     const r = Number(p.result);
     const lower = lowerIsBetter(p.discipline);

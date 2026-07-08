@@ -9,7 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { db } from "@/lib/db";
 import { sessions } from "@/lib/db/schema";
 import { requireUser } from "@/lib/current-user";
-import { eventLabel, formatResult } from "@/lib/athletics";
+import { eventLabel, formatResult, isWindLegal } from "@/lib/athletics";
 import { formatDate } from "@/lib/format";
 import { listSeasons, seasonKey, seasonLabel } from "@/lib/season";
 import { listSessions, type SessionFilters as Filters } from "@/lib/services";
@@ -56,7 +56,10 @@ export default async function SessionsPage({
     tipo: s.tipo,
     note: s.note,
     performances: s.performances
-      .map((p) => `${eventLabel(p)} ${formatResult(p.result, p)}`)
+      .map((p) => {
+        const windy = !isWindLegal(p, p.wind != null ? Number(p.wind) : null);
+        return `${eventLabel(p)} ${formatResult(p.result, p)}${windy ? "w" : ""}`;
+      })
       .join(" · "),
   }));
 

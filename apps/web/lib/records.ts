@@ -1,7 +1,7 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { performances, personalBests, sessions, type Discipline } from "@/lib/db/schema";
-import { eventKey, isBetter } from "@/lib/athletics";
+import { eventKey, isBetter, isWindLegal } from "@/lib/athletics";
 
 type Row = {
   performanceId: string;
@@ -10,6 +10,7 @@ type Row = {
   distance: number | null;
   event: string | null;
   result: number;
+  wind: number | null;
   date: Date;
 };
 
@@ -26,17 +27,23 @@ export async function recomputePersonalBests(userId: string): Promise<void> {
       distance: performances.distance,
       event: performances.event,
       result: performances.result,
+      wind: performances.wind,
       date: sessions.date,
     })
     .from(performances)
     .innerJoin(sessions, eq(performances.sessionId, sessions.id))
     .where(eq(performances.userId, userId));
 
-  const parsed: Row[] = rows.map((r) => ({ ...r, result: Number(r.result) }));
+  const parsed: Row[] = rows.map((r) => ({
+    ...r,
+    result: Number(r.result),
+    wind: r.wind != null ? Number(r.wind) : null,
+  }));
 
-  // Best per event key.
+  // Best *wind-legal* mark per event key (tailwind > +2.0 m/s doesn't count).
   const bestByKey = new Map<string, Row>();
   for (const r of parsed) {
+    if (!isWindLegal(r, r.wind)) continue;
     const key = eventKey(r);
     const current = bestByKey.get(key);
     if (!current || isBetter(r.result, current.result, r.discipline)) {

@@ -106,6 +106,28 @@ export function lowerIsBetter(discipline: Discipline): boolean {
   return isTimed(discipline);
 }
 
+// ── Wind legality (FIDAL / World Athletics) ────────────────────────────────────
+// Wind is measured (and caps record validity) for outdoor runs up to 200m,
+// short hurdles, and the horizontal jumps. Tailwind above +2.0 m/s makes the
+// mark "ventosa": still a real result, but not valid as a personal best.
+export const WIND_LEGAL_LIMIT = 2.0;
+
+export function isWindAffected(p: EventKey): boolean {
+  if (p.discipline === "sprint" || p.discipline === "hurdles") return (p.distance ?? 0) <= 200;
+  if (p.discipline === "jump") return p.event === "lungo" || p.event === "triplo";
+  return false;
+}
+
+/**
+ * True if the mark counts for records: wind-immune event, unknown wind
+ * (common in training / indoor), or tailwind within +2.0 m/s.
+ */
+export function isWindLegal(p: EventKey, wind: number | null): boolean {
+  if (!isWindAffected(p)) return true;
+  if (wind == null) return true;
+  return wind <= WIND_LEGAL_LIMIT;
+}
+
 /** True if `a` is a better performance than `b` for the discipline. */
 export function isBetter(a: number, b: number, discipline: Discipline): boolean {
   return lowerIsBetter(discipline) ? a < b : a > b;
