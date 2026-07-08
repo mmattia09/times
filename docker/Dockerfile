@@ -8,7 +8,10 @@ WORKDIR /app
 FROM base AS deps
 COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
 COPY apps/web/package.json apps/web/package.json
-RUN pnpm install --frozen-lockfile
+# Install without running dependency build scripts (pnpm treats "ignored builds"
+# as fatal in CI), then explicitly build the native deps we actually need.
+RUN pnpm install --frozen-lockfile --ignore-scripts \
+ && pnpm rebuild esbuild sharp unrs-resolver
 
 # ── builder ──────────────────────────────────────────────────────────────────
 FROM base AS builder
@@ -29,8 +32,10 @@ COPY --from=builder /app/apps/web/.next/static ./apps/web/.next/static
 COPY --from=builder /app/apps/web/public ./apps/web/public
 
 # Migrations + seed run at container start; need the tsx-driven scripts + source.
+# tsconfig.json is required so tsx can resolve the "@/*" path alias used in lib/.
 COPY --from=builder /app/apps/web/lib ./apps/web/lib
 COPY --from=builder /app/apps/web/drizzle.config.ts ./apps/web/drizzle.config.ts
+COPY --from=builder /app/apps/web/tsconfig.json ./apps/web/tsconfig.json
 COPY --from=builder /app/apps/web/package.json ./apps/web/package.json
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/apps/web/node_modules ./apps/web/node_modules

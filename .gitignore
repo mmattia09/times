@@ -9,6 +9,7 @@ dist
 .DS_Store
 .turbo
 coverage
+.claude/
 
 # Private data — the real Notion export (personal performance history + locations).
 # Only the anonymized sample is committed.
