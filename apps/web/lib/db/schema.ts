@@ -89,6 +89,25 @@ export const verifications = pgTable("verifications", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+// ── Workouts ─────────────────────────────────────────────────────────────────
+// A workout is a list of blocks matching the athlete's training tables:
+// blocco / ripetute / recupero / pausa / ritmo / note. Values stay free-text
+// ("4 x 60m", "passo", "200m surplex", "pb 400m") — that's how coaches write them.
+export type WorkoutBlock = {
+  label: string | null; // "1", "2 x 1", "piramidale" — empty = continuation row
+  ripetute: string;
+  recupero: string | null;
+  pausa: string | null;
+  ritmo: string | null;
+  note: string | null;
+};
+
+export type SessionWorkout = {
+  templateId: string | null;
+  name: string | null;
+  blocks: WorkoutBlock[];
+};
+
 // ── Domain: sessions ─────────────────────────────────────────────────────────
 export const sessions = pgTable("sessions", {
   id: text("id")
@@ -109,6 +128,41 @@ export const sessions = pgTable("sessions", {
   note: text("note"),
   // Hash of (date+distance+result) used to dedup FIDAL imports.
   fidalId: text("fidal_id").unique(),
+  // Optional structured workout (snapshot — editing a template never rewrites history).
+  workout: jsonb("workout").$type<SessionWorkout>(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// ── Domain: workout templates (the athlete's scheme library) ─────────────────
+export const workoutTemplates = pgTable("workout_templates", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => createId()),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  category: text("category"), // velocità, tecnica, partenza dai blocchi, resistenza…
+  description: text("description"),
+  blocks: jsonb("blocks").$type<WorkoutBlock[]>().notNull().default([]),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// ── Domain: goals (target per event, compared against the current PB) ────────
+export const goals = pgTable("goals", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => createId()),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  discipline: disciplineEnum("discipline").notNull(),
+  distance: integer("distance"),
+  event: varchar("event", { length: 32 }),
+  target: numeric("target", { precision: 8, scale: 2 }).notNull(),
+  note: text("note"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
@@ -223,6 +277,8 @@ export type NewSession = typeof sessions.$inferInsert;
 export type Performance = typeof performances.$inferSelect;
 export type NewPerformance = typeof performances.$inferInsert;
 export type PersonalBest = typeof personalBests.$inferSelect;
+export type WorkoutTemplate = typeof workoutTemplates.$inferSelect;
+export type Goal = typeof goals.$inferSelect;
 export type ApiKey = typeof apiKeys.$inferSelect;
 export type UserSettings = typeof userSettings.$inferSelect;
 export type User = typeof users.$inferSelect;

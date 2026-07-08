@@ -99,17 +99,40 @@ maps the events, and dedups by a hash of `date + specialità + prestazione` stor
 `fidalId`. Use **Testa connessione** for a dry-run preview, then **Sincronizza ora** to
 import only new results.
 
+## Workouts (schede)
+
+The **Schede** page is a library of structured workouts in the classic coach-table
+format — blocco · ripetute · recupero · pausa · ritmo · note, all free text
+("4 x 60m", "passo", "2' 30\"", "max"). Attach a scheda to a training session from
+the session form: the blocks are snapshotted onto the session, so editing a
+template later never rewrites your training history.
+
+## Goals (obiettivi)
+
+On the Records page you can set a target per event ("100m in 11.80"). Each goal
+shows your current wind-legal PB, how much is missing, and a progress meter;
+it flips to **raggiunto** when the PB beats the target.
+
+## Import / Export
+
+**Settings → Dati** exports everything as a single JSON file — sessions with
+performances and workouts, workout templates, goals, settings, and API keys
+(hashes only; passwords are never exported). Import is idempotent: existing
+records are skipped, never duplicated. Moving to a new instance is
+*export → register → import*. For scripted migrations use
+`GET /api/v1/export` and `POST /api/v1/import` with an API key.
+
 ## Project layout
 
 ```
 apps/web/
   app/(auth)        login / register
-  app/(dashboard)   dashboard · sessions · records · settings
+  app/(dashboard)   dashboard · sessions · workouts · records · settings
   app/api/auth      Better Auth handler
   app/api/internal  session-cookie API (used by the UI)
   app/api/v1        external REST API (API-key auth)
-  components/{ui,charts,forms,layout,sessions,settings}
-  lib/{db,auth,api-key,fidal,fidal-sync,records,services,athletics,season,format}
+  components/{ui,charts,forms,layout,sessions,settings,workouts,records}
+  lib/{db,auth,api-key,fidal,fidal-sync,records,services,athletics,season,format,data-transfer}
 docker/             Dockerfile + entrypoint
 docker-compose.yml  db + app
 ```

@@ -25,6 +25,41 @@ export const tipoSchema = z.enum(["outdoor", "indoor"]);
 const emptyToNull = <T extends z.ZodTypeAny>(schema: T) =>
   z.preprocess((v) => (v === "" || v === undefined ? null : v), schema.nullable());
 
+export const workoutBlockSchema = z.object({
+  label: emptyToNull(z.string().max(64)),
+  ripetute: z.string().min(1).max(256),
+  recupero: emptyToNull(z.string().max(128)),
+  pausa: emptyToNull(z.string().max(128)),
+  ritmo: emptyToNull(z.string().max(128)),
+  note: emptyToNull(z.string().max(512)),
+});
+
+export const sessionWorkoutSchema = z.object({
+  templateId: emptyToNull(z.string().max(64)),
+  name: emptyToNull(z.string().max(128)),
+  blocks: z.array(workoutBlockSchema).min(1),
+});
+
+export const workoutTemplateInputSchema = z.object({
+  name: z.string().min(1, "Nome richiesto").max(128),
+  category: emptyToNull(z.string().max(64)),
+  description: emptyToNull(z.string().max(1000)),
+  blocks: z.array(workoutBlockSchema).min(1, "Aggiungi almeno un blocco"),
+});
+
+export const goalInputSchema = z.object({
+  discipline: z
+    .enum(["sprint", "hurdles", "middle_distance", "long_distance", "relay", "walk", "jump", "throw", "combined"])
+    .default("sprint"),
+  distance: emptyToNull(z.coerce.number().int().positive()),
+  event: emptyToNull(z.string().max(32)),
+  target: z.coerce.number().positive({ message: "Obiettivo richiesto" }),
+  note: emptyToNull(z.string().max(256)),
+});
+
+export type WorkoutTemplateInput = z.infer<typeof workoutTemplateInputSchema>;
+export type GoalInput = z.infer<typeof goalInputSchema>;
+
 export const performanceInputSchema = z.object({
   discipline: disciplineSchema.default("sprint"),
   distance: emptyToNull(z.coerce.number().int().positive()),
@@ -51,6 +86,9 @@ export const sessionInputSchema = z.object({
   organizzatore: emptyToNull(organizzatoreSchema),
   tipo: emptyToNull(tipoSchema),
   note: emptyToNull(z.string().max(2000)),
+  workout: z
+    .preprocess((v) => (v === "" || v === undefined ? null : v), sessionWorkoutSchema.nullable())
+    .optional(),
   performances: z.array(performanceInputSchema).min(1, {
     message: "Aggiungi almeno una prestazione",
   }),

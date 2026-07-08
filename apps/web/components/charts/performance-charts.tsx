@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTheme } from "next-themes";
 import {
   Bar,
@@ -34,6 +34,7 @@ export type ChartPoint = {
   result: number;
   wind: number | null;
   legal: boolean; // wind-legal mark (counts for PBs)
+  tipo: "outdoor" | "indoor" | null;
 };
 
 /**
@@ -85,6 +86,7 @@ export function PerformanceCharts({ points }: { points: ChartPoint[] }) {
   const [eventKey, setEventKey] = useState(eventKeys[0]?.key ?? "");
   const [seasonSel, setSeasonSel] = useState<string>("all");
   const [ctx, setCtx] = useState<"all" | "competition" | "training">("all");
+  const [ambiente, setAmbiente] = useState<"all" | "outdoor" | "indoor">("all");
 
   const current = eventKeys.find((e) => e.key === eventKey);
   const sample = points.find((p) => p.key === eventKey);
@@ -93,13 +95,21 @@ export function PerformanceCharts({ points }: { points: ChartPoint[] }) {
     ? { discipline: sample.discipline, distance: sample.distance, event: sample.event }
     : { discipline: "sprint", distance: 100, event: null };
 
+  // "outdoor" includes unlabeled sessions (older data has no ambiente set).
+  const matchAmbiente = useCallback(
+    (p: ChartPoint) =>
+      ambiente === "all" || (ambiente === "indoor" ? p.tipo === "indoor" : p.tipo !== "indoor"),
+    [ambiente],
+  );
+
   const filtered = useMemo(() => {
     return points
       .filter((p) => p.key === eventKey)
       .filter((p) => seasonSel === "all" || p.seasonKey === seasonSel)
       .filter((p) => ctx === "all" || p.type === ctx)
+      .filter(matchAmbiente)
       .sort((a, b) => a.date.localeCompare(b.date));
-  }, [points, eventKey, seasonSel, ctx]);
+  }, [points, eventKey, seasonSel, ctx, matchAmbiente]);
 
   // Progress line: one row per point; the two contexts are separate series.
   const progress = filtered.map((p) => ({
@@ -113,19 +123,19 @@ export function PerformanceCharts({ points }: { points: ChartPoint[] }) {
   // Season comparison: best wind-legal mark per season for the selected event.
   const seasonBest = useMemo(() => {
     const m = new Map<string, { label: string; sort: number; best: number }>();
-    for (const p of points.filter((x) => x.key === eventKey && x.legal)) {
+    for (const p of points.filter((x) => x.key === eventKey && x.legal && matchAmbiente(x))) {
       const cur = m.get(p.seasonKey);
       if (!cur || (lowerIsBetter ? p.result < cur.best : p.result > cur.best)) {
         m.set(p.seasonKey, { label: p.seasonLabel, sort: p.seasonSort, best: p.result });
       }
     }
     return [...m.values()].sort((a, b) => a.sort - b.sort).map((e) => ({ season: e.label, best: e.best }));
-  }, [points, eventKey, lowerIsBetter]);
+  }, [points, eventKey, lowerIsBetter, matchAmbiente]);
 
   // Improvement curve: running-best (wind-legal) as % gained since the first mark.
   const improvement = useMemo(() => {
     const all = points
-      .filter((x) => x.key === eventKey && x.legal)
+      .filter((x) => x.key === eventKey && x.legal && matchAmbiente(x))
       .sort((a, b) => a.date.localeCompare(b.date));
     if (all.length === 0) return [];
     const first = all[0].result;
@@ -137,7 +147,7 @@ export function PerformanceCharts({ points }: { points: ChartPoint[] }) {
         : ((runningBest - first) / first) * 100;
       return { date: p.date.slice(0, 10), improvement: Number(pct.toFixed(2)) };
     });
-  }, [points, eventKey, lowerIsBetter]);
+  }, [points, eventKey, lowerIsBetter, matchAmbiente]);
 
   const yDomain: [string | number, string | number] = lowerIsBetter
     ? ["dataMin - 0.3", "dataMax + 0.3"]
@@ -189,6 +199,13 @@ export function PerformanceCharts({ points }: { points: ChartPoint[] }) {
             <TabsTrigger value="all" className="text-xs">Tutto</TabsTrigger>
             <TabsTrigger value="competition" className="text-xs">Gare</TabsTrigger>
             <TabsTrigger value="training" className="text-xs">Allen.</TabsTrigger>
+          </TabsList>
+        </Tabs>
+        <Tabs value={ambiente} onValueChange={(v) => setAmbiente(v as typeof ambiente)}>
+          <TabsList className="h-8">
+            <TabsTrigger value="all" className="text-xs">Tutti</TabsTrigger>
+            <TabsTrigger value="outdoor" className="text-xs">Outdoor</TabsTrigger>
+            <TabsTrigger value="indoor" className="text-xs">Indoor</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>

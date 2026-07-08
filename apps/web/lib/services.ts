@@ -57,6 +57,7 @@ export async function createSession(
         organizzatore: input.organizzatore ?? null,
         tipo: input.tipo ?? null,
         note: input.note ?? null,
+        workout: input.workout ?? null,
         fidalId: fidalId ?? null,
       })
       .returning({ id: sessions.id });
@@ -111,6 +112,7 @@ export async function updateSession(
         organizzatore: input.organizzatore ?? null,
         tipo: input.tipo ?? null,
         note: input.note ?? null,
+        workout: input.workout ?? null,
         updatedAt: new Date(),
       })
       .where(eq(sessions.id, sessionId));

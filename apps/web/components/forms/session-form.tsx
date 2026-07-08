@@ -17,8 +17,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { WorkoutTable } from "@/components/workouts/workout-table";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import type { WorkoutTemplate } from "@/lib/db/schema";
 import {
   DISCIPLINES,
   JUMP_EVENTS,
@@ -68,6 +70,7 @@ export function SessionForm({
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [luoghi, setLuoghi] = useState<string[]>([]);
+  const [templates, setTemplates] = useState<WorkoutTemplate[]>([]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(sessionInputSchema),
@@ -81,6 +84,7 @@ export function SessionForm({
       organizzatore: initial?.organizzatore ?? null,
       tipo: initial?.tipo ?? null,
       note: initial?.note ?? null,
+      workout: initial?.workout ?? null,
       performances: initial?.performances ?? [
         { discipline: "sprint", distance: 100, event: null, result: 0, wind: null, lane: null, position: null, heat: null },
       ],
@@ -95,7 +99,13 @@ export function SessionForm({
       .then((r) => r.json())
       .then((j) => setLuoghi(j.data ?? []))
       .catch(() => {});
+    fetch("/api/internal/templates")
+      .then((r) => r.json())
+      .then((j) => setTemplates(j.data ?? []))
+      .catch(() => {});
   }, []);
+
+  const workout = form.watch("workout");
 
   async function onSubmit(values: FormValues) {
     setSubmitting(true);
@@ -218,6 +228,54 @@ export function SessionForm({
           </div>
         </CardContent>
       </Card>
+
+      {/* Workout (scheda allenamento) */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold">Scheda allenamento</h2>
+          {workout && (
+            <Button type="button" variant="ghost" size="sm" onClick={() => form.setValue("workout", null)}>
+              <Trash2 className="h-4 w-4" /> Rimuovi
+            </Button>
+          )}
+        </div>
+        {workout ? (
+          <Card>
+            <CardContent className="p-0">
+              {workout.name && (
+                <p className="border-b px-4 py-2 text-sm font-medium">{workout.name}</p>
+              )}
+              <WorkoutTable blocks={workout.blocks} />
+            </CardContent>
+          </Card>
+        ) : templates.length > 0 ? (
+          <Select
+            value=""
+            onValueChange={(id) => {
+              const t = templates.find((x) => x.id === id);
+              if (t) {
+                form.setValue("workout", { templateId: t.id, name: t.name, blocks: t.blocks });
+              }
+            }}
+          >
+            <SelectTrigger className="max-w-sm">
+              <SelectValue placeholder="Aggancia una scheda dalla libreria…" />
+            </SelectTrigger>
+            <SelectContent>
+              {templates.map((t) => (
+                <SelectItem key={t.id} value={t.id}>
+                  {t.category ? `${t.category} · ` : ""}
+                  {t.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            Nessuna scheda in libreria: creane una nella pagina Schede per agganciarla qui.
+          </p>
+        )}
+      </div>
 
       {/* Performances */}
       <div className="space-y-3">

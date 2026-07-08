@@ -22,6 +22,7 @@ export default async function EditSessionPage({ params }: { params: Promise<{ id
     organizzatore: session.organizzatore,
     tipo: session.tipo,
     note: session.note,
+    workout: session.workout ?? null,
     performances: session.performances.map((p) => ({
       discipline: p.discipline,
       distance: p.distance,

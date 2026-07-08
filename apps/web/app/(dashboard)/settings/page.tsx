@@ -81,6 +81,22 @@ export default async function SettingsPage() {
 
       <Card>
         <CardHeader>
+          <CardTitle className="text-base">Dati</CardTitle>
+          <CardDescription>Esporta tutti i dati in JSON o importali da un&apos;altra istanza.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Link
+            href="/settings/data"
+            className="flex items-center justify-between rounded-md border p-3 text-sm hover:bg-secondary/40"
+          >
+            <span>Esporta / Importa (JSON)</span>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </Link>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle className="text-base">Stagione & aspetto</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 text-sm text-muted-foreground">

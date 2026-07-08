@@ -2,6 +2,7 @@ import Link from "next/link";
 import { asc, eq } from "drizzle-orm";
 import { PageHeader } from "@/components/layout/page-header";
 import { PerformanceCharts, type ChartPoint } from "@/components/charts/performance-charts";
+import { GoalsCard, type PbSummary } from "@/components/records/goals-card";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -53,6 +54,7 @@ export default async function RecordsPage() {
       wind: performances.wind,
       date: sessions.date,
       type: sessions.type,
+      tipo: sessions.tipo,
       luogo: sessions.luogo,
     })
     .from(performances)
@@ -116,8 +118,18 @@ export default async function RecordsPage() {
       result: r.resultNum,
       wind: r.windNum,
       legal: r.legal,
+      tipo: r.tipo,
     };
   });
+
+  const pbSummaries: PbSummary[] = pbRows.map(({ best }) => ({
+    discipline: best.discipline,
+    distance: best.distance,
+    event: best.event,
+    keyStr: eventKey(best),
+    label: eventLabel(best),
+    result: best.resultNum,
+  }));
 
   return (
     <>
@@ -187,6 +199,10 @@ export default async function RecordsPage() {
           </Table>
         </CardContent>
       </Card>
+
+      <div className="mt-6">
+        <GoalsCard pbs={pbSummaries} />
+      </div>
 
       <h2 className="mb-3 mt-8 text-sm font-semibold">Grafici</h2>
       <PerformanceCharts points={points} />

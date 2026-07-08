@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Pencil } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { DeleteSessionButton } from "@/components/sessions/delete-session-button";
+import { WorkoutTable } from "@/components/workouts/workout-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -69,6 +70,19 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
           )}
         </CardContent>
       </Card>
+
+      {session.workout && (
+        <>
+          <h2 className="mb-2 mt-6 text-sm font-semibold">
+            Scheda allenamento{session.workout.name ? ` — ${session.workout.name}` : ""}
+          </h2>
+          <Card>
+            <CardContent className="p-0">
+              <WorkoutTable blocks={session.workout.blocks} />
+            </CardContent>
+          </Card>
+        </>
+      )}
 
       <h2 className="mb-2 mt-6 text-sm font-semibold">Prestazioni</h2>
       <Card>
