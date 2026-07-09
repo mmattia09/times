@@ -1,9 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { ClipboardList, Pencil, Plus, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
-import { TemplateEditorDialog } from "@/components/workouts/template-editor";
 import { WorkoutTable } from "@/components/workouts/workout-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,8 +14,6 @@ import type { WorkoutTemplate } from "@/lib/db/schema";
 
 export default function WorkoutsPage() {
   const [templates, setTemplates] = useState<WorkoutTemplate[] | null>(null);
-  const [editorOpen, setEditorOpen] = useState(false);
-  const [editing, setEditing] = useState<WorkoutTemplate | null>(null);
 
   const load = useCallback(async () => {
     const res = await fetch("/api/internal/templates");
@@ -41,17 +39,22 @@ export default function WorkoutsPage() {
     byCategory.set(c, [...(byCategory.get(c) ?? []), t]);
   }
 
+  const count = templates?.length ?? 0;
+
   return (
     <>
-      <PageHeader title="Schede" description="La tua libreria di allenamenti: blocchi, ripetute, recuperi e ritmi.">
-        <Button
-          size="sm"
-          onClick={() => {
-            setEditing(null);
-            setEditorOpen(true);
-          }}
-        >
-          <Plus className="h-4 w-4" /> Nuova scheda
+      <PageHeader
+        title="Schede"
+        description={
+          templates === null
+            ? "La tua libreria di allenamenti."
+            : `${count} ${count === 1 ? "scheda" : "schede"} in libreria, in ${byCategory.size} ${byCategory.size === 1 ? "categoria" : "categorie"}.`
+        }
+      >
+        <Button asChild size="sm">
+          <Link href="/workouts/new">
+            <Plus className="h-4 w-4" /> Nuova
+          </Link>
         </Button>
       </PageHeader>
 
@@ -67,14 +70,10 @@ export default function WorkoutsPage() {
             <p className="text-sm text-muted-foreground">
               Nessuna scheda. Crea la prima: potrai agganciarla alle sessioni di allenamento.
             </p>
-            <Button
-              size="sm"
-              onClick={() => {
-                setEditing(null);
-                setEditorOpen(true);
-              }}
-            >
-              <Plus className="h-4 w-4" /> Nuova scheda
+            <Button asChild size="sm">
+              <Link href="/workouts/new">
+                <Plus className="h-4 w-4" /> Nuova
+              </Link>
             </Button>
           </CardContent>
         </Card>
@@ -82,7 +81,9 @@ export default function WorkoutsPage() {
         <div className="space-y-8">
           {[...byCategory.entries()].map(([category, list]) => (
             <section key={category}>
-              <h2 className="mb-3 text-sm font-semibold capitalize">{category}</h2>
+              <h2 className="mb-3 text-sm font-semibold capitalize">
+                {category} <span className="font-normal text-muted-foreground">· {list.length}</span>
+              </h2>
               <div className="grid gap-4 xl:grid-cols-2">
                 {list.map((t) => (
                   <Card key={t.id}>
@@ -95,16 +96,10 @@ export default function WorkoutsPage() {
                       </div>
                       <div className="flex shrink-0 items-center gap-1">
                         <Badge variant="muted">{t.blocks.length} righe</Badge>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          aria-label="Modifica"
-                          onClick={() => {
-                            setEditing(t);
-                            setEditorOpen(true);
-                          }}
-                        >
-                          <Pencil className="h-4 w-4" />
+                        <Button asChild variant="ghost" size="icon" aria-label="Modifica">
+                          <Link href={`/workouts/${t.id}/edit`}>
+                            <Pencil className="h-4 w-4" />
+                          </Link>
                         </Button>
                         <Button
                           variant="ghost"
@@ -126,16 +121,6 @@ export default function WorkoutsPage() {
             </section>
           ))}
         </div>
-      )}
-
-      {editorOpen && (
-        <TemplateEditorDialog
-          key={editing?.id ?? "new"}
-          open={editorOpen}
-          onOpenChange={setEditorOpen}
-          template={editing}
-          onSaved={load}
-        />
       )}
     </>
   );

@@ -9,7 +9,7 @@ dates render in `Europe/Rome`.
 
 ## Stack
 
-- **Next.js 15** (App Router) · TypeScript · Tailwind CSS · shadcn/ui · Recharts
+- **Next.js 16** (App Router) · TypeScript · Tailwind CSS · shadcn/ui · Recharts
 - **PostgreSQL 16** + **Drizzle ORM**
 - **Better Auth** (email/password, session cookies)
 - **Cheerio** for the server-side FIDAL scraper

@@ -131,7 +131,23 @@ export function SessionForm({
   const errors = form.formState.errors;
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+    <form
+      onSubmit={form.handleSubmit(onSubmit)}
+      onKeyDown={(e) => {
+        // ⌘/Ctrl+Invio salva; Invio da solo dentro un input non invia il form
+        // a metà compilazione (comportamento coerente con l'editor delle schede).
+        if (e.key !== "Enter") return;
+        if (e.metaKey || e.ctrlKey) {
+          e.preventDefault();
+          form.handleSubmit(onSubmit)();
+        } else if ((e.target as HTMLElement).tagName === "INPUT") {
+          e.preventDefault();
+        }
+      }}
+      className="space-y-6"
+    >
+      <div className="space-y-3">
+      <h2 className="text-sm font-semibold">Dettagli</h2>
       <Card>
         <CardContent className="grid gap-5 p-5 sm:grid-cols-2">
           {/* Type toggle */}
@@ -228,6 +244,7 @@ export function SessionForm({
           </div>
         </CardContent>
       </Card>
+      </div>
 
       {/* Workout (scheda allenamento) */}
       <div className="space-y-3">
@@ -307,7 +324,8 @@ export function SessionForm({
         ))}
       </div>
 
-      <div className="flex justify-end gap-2">
+      <div className="flex items-center justify-end gap-3">
+        <span className="mr-auto text-xs text-muted-foreground">⌘Invio: salva</span>
         <Button type="button" variant="ghost" onClick={() => router.back()}>
           Annulla
         </Button>

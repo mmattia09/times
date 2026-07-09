@@ -9,10 +9,6 @@ const nextConfig = {
   // Trace from the monorepo root so pnpm-hoisted deps are bundled into standalone.
   outputFileTracingRoot: monorepoRoot,
   serverExternalPackages: ["pg"],
-  eslint: {
-    // Lint is run separately in CI; don't fail production builds on lint.
-    ignoreDuringBuilds: true,
-  },
 };
 
 export default nextConfig;

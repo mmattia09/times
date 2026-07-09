@@ -2,14 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionCookie } from "better-auth/cookies";
 
 /**
- * Route protection:
+ * Route protection (Next 16 "proxy", formerly middleware):
  *  - /api/auth/*  → public (Better Auth endpoints)
- *  - /api/v1/*    → guarded by API-key middleware inside each handler (skip here)
+ *  - /api/v1/*    → guarded by API-key auth inside each handler (skip here)
  *  - other /api/* → require a session cookie
- *  - /dashboard, /sessions, /records, /settings → require a session cookie
- *  - /login, /register → redirect to /dashboard if already signed in
+ *  - app pages    → require a session cookie
+ *  - /login, /register → always reachable (DB-validated redirect lives in the (auth) layout)
  */
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const hasSession = !!getSessionCookie(req);
 
@@ -25,11 +25,12 @@ export function middleware(req: NextRequest) {
     }
   }
 
+  // Auth pages are always reachable. The "already signed in → dashboard" redirect
+  // lives in the (auth) layout, which validates the session against the DB — the
+  // middleware only sees cookie *presence*, and a stale cookie (e.g. after a DB
+  // reset) would otherwise cause an infinite /login ↔ /dashboard redirect loop.
   const isAuthPage = pathname === "/login" || pathname === "/register";
-  if (isAuthPage) {
-    if (hasSession) return NextResponse.redirect(new URL("/dashboard", req.url));
-    return NextResponse.next();
-  }
+  if (isAuthPage) return NextResponse.next();
 
   // /api/v1 is authenticated per-handler with API keys.
   if (pathname.startsWith("/api/v1")) return NextResponse.next();

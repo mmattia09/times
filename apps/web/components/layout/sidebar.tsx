@@ -4,14 +4,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Timer } from "lucide-react";
 import { navItems } from "@/components/layout/nav";
-import { UserMenu } from "@/components/layout/user-menu";
 import { cn } from "@/lib/utils";
 
 function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function Sidebar({ userName, userEmail }: { userName?: string; userEmail: string }) {
+export function Sidebar() {
   const pathname = usePathname();
   return (
     <aside className="hidden w-60 shrink-0 flex-col border-r bg-card md:flex">
@@ -40,9 +39,6 @@ export function Sidebar({ userName, userEmail }: { userName?: string; userEmail:
           );
         })}
       </nav>
-      <div className="border-t p-3">
-        <UserMenu userName={userName} userEmail={userEmail} />
-      </div>
     </aside>
   );
 }
