@@ -1,6 +1,8 @@
 import { PageHeader } from "@/components/layout/page-header";
 import { SessionForm } from "@/components/forms/session-form";
 
+
+export const metadata = { title: "Nuova sessione" };
 export default function NewSessionPage() {
   return (
     <div className="mx-auto max-w-3xl">

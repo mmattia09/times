@@ -224,7 +224,7 @@ export function TemplateForm({ template }: { template?: WorkoutTemplate }) {
           </CardContent>
         </Card>
         <p className="text-xs text-muted-foreground">
-          Invio: riga successiva (o nuova riga in fondo) · ⌘Invio: salva
+          Invio: riga successiva (o nuova riga in fondo) · ⌘ + Invio: salva
         </p>
       </div>
 

@@ -7,7 +7,10 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
-  title: "Athletics Tracker",
+  title: {
+    default: "Athletics Tracker",
+    template: "%s · Athletics",
+  },
   description: "Tracciamento prestazioni di atletica leggera",
 };
 

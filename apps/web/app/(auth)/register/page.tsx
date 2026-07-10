@@ -37,7 +37,7 @@ export default function RegisterPage() {
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-1.5">
             <Label htmlFor="name">Nome</Label>
-            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
+            <Input id="name" autoFocus value={name} onChange={(e) => setName(e.target.value)} required />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="email">Email</Label>

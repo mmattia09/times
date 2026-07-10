@@ -20,6 +20,8 @@ import { formatDate } from "@/lib/format";
 import { currentSeason, seasonLabel, seasonRange } from "@/lib/season";
 import { listSessions } from "@/lib/services";
 
+
+export const metadata = { title: "Dashboard" };
 export default async function DashboardPage() {
   const user = await requireUser();
   const season = currentSeason();

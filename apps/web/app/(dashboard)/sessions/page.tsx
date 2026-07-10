@@ -10,10 +10,12 @@ import { db } from "@/lib/db";
 import { sessions } from "@/lib/db/schema";
 import { requireUser } from "@/lib/current-user";
 import { eventLabel, formatResult, isWindLegal } from "@/lib/athletics";
-import { formatDate } from "@/lib/format";
+import { formatDate, formatOrganizzatore } from "@/lib/format";
 import { listSeasons, seasonKey, seasonLabel } from "@/lib/season";
 import { listSessions, type SessionFilters as Filters } from "@/lib/services";
 
+
+export const metadata = { title: "Sessioni" };
 export default async function SessionsPage({
   searchParams,
 }: {
@@ -52,7 +54,7 @@ export default async function SessionsPage({
     tempo: s.tempo,
     livello: s.livello,
     luogo: s.luogo,
-    organizzatore: s.organizzatore,
+    organizzatore: formatOrganizzatore(s.organizzatore),
     tipo: s.tipo,
     note: s.note,
     performances: s.performances

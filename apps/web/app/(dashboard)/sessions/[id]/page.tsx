@@ -18,7 +18,7 @@ import {
 import { requireUser } from "@/lib/current-user";
 import { getSessionById } from "@/lib/services";
 import { eventLabel, formatResult, isWindLegal } from "@/lib/athletics";
-import { formatDateLong } from "@/lib/format";
+import { formatDateLong, formatOrganizzatore } from "@/lib/format";
 
 function meta(label: string, value?: string | null) {
   if (!value) return null;
@@ -63,7 +63,7 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
             {meta("Luogo", session.luogo)}
             {meta("Cronometraggio", session.tempo)}
             {meta("Livello", session.livello)}
-            {meta("Organizzatore", session.organizzatore)}
+            {meta("Organizzatore", formatOrganizzatore(session.organizzatore))}
           </dl>
           {session.note && (
             <p className="mt-4 whitespace-pre-wrap text-sm text-muted-foreground">{session.note}</p>

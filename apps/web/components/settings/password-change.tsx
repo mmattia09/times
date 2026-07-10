@@ -31,7 +31,7 @@ export function PasswordChange() {
   }
 
   return (
-    <form onSubmit={submit} className="grid max-w-md gap-4 sm:grid-cols-2">
+    <form onSubmit={submit} className="grid gap-4 sm:grid-cols-2">
       <div className="space-y-1.5">
         <Label htmlFor="cur">Password attuale</Label>
         <Input id="cur" type="password" value={current} onChange={(e) => setCurrent(e.target.value)} required />

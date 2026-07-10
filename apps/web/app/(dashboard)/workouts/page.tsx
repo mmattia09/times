@@ -8,12 +8,14 @@ import { WorkoutTable } from "@/components/workouts/workout-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/hooks/use-toast";
 import type { WorkoutTemplate } from "@/lib/db/schema";
 
 export default function WorkoutsPage() {
   const [templates, setTemplates] = useState<WorkoutTemplate[] | null>(null);
+  const [toDelete, setToDelete] = useState<WorkoutTemplate | null>(null);
 
   const load = useCallback(async () => {
     const res = await fetch("/api/internal/templates");
@@ -106,7 +108,7 @@ export default function WorkoutsPage() {
                           size="icon"
                           aria-label="Elimina"
                           className="text-muted-foreground hover:text-destructive"
-                          onClick={() => remove(t.id)}
+                          onClick={() => setToDelete(t)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -122,6 +124,14 @@ export default function WorkoutsPage() {
           ))}
         </div>
       )}
+
+      <ConfirmDialog
+        open={toDelete !== null}
+        onOpenChange={(o) => !o && setToDelete(null)}
+        title="Eliminare la scheda?"
+        description={`"${toDelete?.name ?? ""}" verrà rimossa dalla libreria. Le sessioni a cui è già agganciata non cambiano.`}
+        onConfirm={() => (toDelete ? remove(toDelete.id) : undefined)}
+      />
     </>
   );
 }

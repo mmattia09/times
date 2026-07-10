@@ -151,7 +151,7 @@ export function SessionForm({
       <Card>
         <CardContent className="grid gap-5 p-5 sm:grid-cols-2">
           {/* Type toggle */}
-          <div className="space-y-1.5 sm:col-span-2">
+          <div className="flex items-center gap-4 sm:col-span-2">
             <Label>Tipo</Label>
             <div className="inline-flex rounded-md border p-0.5">
               {(["training", "competition"] as const).map((t) => (
@@ -325,7 +325,7 @@ export function SessionForm({
       </div>
 
       <div className="flex items-center justify-end gap-3">
-        <span className="mr-auto text-xs text-muted-foreground">⌘Invio: salva</span>
+        <span className="mr-auto text-xs text-muted-foreground">⌘ + Invio: salva</span>
         <Button type="button" variant="ghost" onClick={() => router.back()}>
           Annulla
         </Button>

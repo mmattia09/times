@@ -5,6 +5,7 @@ import { Plus, Target, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   Dialog,
   DialogContent,
@@ -24,6 +25,7 @@ export type PbSummary = EventKey & { keyStr: string; label: string; result: numb
 export function GoalsCard({ pbs }: { pbs: PbSummary[] }) {
   const [goals, setGoals] = useState<Goal[] | null>(null);
   const [open, setOpen] = useState(false);
+  const [toDelete, setToDelete] = useState<Goal | null>(null);
 
   const load = useCallback(async () => {
     const res = await fetch("/api/internal/goals");
@@ -96,8 +98,8 @@ export function GoalsCard({ pbs }: { pbs: PbSummary[] }) {
                     )}
                     <button
                       type="button"
-                      onClick={() => remove(g.id)}
-                      className="text-muted-foreground hover:text-destructive"
+                      onClick={() => setToDelete(g)}
+                      className="text-muted-foreground transition-colors hover:text-destructive"
                       aria-label="Elimina obiettivo"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
@@ -110,6 +112,17 @@ export function GoalsCard({ pbs }: { pbs: PbSummary[] }) {
         )}
       </CardContent>
       {open && <AddGoalDialog open={open} onOpenChange={setOpen} pbs={pbs} onSaved={load} />}
+      <ConfirmDialog
+        open={toDelete !== null}
+        onOpenChange={(o) => !o && setToDelete(null)}
+        title="Eliminare l'obiettivo?"
+        description={
+          toDelete
+            ? `L'obiettivo su ${eventLabel({ discipline: toDelete.discipline, distance: toDelete.distance, event: toDelete.event })} verrà rimosso.`
+            : ""
+        }
+        onConfirm={() => (toDelete ? remove(toDelete.id) : undefined)}
+      />
     </Card>
   );
 }

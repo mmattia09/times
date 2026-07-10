@@ -57,7 +57,7 @@ export function SessionsTable({ rows }: { rows: SessionRow[] }) {
             <TableCell className="capitalize text-muted-foreground">{r.tempo ?? "—"}</TableCell>
             <TableCell className="capitalize text-muted-foreground">{r.livello ?? "—"}</TableCell>
             <TableCell className="text-muted-foreground">{r.luogo ?? "—"}</TableCell>
-            <TableCell className="uppercase text-muted-foreground">{r.organizzatore ?? "—"}</TableCell>
+            <TableCell className="text-muted-foreground">{r.organizzatore ?? "—"}</TableCell>
             <TableCell className="capitalize text-muted-foreground">{r.tipo ?? "—"}</TableCell>
           </TableRow>
         ))}

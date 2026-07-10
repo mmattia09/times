@@ -5,6 +5,7 @@ import { Check, Copy, KeyRound, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { toast } from "@/hooks/use-toast";
 import { formatDate } from "@/lib/format";
 
@@ -23,6 +24,7 @@ export function ApiKeysManager() {
   const [creating, setCreating] = useState(false);
   const [newKey, setNewKey] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [toRevoke, setToRevoke] = useState<Key | null>(null);
 
   async function load() {
     const res = await fetch("/api/keys");
@@ -111,7 +113,7 @@ export function ApiKeysManager() {
                 </p>
               </div>
               {!k.revokedAt && (
-                <Button variant="ghost" size="sm" className="text-destructive" onClick={() => revoke(k.id)}>
+                <Button variant="ghost" size="sm" className="text-destructive" onClick={() => setToRevoke(k)}>
                   <Trash2 className="h-4 w-4" /> Revoca
                 </Button>
               )}
@@ -119,6 +121,15 @@ export function ApiKeysManager() {
           ))}
         </ul>
       )}
+
+      <ConfirmDialog
+        open={toRevoke !== null}
+        onOpenChange={(o) => !o && setToRevoke(null)}
+        title="Revocare la chiave?"
+        description={`"${toRevoke?.label ?? ""}" smetterà di funzionare immediatamente per qualsiasi client che la usa.`}
+        confirmLabel="Revoca"
+        onConfirm={() => (toRevoke ? revoke(toRevoke.id) : undefined)}
+      />
     </div>
   );
 }

@@ -11,6 +11,8 @@ import { db } from "@/lib/db";
 import { userSettings } from "@/lib/db/schema";
 import { requireUser } from "@/lib/current-user";
 
+
+export const metadata = { title: "Impostazioni" };
 export default async function SettingsPage() {
   const user = await requireUser();
   const [settings] = await db
@@ -23,7 +25,9 @@ export default async function SettingsPage() {
     <>
       <PageHeader title="Impostazioni" />
 
+      {/* Two independent columns so short cards pack together without gaps. */}
       <div className="grid items-start gap-6 lg:grid-cols-2">
+        <div className="space-y-6">
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Profilo</CardTitle>
@@ -46,19 +50,6 @@ export default async function SettingsPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Integrazione FIDAL</CardTitle>
-            <CardDescription>Importa automaticamente le gare dal tuo profilo FIDAL.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <FidalSettings
-              initialUrl={settings?.fidalUrl ?? ""}
-              lastSyncAt={settings?.lastFidalSyncAt ? settings.lastFidalSyncAt.toISOString() : null}
-            />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
             <CardTitle className="text-base">Chiavi API</CardTitle>
             <CardDescription>
               Per l&apos;accesso programmatico a <code>/api/v1</code>. Usa l&apos;header{" "}
@@ -67,6 +58,21 @@ export default async function SettingsPage() {
           </CardHeader>
           <CardContent>
             <ApiKeysManager />
+          </CardContent>
+        </Card>
+        </div>
+
+        <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Integrazione FIDAL</CardTitle>
+            <CardDescription>Importa automaticamente le gare dal tuo profilo FIDAL.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <FidalSettings
+              initialUrl={settings?.fidalUrl ?? ""}
+              lastSyncAt={settings?.lastFidalSyncAt ? settings.lastFidalSyncAt.toISOString() : null}
+            />
           </CardContent>
         </Card>
 
@@ -81,6 +87,7 @@ export default async function SettingsPage() {
             <DataTransferCard />
           </CardContent>
         </Card>
+        </div>
       </div>
     </>
   );

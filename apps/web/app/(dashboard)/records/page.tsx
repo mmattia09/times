@@ -40,6 +40,8 @@ function sbGap(pb: number, sb: number, ek: EventKey, lower: boolean): string {
   return `−${gap.toFixed(2)} m`;
 }
 
+
+export const metadata = { title: "Record" };
 export default async function RecordsPage() {
   const user = await requireUser();
 

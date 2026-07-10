@@ -6,6 +6,8 @@ import { db } from "@/lib/db";
 import { workoutTemplates } from "@/lib/db/schema";
 import { requireUser } from "@/lib/current-user";
 
+
+export const metadata = { title: "Modifica scheda" };
 export default async function EditTemplatePage({ params }: { params: Promise<{ id: string }> }) {
   const user = await requireUser();
   const { id } = await params;
