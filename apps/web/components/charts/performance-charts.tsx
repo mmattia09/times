@@ -1,7 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useTheme } from "next-themes";
+import { useCallback, useMemo, useState } from "react";
 import {
   Bar,
   BarChart,
@@ -16,6 +15,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useChartTokens, type ChartTokens } from "@/components/charts/chart-theme";
 import { formatResult, type EventKey } from "@/lib/athletics";
 import type { Discipline } from "@/lib/db/schema";
 
@@ -36,37 +36,6 @@ export type ChartPoint = {
   legal: boolean; // wind-legal mark (counts for PBs)
   tipo: "outdoor" | "indoor" | null;
 };
-
-/**
- * Chart color tokens per theme. Series hues validated with the dataviz palette
- * checker against the app's card surfaces (light #ffffff, dark #151519):
- * CVD ΔE 76.8 (light) / 61.6 (dark), lightness band and chroma floor PASS.
- * The light aqua sits at 2.8:1 contrast → relief comes from the legend, the
- * dashed-line secondary encoding and the table view above the charts.
- */
-const TOKENS = {
-  light: {
-    gara: "#4a3aa7",
-    allenamento: "#1baf7a",
-    grid: "#e4e4e7",
-    axis: "#71717b",
-    surface: "#ffffff",
-  },
-  dark: {
-    gara: "#9085e9",
-    allenamento: "#199e70",
-    grid: "#2c2c30",
-    axis: "#94949f",
-    surface: "#151519",
-  },
-} as const;
-
-function useChartTokens() {
-  const { resolvedTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-  return { tokens: TOKENS[mounted && resolvedTheme === "dark" ? "dark" : "light"], mounted };
-}
 
 export function PerformanceCharts({ points }: { points: ChartPoint[] }) {
   const { tokens, mounted } = useChartTokens();
@@ -319,7 +288,7 @@ export function PerformanceCharts({ points }: { points: ChartPoint[] }) {
 }
 
 /** Legend for the two-series chart: line-key swatches, text in text tokens. */
-function ChartLegend({ tokens }: { tokens: (typeof TOKENS)[keyof typeof TOKENS] }) {
+function ChartLegend({ tokens }: { tokens: ChartTokens }) {
   return (
     <div className="flex items-center gap-4 text-xs text-muted-foreground">
       <span className="flex items-center gap-1.5">

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { and, count, eq, gte, lte } from "drizzle-orm";
 import { CalendarDays, ClipboardList, ListChecks, Target, Trophy } from "lucide-react";
+import { MonthlyVolumeChart, TrendChart, type MonthVolume, type TrendPoint } from "@/components/dashboard/dashboard-charts";
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -87,6 +88,66 @@ export default async function DashboardPage() {
   const latestPbs = [...pbs]
     .sort((a, b) => b.achievedAt.getTime() - a.achievedAt.getTime())
     .slice(0, 5);
+
+  // Trend of the most-raced event in the last 12 months (wind-legal marks only).
+  const yearAgo = new Date();
+  yearAgo.setUTCFullYear(yearAgo.getUTCFullYear() - 1);
+  const recentPerfs = await db
+    .select({
+      discipline: performances.discipline,
+      distance: performances.distance,
+      event: performances.event,
+      result: performances.result,
+      wind: performances.wind,
+      date: sessions.date,
+    })
+    .from(performances)
+    .innerJoin(sessions, eq(performances.sessionId, sessions.id))
+    .where(and(eq(performances.userId, user.id), gte(sessions.date, yearAgo)))
+    .orderBy(sessions.date);
+
+  const legalRecent = recentPerfs.filter((p) =>
+    isWindLegal(p, p.wind != null ? Number(p.wind) : null),
+  );
+  const byEvent = new Map<string, typeof legalRecent>();
+  for (const p of legalRecent) {
+    const k = eventKey(p);
+    byEvent.set(k, [...(byEvent.get(k) ?? []), p]);
+  }
+  const topEventList = [...byEvent.values()].sort((a, b) => b.length - a.length)[0] ?? [];
+  const trendEvent: EventKey | null =
+    topEventList.length >= 2
+      ? { discipline: topEventList[0].discipline, distance: topEventList[0].distance, event: topEventList[0].event }
+      : null;
+  const trendPoints: TrendPoint[] = topEventList.map((p) => ({
+    date: formatDate(p.date, "d MMM"),
+    result: Number(p.result),
+  }));
+
+  // Sessions per month (last 6 months), split gare / allenamenti.
+  const sixMonthsAgo = new Date();
+  sixMonthsAgo.setUTCMonth(sixMonthsAgo.getUTCMonth() - 5, 1);
+  sixMonthsAgo.setUTCHours(0, 0, 0, 0);
+  const recentSessions = await db
+    .select({ date: sessions.date, type: sessions.type })
+    .from(sessions)
+    .where(and(eq(sessions.userId, user.id), gte(sessions.date, sixMonthsAgo)));
+
+  const monthlyVolume: MonthVolume[] = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date();
+    d.setUTCDate(1);
+    d.setUTCMonth(d.getUTCMonth() - i);
+    const key = `${d.getUTCFullYear()}-${d.getUTCMonth()}`;
+    const inMonth = recentSessions.filter(
+      (s) => `${s.date.getUTCFullYear()}-${s.date.getUTCMonth()}` === key,
+    );
+    monthlyVolume.push({
+      month: formatDate(d, "MMM"),
+      gare: inMonth.filter((s) => s.type === "competition").length,
+      allenamenti: inMonth.filter((s) => s.type === "training").length,
+    });
+  }
 
   // Goals vs current PBs.
   const goalRows = allGoals.map((g) => {
@@ -245,6 +306,18 @@ export default async function DashboardPage() {
             )}
           </CardContent>
         </Card>
+      </div>
+
+      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+        {trendEvent && (
+          <TrendChart
+            title={`Andamento — ${eventLabel(trendEvent)}`}
+            points={trendPoints}
+            lowerIsBetter={lowerIsBetter(trendEvent.discipline)}
+            eventKey={trendEvent}
+          />
+        )}
+        <MonthlyVolumeChart data={monthlyVolume} />
       </div>
     </>
   );
