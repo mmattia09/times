@@ -1,4 +1,3 @@
-# syntax=docker/dockerfile:1
 # Multi-stage build for the Next.js app (standalone output).
 FROM node:22-alpine AS base
 RUN corepack enable && corepack prepare pnpm@11.3.0 --activate

@@ -3,24 +3,23 @@ services:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_DB: athletics
-      POSTGRES_USER: athletics
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-athletics}
+      POSTGRES_DB: times
+      POSTGRES_USER: times
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-times}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U athletics -d athletics"]
+      test: ["CMD-SHELL", "pg_isready -U times -d times"]
       interval: 5s
       timeout: 5s
       retries: 10
 
   app:
-    # By default uses the image built by CI (set APP_IMAGE in .env to the
-    # published tag, e.g. ghcr.io/<owner>/<repo>:latest). For a local build run:
-    #   docker compose up --build
-    image: ${APP_IMAGE:-athletics-tracker:local}
+    # By default builds locally. To run the image published by CI, set
+    # APP_IMAGE=ghcr.io/<owner>/<repo>:latest in .env, then: docker compose pull app
+    image: ${APP_IMAGE:-times:local}
     build:
       context: .
       dockerfile: docker/Dockerfile
@@ -28,14 +27,12 @@ services:
     ports:
       - "3000:3000"
     environment:
-      DATABASE_URL: postgresql://athletics:${DB_PASSWORD:-athletics}@db:5432/athletics
+      DATABASE_URL: postgresql://times:${DB_PASSWORD:-times}@db:5432/times
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?set BETTER_AUTH_SECRET in .env}
       BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000}
-      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
-      SEED_USER_EMAIL: ${SEED_USER_EMAIL:-athlete@example.com}
-      SEED_USER_NAME: ${SEED_USER_NAME:-Athlete}
-      SEED_USER_PASSWORD: ${SEED_USER_PASSWORD:-changeme}
-      FIDAL_ATHLETE_URL: ${FIDAL_ATHLETE_URL:-}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@example.com}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-changeme}
+      DISABLE_REGISTRATION: ${DISABLE_REGISTRATION:-false}
       NODE_ENV: production
     depends_on:
       db:

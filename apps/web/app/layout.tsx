@@ -8,10 +8,10 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
   title: {
-    default: "Athletics Tracker",
-    template: "%s · Athletics",
+    default: "Times — atletica leggera",
+    template: "%s · Times",
   },
-  description: "Tracciamento prestazioni di atletica leggera",
+  description: "Tracker self-hosted per allenamenti e gare di atletica leggera.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

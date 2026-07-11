@@ -1,4 +1,4 @@
-# Keep the build context small and free of secrets/personal data.
+# Keep the build context small and free of secrets.
 **/node_modules
 **/.next
 .git
@@ -12,7 +12,3 @@ coverage
 
 # Local plan/preview/editor cruft
 .claude
-
-# Private Notion export (personal data) — only the sample is shipped for seeding.
-apps/web/lib/db/seed-data/notion-times.csv
-!apps/web/lib/db/seed-data/*.sample.csv

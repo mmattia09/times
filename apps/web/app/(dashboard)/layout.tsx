@@ -13,7 +13,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-2 border-b bg-background/95 px-4 backdrop-blur md:px-6">
-          <span className="text-sm font-medium text-muted-foreground md:hidden">Athletics</span>
+          <span className="text-sm font-semibold md:hidden">Times</span>
           <div className="ml-auto flex items-center gap-2">
             <Button asChild size="sm">
               <Link href="/sessions/new">

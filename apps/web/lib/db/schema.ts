@@ -43,6 +43,9 @@ export const users = pgTable("users", {
   emailVerified: boolean("email_verified").notNull().default(false),
   name: text("name"),
   image: text("image"),
+  // The admin is the first user, provisioned from ADMIN_EMAIL/ADMIN_PASSWORD in
+  // the environment. Their email/password are managed there, not in the UI.
+  isAdmin: boolean("is_admin").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });

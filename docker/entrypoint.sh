@@ -8,7 +8,7 @@ cd /app/apps/web
 echo "▶ Running migrations…"
 node --import tsx lib/db/migrate.ts || npx tsx lib/db/migrate.ts
 
-echo "▶ Seeding (idempotent)…"
+echo "▶ Provisioning admin from environment…"
 node --import tsx lib/db/seed.ts || npx tsx lib/db/seed.ts || true
 
 cd /app

@@ -38,12 +38,14 @@ function NavLink({
 export function Sidebar() {
   const pathname = usePathname();
   return (
-    <aside className="hidden w-60 shrink-0 flex-col border-r bg-card md:flex">
+    // Sticky + full-height so the nav (and Impostazioni) stays visible while
+    // the main content scrolls.
+    <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r bg-card md:flex">
       <div className="flex h-14 items-center gap-2 border-b px-5">
         <Timer className="h-5 w-5 text-primary" />
-        <span className="font-semibold tracking-tight">Athletics</span>
+        <span className="font-semibold tracking-tight">Times</span>
       </div>
-      <nav className="flex-1 space-y-1 p-3">
+      <nav className="flex-1 space-y-1 overflow-y-auto p-3">
         {navItems.map((item) => (
           <NavLink key={item.href} pathname={pathname} item={item} />
         ))}

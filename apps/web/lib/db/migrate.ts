@@ -4,7 +4,7 @@ import { Pool } from "pg";
 
 async function main() {
   const connectionString =
-    process.env.DATABASE_URL ?? "postgresql://athletics:athletics@localhost:5432/athletics";
+    process.env.DATABASE_URL ?? "postgresql://times:times@localhost:5432/times";
   const pool = new Pool({ connectionString });
   const db = drizzle(pool);
 

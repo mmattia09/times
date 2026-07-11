@@ -3,7 +3,7 @@ import { Pool } from "pg";
 import * as schema from "./schema";
 
 const connectionString =
-  process.env.DATABASE_URL ?? "postgresql://athletics:athletics@localhost:5432/athletics";
+  process.env.DATABASE_URL ?? "postgresql://times:times@localhost:5432/times";
 
 // Reuse the pool across hot reloads in dev.
 const globalForDb = globalThis as unknown as { __pool?: Pool };

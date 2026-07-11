@@ -15,6 +15,13 @@
       "when": 1783542147416,
       "tag": "0001_dusty_mac_gargan",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1783750715480,
+      "tag": "0002_striped_shape",
+      "breakpoints": true
     }
   ]
 }

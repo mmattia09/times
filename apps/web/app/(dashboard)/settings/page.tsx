@@ -3,23 +3,21 @@ import { PageHeader } from "@/components/layout/page-header";
 import { ApiKeysManager } from "@/components/settings/api-keys-manager";
 import { DataTransferCard } from "@/components/settings/data-transfer-card";
 import { FidalSettings } from "@/components/settings/fidal-settings";
-import { PasswordChange } from "@/components/settings/password-change";
+import { ProfileSettings } from "@/components/settings/profile-settings";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { db } from "@/lib/db";
-import { userSettings } from "@/lib/db/schema";
+import { users, userSettings } from "@/lib/db/schema";
 import { requireUser } from "@/lib/current-user";
 
 
 export const metadata = { title: "Impostazioni" };
 export default async function SettingsPage() {
   const user = await requireUser();
-  const [settings] = await db
-    .select()
-    .from(userSettings)
-    .where(eq(userSettings.userId, user.id))
-    .limit(1);
+  const [[settings], [row]] = await Promise.all([
+    db.select().from(userSettings).where(eq(userSettings.userId, user.id)).limit(1),
+    db.select({ isAdmin: users.isAdmin }).from(users).where(eq(users.id, user.id)).limit(1),
+  ]);
+  const isAdmin = row?.isAdmin ?? false;
 
   return (
     <>
@@ -33,18 +31,12 @@ export default async function SettingsPage() {
             <CardTitle className="text-base">Profilo</CardTitle>
             <CardDescription>I tuoi dati di accesso.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label>Nome</Label>
-                <Input defaultValue={user.name ?? ""} disabled />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Email</Label>
-                <Input defaultValue={user.email} disabled />
-              </div>
-            </div>
-            <PasswordChange />
+          <CardContent>
+            <ProfileSettings
+              initialName={user.name ?? ""}
+              initialEmail={user.email}
+              isAdmin={isAdmin}
+            />
           </CardContent>
         </Card>
 
