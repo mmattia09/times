@@ -12,7 +12,8 @@ const profileSchema = z.object({
 /**
  * Update the current user's name/email. Self-host without a mailer, so we write
  * the users table directly (login looks up by email; sessions key on the user
- * id, so this is safe). The admin account is env-managed and rejected here.
+ * id, so this is safe). The admin's credentials are env-managed: the admin may
+ * change their display name here, but never the email.
  */
 export async function PUT(req: Request) {
   const session = await getSession();
@@ -23,17 +24,18 @@ export async function PUT(req: Request) {
     .from(users)
     .where(eq(users.id, session.user.id))
     .limit(1);
-  if (me?.isAdmin) {
-    return Response.json(
-      { error: "forbidden", message: "L'account admin si gestisce dal file .env." },
-      { status: 403 },
-    );
-  }
 
   const body = await req.json().catch(() => null);
   const parsed = profileSchema.safeParse(body);
   if (!parsed.success) {
     return Response.json({ error: "bad_request", issues: parsed.error.flatten() }, { status: 400 });
+  }
+
+  if (me?.isAdmin && parsed.data.email != null) {
+    return Response.json(
+      { error: "forbidden", message: "L'email dell'admin si gestisce dal file .env." },
+      { status: 403 },
+    );
   }
 
   const update: { name?: string; email?: string; emailVerified?: boolean; updatedAt: Date } = {

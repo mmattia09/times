@@ -23,33 +23,7 @@ export function ProfileSettings({
   const [email, setEmail] = useState(initialEmail);
   const [saving, setSaving] = useState(false);
 
-  // The admin account is provisioned from the environment — not editable here.
-  if (isAdmin) {
-    return (
-      <div className="space-y-4">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-1.5">
-            <Label>Nome</Label>
-            <Input defaultValue={initialName} disabled />
-          </div>
-          <div className="space-y-1.5">
-            <Label>Email</Label>
-            <Input defaultValue={initialEmail} disabled />
-          </div>
-        </div>
-        <div className="flex items-start gap-2 rounded-md border bg-muted/40 p-3 text-xs text-muted-foreground">
-          <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-          <span>
-            Questo è l&apos;account amministratore. Email e password si cambiano solo dal file{" "}
-            <code>.env</code> del server (variabili <code>ADMIN_EMAIL</code> e{" "}
-            <code>ADMIN_PASSWORD</code>), poi riavvia il container.
-          </span>
-        </div>
-      </div>
-    );
-  }
-
-  const dirty = name !== initialName || email.trim().toLowerCase() !== initialEmail;
+  const dirty = name !== initialName || (!isAdmin && email.trim().toLowerCase() !== initialEmail);
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
@@ -57,7 +31,8 @@ export function ProfileSettings({
     try {
       const payload: { name?: string; email?: string } = {};
       if (name !== initialName) payload.name = name;
-      if (email.trim().toLowerCase() !== initialEmail) payload.email = email.trim().toLowerCase();
+      if (!isAdmin && email.trim().toLowerCase() !== initialEmail)
+        payload.email = email.trim().toLowerCase();
       const res = await fetch("/api/internal/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -91,6 +66,7 @@ export function ProfileSettings({
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              disabled={isAdmin}
             />
           </div>
         </div>
@@ -98,9 +74,20 @@ export function ProfileSettings({
           {saving ? "Salvataggio…" : "Salva profilo"}
         </Button>
       </form>
-      <div className="border-t pt-4">
-        <PasswordChange />
-      </div>
+      {isAdmin ? (
+        <div className="flex items-start gap-2 rounded-md border bg-muted/40 p-3 text-xs text-muted-foreground">
+          <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          <span>
+            Account amministratore: email e password si cambiano solo dal file <code>.env</code>{" "}
+            del server (<code>ADMIN_EMAIL</code>, <code>ADMIN_PASSWORD</code>), poi riavvia il
+            container. Il nome invece è modificabile qui.
+          </span>
+        </div>
+      ) : (
+        <div className="border-t pt-4">
+          <PasswordChange />
+        </div>
+      )}
     </div>
   );
 }
