@@ -19,6 +19,12 @@ import { useChartTokens, type ChartTokens } from "@/components/charts/chart-them
 import { formatResult, type EventKey } from "@/lib/athletics";
 import type { Discipline } from "@/lib/db/schema";
 
+/** Axis tick label without floating-point noise (12.000001 → "12"). */
+function tidyTick(v: number): string {
+  const n = Number(v);
+  return Number.isInteger(n) ? String(n) : n.toFixed(2).replace(/\.?0+$/, "");
+}
+
 export type ChartPoint = {
   date: string; // ISO
   seasonKey: string;
@@ -196,6 +202,7 @@ export function PerformanceCharts({ points }: { points: ChartPoint[] }) {
                 tickLine={false}
                 axisLine={false}
                 width={44}
+                tickFormatter={tidyTick}
               />
               <Tooltip content={<ChartTooltip fmt={fmt} />} cursor={{ stroke: tokens.grid }} />
               <Line
@@ -239,7 +246,7 @@ export function PerformanceCharts({ points }: { points: ChartPoint[] }) {
               <BarChart data={seasonBest} margin={{ top: 8, right: 12, left: -8, bottom: 0 }}>
                 <CartesianGrid stroke={tokens.grid} strokeWidth={1} vertical={false} />
                 <XAxis dataKey="season" tick={tick} tickLine={false} axisLine={false} />
-                <YAxis reversed={lowerIsBetter} domain={yDomain} tick={tick} tickLine={false} axisLine={false} width={44} />
+                <YAxis reversed={lowerIsBetter} domain={yDomain} tick={tick} tickLine={false} axisLine={false} width={44} tickFormatter={tidyTick} />
                 <Tooltip content={<ChartTooltip fmt={fmt} />} cursor={{ fill: tokens.grid, opacity: 0.35 }} />
                 <Bar
                   dataKey="best"

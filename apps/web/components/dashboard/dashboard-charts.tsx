@@ -18,6 +18,12 @@ import { formatResult, type EventKey } from "@/lib/athletics";
 export type TrendPoint = { date: string; result: number };
 export type MonthVolume = { month: string; gare: number; allenamenti: number };
 
+/** Axis tick label without floating-point noise (12.000001 → "12"). */
+function tidyTick(v: number): string {
+  const n = Number(v);
+  return Number.isInteger(n) ? String(n) : n.toFixed(2).replace(/\.?0+$/, "");
+}
+
 /** Compact single-series trend of the athlete's most-raced event. */
 export function TrendChart({
   title,
@@ -53,6 +59,7 @@ export function TrendChart({
                   tickLine={false}
                   axisLine={false}
                   width={44}
+                  tickFormatter={tidyTick}
                 />
                 <Tooltip
                   cursor={{ stroke: tokens.grid }}

@@ -37,8 +37,29 @@ discipline. The UI is in Italian; dates render in `Europe/Rome`.
 
 ## Visuals
 
-<!-- TODO: add screenshots (dashboard, records, scheda editor) once the instance has data.
-     Suggested: docs/screenshots/*.png referenced here. -->
+**Dashboard** — season overview, goals, latest PBs, progress of your most-raced event
+and monthly training volume.
+
+![Dashboard](docs/screenshots/dashboard.png)
+
+**Record** — personal & season bests (wind-legal), goals, and per-event charts.
+
+![Record](docs/screenshots/records.png)
+
+<details>
+<summary>More screenshots — sessions & workout library</summary>
+
+**Sessioni** — every training day and competition, filterable.
+
+![Sessioni](docs/screenshots/sessions.png)
+
+**Schede** — the workout library in the coach-table format.
+
+![Schede](docs/screenshots/workouts.png)
+
+</details>
+
+> The screenshots use a demo dataset, not real data.
 
 ## Installation
 
