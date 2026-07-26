@@ -38,11 +38,76 @@ export type FidalImportItem = {
   session: SessionInput;
 };
 
-/** Fetch the athlete profile HTML using the prescribed headers. Server-only. */
+/** Hosts the scraper is allowed to talk to. */
+const ALLOWED_HOSTS = new Set(["fidal.it", "www.fidal.it"]);
+
+/** Max bytes we'll read from the profile page (it's ~110KB in practice). */
+const MAX_BYTES = 5 * 1024 * 1024;
+const TIMEOUT_MS = 15_000;
+
+/**
+ * Validate a FIDAL profile URL. The server fetches this URL, so it must be
+ * pinned to the real host: a substring check would accept
+ * `http://169.254.169.254/?x=fidal.it` or `http://fidal.it.evil.com/` and turn
+ * the scraper into an SSRF gadget against the internal network.
+ */
+export function assertFidalUrl(raw: string): URL {
+  let url: URL;
+  try {
+    url = new URL(raw);
+  } catch {
+    throw new Error("URL non valido.");
+  }
+  if (url.protocol !== "https:") throw new Error("L'URL FIDAL deve usare https.");
+  if (!ALLOWED_HOSTS.has(url.hostname.toLowerCase())) {
+    throw new Error("L'URL deve puntare a fidal.it.");
+  }
+  return url;
+}
+
+/** True if the URL is a valid FIDAL profile URL (no throw). */
+export function isValidFidalUrl(raw: string): boolean {
+  try {
+    assertFidalUrl(raw);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Fetch the athlete profile HTML using the prescribed headers. Server-only.
+ * Redirects are followed manually so every hop is re-checked against the
+ * allow-list (an open redirect on the origin would otherwise escape it).
+ */
 export async function fetchFidalProfile(url: string): Promise<string> {
-  const res = await fetch(url, { headers: FIDAL_HEADERS, redirect: "follow" });
-  if (!res.ok) throw new Error(`FIDAL request failed: ${res.status} ${res.statusText}`);
-  return res.text();
+  let current = assertFidalUrl(url);
+
+  for (let hop = 0; hop < 5; hop++) {
+    const res = await fetch(current, {
+      headers: FIDAL_HEADERS,
+      redirect: "manual",
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    });
+
+    if (res.status >= 300 && res.status < 400) {
+      const location = res.headers.get("location");
+      if (!location) throw new Error("FIDAL redirect without a destination.");
+      current = assertFidalUrl(new URL(location, current).toString());
+      continue;
+    }
+
+    if (!res.ok) throw new Error(`FIDAL request failed: ${res.status} ${res.statusText}`);
+
+    const declared = Number(res.headers.get("content-length") ?? 0);
+    if (declared > MAX_BYTES) throw new Error("FIDAL response too large.");
+
+    const body = await res.arrayBuffer();
+    if (body.byteLength > MAX_BYTES) throw new Error("FIDAL response too large.");
+    return new TextDecoder().decode(body);
+  }
+
+  throw new Error("Troppi redirect dalla pagina FIDAL.");
 }
 
 /** Parse an Italian dd/mm/yyyy (or dd-mm-yyyy) date string. */

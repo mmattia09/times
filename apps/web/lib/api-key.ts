@@ -2,6 +2,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { apiKeys } from "@/lib/db/schema";
+import { clientIp, rateLimit, tooManyRequests } from "@/lib/rate-limit";
 
 const KEY_PREFIX = "ath_live_";
 
@@ -28,13 +29,27 @@ export async function authenticateApiKey(req: Request): Promise<string | null> {
   const [row] = await db.select().from(apiKeys).where(eq(apiKeys.keyHash, keyHash)).limit(1);
   if (!row || row.revokedAt) return null;
 
-  // Best-effort last-used timestamp.
-  db.update(apiKeys)
+  // Best-effort last-used timestamp; never let it reject the request.
+  void db
+    .update(apiKeys)
     .set({ lastUsedAt: new Date() })
     .where(eq(apiKeys.id, row.id))
     .catch(() => {});
 
   return row.userId;
+}
+
+/**
+ * Authenticate, applying a per-IP rate limit to failed attempts so the key
+ * space can't be probed. Returns the userId, or a 401/429 response to return.
+ */
+export async function requireApiKey(req: Request): Promise<{ userId: string } | Response> {
+  const userId = await authenticateApiKey(req);
+  if (userId) return { userId };
+
+  const limit = rateLimit(`apikey:${clientIp(req)}`, 20, 5 * 60_000);
+  if (!limit.ok) return tooManyRequests(limit.retryAfter);
+  return unauthorized();
 }
 
 /** Standard 401 response for the v1 API. */

@@ -33,12 +33,19 @@ const exportSessionSchema = sessionInputSchema.extend({
 });
 
 const exportApiKeySchema = z.object({
-  label: z.string(),
-  keyHash: z.string(),
-  prefix: z.string(),
+  label: z.string().max(64),
+  keyHash: z.string().regex(/^[a-f0-9]{64}$/, "Hash chiave non valido"),
+  prefix: z.string().max(32),
   revokedAt: z.string().nullable(),
   createdAt: z.string(),
 });
+
+// Upper bounds so a hand-crafted file can't exhaust memory or run for hours.
+// Generous vs. a real career: ~55 years at 200 sessions/year.
+const MAX_SESSIONS = 20_000;
+const MAX_TEMPLATES = 2_000;
+const MAX_GOALS = 500;
+const MAX_KEYS = 100;
 
 export const exportFileSchema = z.object({
   app: z.literal("athletics-tracker"),
@@ -47,14 +54,14 @@ export const exportFileSchema = z.object({
   settings: z
     .object({
       fidalUrl: z.string().nullable(),
-      seasonStartMonth: z.number().int(),
-      defaultDistances: z.array(z.number()).nullable(),
+      seasonStartMonth: z.number().int().min(1).max(12),
+      defaultDistances: z.array(z.number()).max(50).nullable(),
     })
     .nullable(),
-  goals: z.array(goalInputSchema),
-  workoutTemplates: z.array(workoutTemplateInputSchema),
-  apiKeys: z.array(exportApiKeySchema),
-  sessions: z.array(exportSessionSchema),
+  goals: z.array(goalInputSchema).max(MAX_GOALS),
+  workoutTemplates: z.array(workoutTemplateInputSchema).max(MAX_TEMPLATES),
+  apiKeys: z.array(exportApiKeySchema).max(MAX_KEYS),
+  sessions: z.array(exportSessionSchema).max(MAX_SESSIONS),
 });
 
 export type ExportFile = z.infer<typeof exportFileSchema>;

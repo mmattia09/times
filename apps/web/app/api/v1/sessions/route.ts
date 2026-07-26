@@ -1,10 +1,11 @@
-import { authenticateApiKey, unauthorized } from "@/lib/api-key";
+import { requireApiKey } from "@/lib/api-key";
 import { createSession, listSessions, type SessionFilters } from "@/lib/services";
 import { sessionInputCheckedSchema, sessionQuerySchema } from "@/lib/validation";
 
 export async function GET(req: Request) {
-  const userId = await authenticateApiKey(req);
-  if (!userId) return unauthorized();
+  const auth = await requireApiKey(req);
+  if (auth instanceof Response) return auth;
+  const { userId } = auth;
 
   const params = Object.fromEntries(new URL(req.url).searchParams);
   const parsed = sessionQuerySchema.safeParse(params);
@@ -16,8 +17,9 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const userId = await authenticateApiKey(req);
-  if (!userId) return unauthorized();
+  const auth = await requireApiKey(req);
+  if (auth instanceof Response) return auth;
+  const { userId } = auth;
 
   const body = await req.json().catch(() => null);
   const parsed = sessionInputCheckedSchema.safeParse(body);

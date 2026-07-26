@@ -1,12 +1,13 @@
-import { authenticateApiKey, unauthorized } from "@/lib/api-key";
+import { requireApiKey } from "@/lib/api-key";
 import { deleteSession, getSessionById, updateSession } from "@/lib/services";
 import { sessionInputCheckedSchema } from "@/lib/validation";
 
 type Params = { params: Promise<{ id: string }> };
 
 export async function GET(req: Request, { params }: Params) {
-  const userId = await authenticateApiKey(req);
-  if (!userId) return unauthorized();
+  const auth = await requireApiKey(req);
+  if (auth instanceof Response) return auth;
+  const { userId } = auth;
   const { id } = await params;
   const data = await getSessionById(userId, id);
   if (!data) return Response.json({ error: "not_found" }, { status: 404 });
@@ -14,8 +15,9 @@ export async function GET(req: Request, { params }: Params) {
 }
 
 export async function PUT(req: Request, { params }: Params) {
-  const userId = await authenticateApiKey(req);
-  if (!userId) return unauthorized();
+  const auth = await requireApiKey(req);
+  if (auth instanceof Response) return auth;
+  const { userId } = auth;
   const { id } = await params;
   const body = await req.json().catch(() => null);
   const parsed = sessionInputCheckedSchema.safeParse(body);
@@ -28,8 +30,9 @@ export async function PUT(req: Request, { params }: Params) {
 }
 
 export async function DELETE(req: Request, { params }: Params) {
-  const userId = await authenticateApiKey(req);
-  if (!userId) return unauthorized();
+  const auth = await requireApiKey(req);
+  if (auth instanceof Response) return auth;
+  const { userId } = auth;
   const { id } = await params;
   const ok = await deleteSession(userId, id);
   if (!ok) return Response.json({ error: "not_found" }, { status: 404 });

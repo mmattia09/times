@@ -122,8 +122,24 @@ export const apiKeyInputSchema = z.object({
   label: z.string().min(1, "Etichetta richiesta").max(64),
 });
 
+/**
+ * The server fetches this URL, so pin it to the real host — a substring check
+ * would accept `https://fidal.it.evil.com/` or `https://10.0.0.1/?x=fidal.it`.
+ */
+function isFidalHost(raw: string): boolean {
+  try {
+    const url = new URL(raw);
+    return (
+      url.protocol === "https:" &&
+      (url.hostname.toLowerCase() === "fidal.it" || url.hostname.toLowerCase() === "www.fidal.it")
+    );
+  } catch {
+    return false;
+  }
+}
+
 export const fidalUrlSchema = z.object({
-  fidalUrl: z.string().url("URL non valido").includes("fidal.it", {
-    message: "Deve essere un URL fidal.it",
+  fidalUrl: z.string().refine(isFidalHost, {
+    message: "Deve essere un URL https di fidal.it",
   }),
 });

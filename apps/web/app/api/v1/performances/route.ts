@@ -1,11 +1,12 @@
 import { and, asc, eq, gte, lte } from "drizzle-orm";
-import { authenticateApiKey, unauthorized } from "@/lib/api-key";
+import { requireApiKey } from "@/lib/api-key";
 import { db } from "@/lib/db";
 import { performances, sessions } from "@/lib/db/schema";
 
 export async function GET(req: Request) {
-  const userId = await authenticateApiKey(req);
-  if (!userId) return unauthorized();
+  const auth = await requireApiKey(req);
+  if (auth instanceof Response) return auth;
+  const { userId } = auth;
 
   const sp = new URL(req.url).searchParams;
   const conds = [eq(performances.userId, userId)];
