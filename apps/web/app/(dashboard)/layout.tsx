@@ -31,7 +31,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
             <UserMenu userName={user.name ?? undefined} userEmail={user.email} />
           </div>
         </header>
-        <main className="flex-1 px-4 pb-24 pt-6 md:px-6 md:pb-8">{children}</main>
+        <main className="flex-1 px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-6 md:px-6 md:pb-8">
+          {children}
+        </main>
         <BottomNav />
       </div>
     </div>

@@ -60,7 +60,9 @@ export function Sidebar() {
 export function BottomNav() {
   const pathname = usePathname();
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 flex border-t bg-card md:hidden">
+    // pb-[env(safe-area-inset-bottom)] keeps the tabs above the iOS home
+    // indicator when the app is installed to the home screen.
+    <nav className="fixed inset-x-0 bottom-0 z-40 flex border-t bg-card pb-[env(safe-area-inset-bottom)] md:hidden">
       {[...navItems, settingsItem].map((item) => {
         const Icon = item.icon;
         const active = isActive(pathname, item.href);
