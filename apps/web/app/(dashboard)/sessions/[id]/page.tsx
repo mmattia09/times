@@ -73,9 +73,19 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
 
       {session.workout && (
         <>
-          <h2 className="mb-2 mt-6 text-sm font-semibold">
-            Scheda allenamento{session.workout.name ? ` — ${session.workout.name}` : ""}
-          </h2>
+          <div className="mb-2 mt-6 flex items-center justify-between gap-2">
+            <h2 className="text-sm font-semibold">
+              Scheda allenamento{session.workout.name ? ` — ${session.workout.name}` : ""}
+            </h2>
+            {session.workout.templateId && (
+              <Link
+                href={`/workouts/${session.workout.templateId}/edit`}
+                className="text-xs text-muted-foreground hover:text-foreground hover:underline"
+              >
+                Apri in libreria →
+              </Link>
+            )}
+          </div>
           <Card>
             <CardContent className="p-0">
               <WorkoutTable blocks={session.workout.blocks} />
@@ -84,6 +94,8 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
         </>
       )}
 
+      {session.performances.length > 0 && (
+        <>
       <h2 className="mb-2 mt-6 text-sm font-semibold">Prestazioni</h2>
       <Card>
         <CardContent className="p-0">
@@ -134,6 +146,16 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
           </Table>
         </CardContent>
       </Card>
+        </>
+      )}
+
+      {session.performances.length === 0 && !session.workout && (
+        <Card className="mt-6">
+          <CardContent className="py-8 text-center text-sm text-muted-foreground">
+            Sessione senza prestazioni: registra solo il giorno di allenamento.
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

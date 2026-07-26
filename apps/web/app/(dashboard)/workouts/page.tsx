@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { ClipboardList, Pencil, Plus, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
+import { TemplateUsage } from "@/components/workouts/template-usage";
 import { WorkoutTable } from "@/components/workouts/workout-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -116,6 +117,7 @@ export default function WorkoutsPage() {
                     </CardHeader>
                     <CardContent className="p-0">
                       <WorkoutTable blocks={t.blocks} />
+                      <TemplateUsage templateId={t.id} />
                     </CardContent>
                   </Card>
                 ))}

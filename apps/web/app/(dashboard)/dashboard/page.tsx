@@ -228,7 +228,9 @@ export default async function DashboardPage() {
                         <span className="text-muted-foreground">{formatDate(s.date)}</span>
                       </span>
                       <span className="truncate text-muted-foreground">
-                        {s.performances.map((p) => eventLabel(p)).join(", ")}
+                        {s.performances.length > 0
+                          ? s.performances.map((p) => eventLabel(p)).join(", ")
+                          : (s.workout?.name ?? "—")}
                       </span>
                     </Link>
                   </li>

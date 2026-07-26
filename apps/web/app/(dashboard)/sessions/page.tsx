@@ -57,12 +57,19 @@ export default async function SessionsPage({
     organizzatore: formatOrganizzatore(s.organizzatore),
     tipo: s.tipo,
     note: s.note,
-    performances: s.performances
-      .map((p) => {
-        const windy = !isWindLegal(p, p.wind != null ? Number(p.wind) : null);
-        return `${eventLabel(p)} ${formatResult(p.result, p)}${windy ? "w" : ""}`;
-      })
-      .join(" · "),
+    // No results? Show the attached scheda (or a dash) so the row still says
+    // what that day was.
+    performances:
+      s.performances.length > 0
+        ? s.performances
+            .map((p) => {
+              const windy = !isWindLegal(p, p.wind != null ? Number(p.wind) : null);
+              return `${eventLabel(p)} ${formatResult(p.result, p)}${windy ? "w" : ""}`;
+            })
+            .join(" · ")
+        : s.workout?.name
+          ? `Scheda: ${s.workout.name}`
+          : "—",
   }));
 
   return (

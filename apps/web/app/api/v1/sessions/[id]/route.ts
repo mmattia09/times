@@ -1,6 +1,6 @@
 import { authenticateApiKey, unauthorized } from "@/lib/api-key";
 import { deleteSession, getSessionById, updateSession } from "@/lib/services";
-import { sessionInputSchema } from "@/lib/validation";
+import { sessionInputCheckedSchema } from "@/lib/validation";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -18,7 +18,7 @@ export async function PUT(req: Request, { params }: Params) {
   if (!userId) return unauthorized();
   const { id } = await params;
   const body = await req.json().catch(() => null);
-  const parsed = sessionInputSchema.safeParse(body);
+  const parsed = sessionInputCheckedSchema.safeParse(body);
   if (!parsed.success) {
     return Response.json({ error: "bad_request", issues: parsed.error.flatten() }, { status: 400 });
   }

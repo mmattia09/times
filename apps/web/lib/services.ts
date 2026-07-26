@@ -62,20 +62,23 @@ export async function createSession(
       })
       .returning({ id: sessions.id });
 
-    await tx.insert(performances).values(
-      input.performances.map((p) => ({
-        sessionId: row.id,
-        userId,
-        discipline: p.discipline,
-        distance: p.distance ?? null,
-        event: p.event ?? null,
-        result: p.result.toString(),
-        wind: p.wind != null ? p.wind.toString() : null,
-        lane: p.lane ?? null,
-        position: p.position ?? null,
-        heat: p.heat ?? null,
-      })),
-    );
+    // A session can have no measured results (e.g. "I trained that day").
+    if (input.performances.length > 0) {
+      await tx.insert(performances).values(
+        input.performances.map((p) => ({
+          sessionId: row.id,
+          userId,
+          discipline: p.discipline,
+          distance: p.distance ?? null,
+          event: p.event ?? null,
+          result: p.result.toString(),
+          wind: p.wind != null ? p.wind.toString() : null,
+          lane: p.lane ?? null,
+          position: p.position ?? null,
+          heat: p.heat ?? null,
+        })),
+      );
+    }
     return row.id;
   });
 
@@ -118,20 +121,22 @@ export async function updateSession(
       .where(eq(sessions.id, sessionId));
 
     await tx.delete(performances).where(eq(performances.sessionId, sessionId));
-    await tx.insert(performances).values(
-      input.performances.map((p) => ({
-        sessionId,
-        userId,
-        discipline: p.discipline,
-        distance: p.distance ?? null,
-        event: p.event ?? null,
-        result: p.result.toString(),
-        wind: p.wind != null ? p.wind.toString() : null,
-        lane: p.lane ?? null,
-        position: p.position ?? null,
-        heat: p.heat ?? null,
-      })),
-    );
+    if (input.performances.length > 0) {
+      await tx.insert(performances).values(
+        input.performances.map((p) => ({
+          sessionId,
+          userId,
+          discipline: p.discipline,
+          distance: p.distance ?? null,
+          event: p.event ?? null,
+          result: p.result.toString(),
+          wind: p.wind != null ? p.wind.toString() : null,
+          lane: p.lane ?? null,
+          position: p.position ?? null,
+          heat: p.heat ?? null,
+        })),
+      );
+    }
     return true;
   });
 

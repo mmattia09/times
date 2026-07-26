@@ -14,20 +14,25 @@ discipline. The UI is in Italian; dates render in `Europe/Rome`.
 ## Features
 
 - **Sessions & performances** — a training day or a competition, with any number of
-  results (e.g. 100m heat + 200m final). Filters by season, type, discipline, level,
-  organiser, indoor/outdoor.
+  results (e.g. 100m heat + 200m final) — or **none at all**: a session can just record
+  the day (or a multi-day period) you trained, optionally with a scheda attached.
+  Filters by season, type, discipline, level, organiser, indoor/outdoor.
 - **Personal & season bests** — recomputed on every write. Wind-aware: a tailwind above
   **+2.0 m/s** flags the mark *ventosa* (kept and charted, but never a record — the
   [FIDAL](https://www.fidal.it) / World Athletics rule).
 - **All disciplines first-class** — sprints, hurdles, middle/long distance, relays, race
   walking, jumps, throws and combined events, each with the right units and
   "lower/higher is better" direction.
+- **Athletic tests** — standing jumps (lungo/alto/triplo/quintuplo/decuplo da fermo) and
+  the Sargent test live in their own **Test** discipline, so they never mix into the
+  competition-jump records.
 - **Charts** — progress over time, best per season, improvement curve, training volume;
   theme-aware and colour-blind-safe.
 - **Goals** — set a target per event and watch the gap to your PB close.
 - **Workout library (schede)** — structured schemes in the classic coach-table format
   (blocco · ripetute · recupero · pausa · ritmo · note), attachable to sessions as
-  immutable snapshots.
+  immutable snapshots. Each scheda shows how many times you've done it and links to
+  those sessions (and back).
 - **Two seasons per year** — *estiva* (Apr–Sep) and *invernale* (Oct–Mar).
 - **FIDAL import** — paste your athlete profile URL and import official results,
   de-duplicated.
@@ -125,7 +130,7 @@ curl -H "Authorization: Bearer ath_live_…" https://your-host/api/v1/records
 
 | Method & path                     | Description                              |
 | --------------------------------- | ---------------------------------------- |
-| `GET/POST /api/v1/sessions`       | List / create sessions with performances |
+| `GET/POST /api/v1/sessions`       | List / create sessions (`performances` may be empty) |
 | `GET/PUT/DELETE /api/v1/sessions/:id` | Read / replace / delete a session    |
 | `GET /api/v1/performances`        | List performances (`distance,from,to`)   |
 | `GET /api/v1/records`             | Personal bests per event                 |

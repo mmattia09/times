@@ -10,6 +10,7 @@ export const disciplineSchema = z.enum([
   "jump",
   "throw",
   "combined",
+  "test",
 ]);
 export const sessionTypeSchema = z.enum(["training", "competition"]);
 export const tempoSchema = z.enum(["elettronico", "cronometro", "manuale"]);
@@ -48,9 +49,7 @@ export const workoutTemplateInputSchema = z.object({
 });
 
 export const goalInputSchema = z.object({
-  discipline: z
-    .enum(["sprint", "hurdles", "middle_distance", "long_distance", "relay", "walk", "jump", "throw", "combined"])
-    .default("sprint"),
+  discipline: disciplineSchema.default("sprint"),
   distance: emptyToNull(z.coerce.number().int().positive()),
   event: emptyToNull(z.string().max(32)),
   target: z.coerce.number().positive({ message: "Obiettivo richiesto" }),
@@ -89,9 +88,20 @@ export const sessionInputSchema = z.object({
   workout: z
     .preprocess((v) => (v === "" || v === undefined ? null : v), sessionWorkoutSchema.nullable())
     .optional(),
-  performances: z.array(performanceInputSchema).min(1, {
-    message: "Aggiungi almeno una prestazione",
-  }),
+  // May be empty: a session can just mark that you trained (or a multi-day
+  // competition you attended) without any measured result.
+  performances: z.array(performanceInputSchema).default([]),
+});
+
+/** Shared rule: an end date can't precede the start date. */
+function endsAfterStart(s: { date: string; endDate?: string | null }): boolean {
+  return !s.endDate || Date.parse(s.endDate) >= Date.parse(s.date);
+}
+
+/** Session schema with the date-order check — use this to validate input. */
+export const sessionInputCheckedSchema = sessionInputSchema.refine(endsAfterStart, {
+  message: "La data di fine non può precedere quella di inizio",
+  path: ["endDate"],
 });
 
 export type SessionInput = z.infer<typeof sessionInputSchema>;

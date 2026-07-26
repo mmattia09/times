@@ -34,6 +34,8 @@ export const disciplineEnum = pgEnum("discipline", [
   "jump",
   "throw",
   "combined",
+  // Athletic tests (standing jumps, sargent…): measured, but not competition events.
+  "test",
 ]);
 
 // ── Auth: users + Better Auth tables ────────────────────────────────────────

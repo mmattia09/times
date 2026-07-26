@@ -25,11 +25,12 @@ import {
   DISCIPLINES,
   JUMP_EVENTS,
   RELAY_EVENTS,
+  TEST_EVENTS,
   RUN_DISTANCES,
   THROW_EVENTS,
   isTimed,
 } from "@/lib/athletics";
-import { sessionInputSchema, type SessionInput } from "@/lib/validation";
+import { sessionInputCheckedSchema, type SessionInput } from "@/lib/validation";
 import type { Discipline } from "@/lib/db/schema";
 
 const NONE = "__none__";
@@ -43,6 +44,8 @@ function disciplineDefaults(d: Discipline): { distance: number | null; event: st
       return { distance: null, event: "giavellotto" };
     case "relay":
       return { distance: null, event: "4x100" };
+    case "test":
+      return { distance: null, event: "lungo_fermo" };
     case "combined":
       return { distance: null, event: "" };
     case "hurdles":
@@ -73,7 +76,7 @@ export function SessionForm({
   const [templates, setTemplates] = useState<WorkoutTemplate[]>([]);
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(sessionInputSchema),
+    resolver: zodResolver(sessionInputCheckedSchema),
     defaultValues: {
       date: initial?.date ?? new Date().toISOString().slice(0, 10),
       endDate: initial?.endDate ?? null,
@@ -85,9 +88,8 @@ export function SessionForm({
       tipo: initial?.tipo ?? null,
       note: initial?.note ?? null,
       workout: initial?.workout ?? null,
-      performances: initial?.performances ?? [
-        { discipline: "sprint", distance: 100, event: null, result: 0, wind: null, lane: null, position: null, heat: null },
-      ],
+      // Starts empty: a session may record just the date(s) you trained.
+      performances: initial?.performances ?? [],
     },
   });
 
@@ -178,7 +180,9 @@ export function SessionForm({
 
           <div className="space-y-1.5">
             <Label htmlFor="endDate">Data fine (opzionale)</Label>
-            <Input id="endDate" type="date" {...form.register("endDate")} />
+            <Input id="endDate" type="date" min={form.watch("date") || undefined} {...form.register("endDate")} />
+            <p className="text-xs text-muted-foreground">Per periodi su più giorni.</p>
+            {errors.endDate && <p className="text-xs text-destructive">{errors.endDate.message}</p>}
           </div>
 
           <EnumSelect
@@ -297,7 +301,9 @@ export function SessionForm({
       {/* Performances */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold">Prestazioni</h2>
+          <h2 className="text-sm font-semibold">
+            Prestazioni <span className="font-normal text-muted-foreground">(opzionali)</span>
+          </h2>
           <Button
             type="button"
             variant="outline"
@@ -313,15 +319,23 @@ export function SessionForm({
           <p className="text-xs text-destructive">{errors.performances.message}</p>
         )}
 
-        {fields.map((field, idx) => (
-          <PerformanceRow
-            key={field.id}
-            index={idx}
-            form={form}
-            onRemove={() => (fields.length > 1 ? remove(idx) : null)}
-            canRemove={fields.length > 1}
-          />
-        ))}
+        {fields.length === 0 ? (
+          <Card>
+            <CardContent className="py-6 text-center text-sm text-muted-foreground">
+              Nessuna prestazione: la sessione registra solo la data.
+            </CardContent>
+          </Card>
+        ) : (
+          fields.map((field, idx) => (
+            <PerformanceRow
+              key={field.id}
+              index={idx}
+              form={form}
+              onRemove={() => remove(idx)}
+              canRemove
+            />
+          ))
+        )}
       </div>
 
       <div className="flex items-center justify-end gap-3">
@@ -384,11 +398,26 @@ function PerformanceRow({
   const isThrow = discipline === "throw";
   const isRelay = discipline === "relay";
   const isCombined = discipline === "combined";
+  const isTest = discipline === "test";
   const timed = isTimed(discipline);
-  const eventOptions = isJump ? JUMP_EVENTS : isThrow ? THROW_EVENTS : isRelay ? RELAY_EVENTS : null;
+  const eventOptions = isJump
+    ? JUMP_EVENTS
+    : isThrow
+      ? THROW_EVENTS
+      : isRelay
+        ? RELAY_EVENTS
+        : isTest
+          ? TEST_EVENTS
+          : null;
   const resultErr = form.formState.errors.performances?.[index]?.result;
 
-  const resultLabel = isThrow ? "(m)" : isJump ? "(cm)" : isCombined ? "(punti)" : "(tempo, s)";
+  const resultLabel = isThrow
+    ? "(m)"
+    : isJump || isTest
+      ? "(cm)"
+      : isCombined
+        ? "(punti)"
+        : "(tempo, s)";
 
   return (
     <Card>

@@ -27,6 +27,7 @@ export const DISCIPLINES: { value: Discipline; label: string }[] = [
   { value: "jump", label: "Salti" },
   { value: "throw", label: "Lanci" },
   { value: "combined", label: "Prove multiple" },
+  { value: "test", label: "Test" },
 ];
 
 export const JUMP_EVENTS = [
@@ -34,6 +35,20 @@ export const JUMP_EVENTS = [
   { event: "lungo", label: "Salto in lungo" },
   { event: "triplo", label: "Salto triplo" },
   { event: "asta", label: "Salto con l'asta" },
+] as const;
+
+/**
+ * Athletic tests — standing/plyometric jumps and similar checks done in
+ * training. Measured in cm (higher is better), kept apart from the competition
+ * jumps so they never mix into the same records.
+ */
+export const TEST_EVENTS = [
+  { event: "lungo_fermo", label: "Lungo da fermo" },
+  { event: "alto_fermo", label: "Alto da fermo" },
+  { event: "triplo_fermo", label: "Triplo da fermo" },
+  { event: "quintuplo_fermo", label: "Quintuplo da fermo" },
+  { event: "decuplo_fermo", label: "Decuplo da fermo" },
+  { event: "sargent", label: "Sargent test" },
 ] as const;
 
 export const THROW_EVENTS = [
@@ -70,6 +85,11 @@ export function eventKey(p: EventKey): string {
 
 /** Human label for an event. */
 export function eventLabel(p: EventKey): string {
+  if (p.discipline === "test") {
+    const t = TEST_EVENTS.find((e) => e.event === p.event);
+    if (t) return t.label;
+    return p.event ? p.event.charAt(0).toUpperCase() + p.event.slice(1).replace(/_/g, " ") : "Test";
+  }
   if (p.discipline === "jump" || p.discipline === "throw") {
     const f = FIELD_EVENTS.find((e) => e.event === p.event);
     if (f) return f.label;
@@ -94,7 +114,7 @@ function formatDistance(m: number): string {
 
 /** Unit of a performance result, derived from discipline/event. */
 export function resultUnit(p: EventKey): "s" | "cm" | "m" | "min" | "pts" {
-  if (p.discipline === "jump") return "cm";
+  if (p.discipline === "jump" || p.discipline === "test") return "cm";
   if (p.discipline === "throw") return "m";
   if (p.discipline === "combined") return "pts";
   if (p.event === "campestre" || p.distance === 2000) return "min";
@@ -170,6 +190,17 @@ export function mapSpecialitaToEvent(raw: string): EventKey | null {
   // Combined events.
   if (/(prove multiple|eptathlon|ettathlon|decathlon|tetrathlon|pentathlon)/.test(s))
     return { discipline: "combined", distance: null, event: s.replace(/\s+/g, " ").trim() };
+
+  // Athletic tests — checked before the flat jumps, otherwise "lungo da fermo"
+  // would match plain "lungo".
+  if (s.includes("sargent")) return { discipline: "test", distance: null, event: "sargent" };
+  if (/(da fermo|fermo|standing)/.test(s)) {
+    if (s.includes("decuplo")) return { discipline: "test", distance: null, event: "decuplo_fermo" };
+    if (s.includes("quintuplo")) return { discipline: "test", distance: null, event: "quintuplo_fermo" };
+    if (s.includes("triplo")) return { discipline: "test", distance: null, event: "triplo_fermo" };
+    if (s.includes("alto")) return { discipline: "test", distance: null, event: "alto_fermo" };
+    if (s.includes("lungo")) return { discipline: "test", distance: null, event: "lungo_fermo" };
+  }
 
   // Field events.
   if (s.includes("alto")) return { discipline: "jump", distance: null, event: "alto" };
