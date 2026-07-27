@@ -129,7 +129,12 @@ account, the admin area refuses to demote or delete it.
 
 The owner can grant **admin** to anyone else from **Administration**, which is also
 where accounts get created when `DISABLE_REGISTRATION=true` leaves no other way in —
-there is no mail server, so the admin sets an initial password and passes it on.
+there is no mail server, so the admin sets an initial password and passes it on. That
+password can be marked as temporary: until the person replaces it, neither the app nor
+the API opens for them. Admins can also reset an existing user's password, on the same
+terms — it signs that user out everywhere, and the dialog says plainly that the
+password opens their account until they change it.
+
 Everyone else registers through the UI and self-manages name, email, password,
 language and time zone from **Settings**.
 

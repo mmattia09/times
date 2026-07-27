@@ -56,6 +56,12 @@ export const users = pgTable("users", {
    * renamed, demoted or deleted — the environment would just recreate it.
    */
   isOwner: boolean("is_owner").notNull().default(false),
+  /**
+   * Set when an admin hands out a password: until the person replaces it the
+   * app is closed to them, so a credential a third party knows can't be used
+   * to keep training data open.
+   */
+  mustChangePassword: boolean("must_change_password").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });

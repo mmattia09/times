@@ -4,14 +4,17 @@ import { BottomNav, Sidebar } from "@/components/layout/sidebar";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { UserMenu } from "@/components/layout/user-menu";
 import { Button } from "@/components/ui/button";
-import { requireUser } from "@/lib/current-user";
-import { getRole } from "@/lib/admin";
+import { redirect } from "next/navigation";
+import { getAccountState, requireUser } from "@/lib/current-user";
 import { getT } from "@/lib/i18n/server";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
+  const { isAdmin, mustChangePassword } = await getAccountState();
+  // An admin handed this account a password; nothing else opens until it is
+  // replaced. One gate here covers every page in the group.
+  if (mustChangePassword) redirect("/change-password");
   const { t } = await getT();
-  const { isAdmin } = await getRole();
   return (
     <div className="flex min-h-screen">
       <Sidebar isAdmin={isAdmin} />

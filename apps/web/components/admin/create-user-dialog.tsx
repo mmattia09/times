@@ -32,6 +32,7 @@ export function CreateUserDialog() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
+  const [mustChange, setMustChange] = useState(true);
   const [saving, setSaving] = useState(false);
 
   function reset() {
@@ -39,6 +40,7 @@ export function CreateUserDialog() {
     setEmail("");
     setPassword("");
     setIsAdmin(false);
+    setMustChange(true);
   }
 
   async function submit(e: React.FormEvent) {
@@ -47,7 +49,7 @@ export function CreateUserDialog() {
     const res = await fetch("/api/internal/admin/users", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, password, isAdmin }),
+      body: JSON.stringify({ name, email, password, isAdmin, mustChangePassword: mustChange }),
     });
     setSaving(false);
     if (!res.ok) {
@@ -120,16 +122,29 @@ export function CreateUserDialog() {
               />
               <p className="text-xs text-muted-foreground">{t("admin.initialPasswordHint")}</p>
             </div>
-            <div className="flex items-center justify-between gap-4 rounded-md border p-3">
-              <div>
-                <p className="text-sm font-medium">{t("admin.grantAdmin")}</p>
-                <p className="text-xs text-muted-foreground">{t("admin.grantAdminHint")}</p>
+            <div className="space-y-3 rounded-md border p-3">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-sm font-medium">{t("admin.mustChange")}</p>
+                  <p className="text-xs text-muted-foreground">{t("admin.mustChangeHint")}</p>
+                </div>
+                <Switch
+                  checked={mustChange}
+                  onCheckedChange={setMustChange}
+                  aria-label={t("admin.mustChange")}
+                />
               </div>
-              <Switch
-                checked={isAdmin}
-                onCheckedChange={setIsAdmin}
-                aria-label={t("admin.grantAdmin")}
-              />
+              <div className="flex items-center justify-between gap-4 border-t pt-3">
+                <div>
+                  <p className="text-sm font-medium">{t("admin.grantAdmin")}</p>
+                  <p className="text-xs text-muted-foreground">{t("admin.grantAdminHint")}</p>
+                </div>
+                <Switch
+                  checked={isAdmin}
+                  onCheckedChange={setIsAdmin}
+                  aria-label={t("admin.grantAdmin")}
+                />
+              </div>
             </div>
           </div>
 

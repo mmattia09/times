@@ -1,12 +1,12 @@
 import { eq } from "drizzle-orm";
-import { getSession } from "@/lib/current-user";
+import { requireApiUser } from "@/lib/current-user";
 import { db } from "@/lib/db";
 import { userSettings } from "@/lib/db/schema";
 import { fidalUrlSchema } from "@/lib/validation";
 
 export async function PUT(req: Request) {
-  const session = await getSession();
-  if (!session?.user) return Response.json({ error: "unauthorized" }, { status: 401 });
+  const auth = await requireApiUser();
+  if ("error" in auth) return auth.error;
 
   const body = await req.json().catch(() => null);
   const parsed = fidalUrlSchema.safeParse(body);
@@ -16,7 +16,7 @@ export async function PUT(req: Request) {
 
   await db
     .insert(userSettings)
-    .values({ userId: session.user.id, fidalUrl: parsed.data.fidalUrl })
+    .values({ userId: auth.user.id, fidalUrl: parsed.data.fidalUrl })
     .onConflictDoUpdate({
       target: userSettings.userId,
       set: { fidalUrl: parsed.data.fidalUrl, updatedAt: new Date() },

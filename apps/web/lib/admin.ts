@@ -1,5 +1,4 @@
 import "server-only";
-import { cache } from "react";
 import { and, count, desc, eq, gt, max, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
@@ -12,7 +11,7 @@ import {
   users,
   workoutTemplates,
 } from "@/lib/db/schema";
-import { getSession } from "@/lib/current-user";
+import { getAccountState, requireApiUser } from "@/lib/current-user";
 
 export type AdminUser = {
   id: string;
@@ -20,6 +19,8 @@ export type AdminUser = {
   name: string | null;
   isAdmin: boolean;
   isOwner: boolean;
+  /** Still owes a password change after an admin set one. */
+  mustChangePassword: boolean;
   createdAt: Date;
   /** Sessions logged, not login sessions. */
   sessionCount: number;
@@ -30,35 +31,24 @@ export type AdminUser = {
   activeUntil: Date | null;
 };
 
-/**
- * The signed-in user's role. Cached per request: the layout, the page and the
- * nav all want to know, and it is one row.
- */
-export const getRole = cache(async (): Promise<{ isAdmin: boolean; isOwner: boolean }> => {
-  const session = await getSession();
-  if (!session?.user) return { isAdmin: false, isOwner: false };
-  const [row] = await db
-    .select({ isAdmin: users.isAdmin, isOwner: users.isOwner })
-    .from(users)
-    .where(eq(users.id, session.user.id))
-    .limit(1);
-  return { isAdmin: row?.isAdmin ?? false, isOwner: row?.isOwner ?? false };
-});
+/** The signed-in user's role — see getAccountState for the cached lookup. */
+export async function getRole(): Promise<{ isAdmin: boolean; isOwner: boolean }> {
+  const { isAdmin, isOwner } = await getAccountState();
+  return { isAdmin, isOwner };
+}
 
 /** Guard for API routes. Returns the caller, or a Response to hand straight back. */
 export async function requireAdminApi(): Promise<
   { userId: string; isOwner: boolean } | { error: Response }
 > {
-  const session = await getSession();
-  if (!session?.user) {
-    return { error: Response.json({ error: "unauthorized" }, { status: 401 }) };
-  }
-  const { isAdmin, isOwner } = await getRole();
+  const caller = await requireApiUser();
+  if ("error" in caller) return { error: caller.error };
+  const { isAdmin, isOwner } = await getAccountState();
   if (!isAdmin) {
     // 404, not 403: an ordinary user has no business knowing this exists.
     return { error: Response.json({ error: "not_found" }, { status: 404 }) };
   }
-  return { userId: session.user.id, isOwner };
+  return { userId: caller.user.id, isOwner };
 }
 
 /**
@@ -99,6 +89,7 @@ export async function listUsers(): Promise<AdminUser[]> {
       name: users.name,
       isAdmin: users.isAdmin,
       isOwner: users.isOwner,
+      mustChangePassword: users.mustChangePassword,
       createdAt: users.createdAt,
       sessionCount: logged.total,
       lastLoggedAt: logged.last,

@@ -12,6 +12,8 @@ const createUserSchema = z.object({
   // Better Auth's own minimum; the person changes it from Settings afterwards.
   password: z.string().min(8, "validation.passwordShort").max(128),
   isAdmin: z.boolean().default(false),
+  /** Lock the account until they replace the password the admin chose. */
+  mustChangePassword: z.boolean().default(true),
 });
 
 /**
@@ -30,7 +32,7 @@ export async function POST(req: Request) {
   if (!parsed.success) {
     return Response.json({ error: "bad_request", issues: parsed.error.flatten() }, { status: 400 });
   }
-  const { name, email, password, isAdmin } = parsed.data;
+  const { name, email, password, isAdmin, mustChangePassword } = parsed.data;
 
   const [existing] = await db.select({ id: users.id }).from(users).where(eq(users.email, email));
   if (existing) {
@@ -49,7 +51,7 @@ export async function POST(req: Request) {
   }
   await db
     .update(users)
-    .set({ emailVerified: true, isAdmin, updatedAt: new Date() })
+    .set({ emailVerified: true, isAdmin, mustChangePassword, updatedAt: new Date() })
     .where(eq(users.id, created.id));
   await db.insert(userSettings).values({ userId: created.id }).onConflictDoNothing();
   // Signing up opens a login session, but nobody is holding it — the admin

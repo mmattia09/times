@@ -1,9 +1,9 @@
-import { getSession } from "@/lib/current-user";
+import { requireApiUser } from "@/lib/current-user";
 import { getLuoghi } from "@/lib/services";
 
 export async function GET() {
-  const session = await getSession();
-  if (!session?.user) return Response.json({ error: "unauthorized" }, { status: 401 });
-  const data = await getLuoghi(session.user.id);
+  const auth = await requireApiUser();
+  if ("error" in auth) return auth.error;
+  const data = await getLuoghi(auth.user.id);
   return Response.json({ data });
 }

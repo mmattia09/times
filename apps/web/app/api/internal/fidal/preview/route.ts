@@ -1,11 +1,11 @@
-import { getSession } from "@/lib/current-user";
+import { requireApiUser } from "@/lib/current-user";
 import { previewFidalSync } from "@/lib/fidal-sync";
 
 export async function GET() {
-  const session = await getSession();
-  if (!session?.user) return Response.json({ error: "unauthorized" }, { status: 401 });
+  const auth = await requireApiUser();
+  if ("error" in auth) return auth.error;
   try {
-    const data = await previewFidalSync(session.user.id);
+    const data = await previewFidalSync(auth.user.id);
     return Response.json({ data });
   } catch (err) {
     return Response.json({ error: "fidal_error", message: (err as Error).message }, { status: 502 });

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { LogOut, ShieldCheck, ShieldOff, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { SetPasswordDialog } from "@/components/admin/set-password-dialog";
 import { toast } from "@/hooks/use-toast";
 import { useI18n } from "@/lib/i18n/client";
 
@@ -16,6 +17,8 @@ type Props = {
   /** True when the row is the signed-in admin looking at themselves. */
   isSelf: boolean;
   activeLogins: number;
+  /** True while the user still has to replace a password an admin set. */
+  mustChangePassword: boolean;
 };
 
 /**
@@ -23,7 +26,15 @@ type Props = {
  * account are locked here as well as in the API — the buttons say why rather
  * than disappearing, so it is clear the rule exists.
  */
-export function UserActions({ userId, name, isAdmin, isOwner, isSelf, activeLogins }: Props) {
+export function UserActions({
+  userId,
+  name,
+  isAdmin,
+  isOwner,
+  isSelf,
+  activeLogins,
+  mustChangePassword,
+}: Props) {
   const router = useRouter();
   const { t } = useI18n();
   const [busy, setBusy] = useState(false);
@@ -98,6 +109,7 @@ export function UserActions({ userId, name, isAdmin, isOwner, isSelf, activeLogi
             </>
           )}
         </Button>
+        <SetPasswordDialog userId={userId} name={name} disabled={busy || locked} />
         <Button
           variant="outline"
           size="sm"
@@ -116,6 +128,9 @@ export function UserActions({ userId, name, isAdmin, isOwner, isSelf, activeLogi
         </Button>
       </div>
 
+      {mustChangePassword && (
+        <p className="text-xs text-amber-600 dark:text-amber-500">{t("admin.pendingChange")}</p>
+      )}
       {lockReason && <p className="text-xs text-muted-foreground">{lockReason}</p>}
 
       <ConfirmDialog

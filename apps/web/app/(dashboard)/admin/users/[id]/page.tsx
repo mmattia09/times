@@ -116,6 +116,7 @@ export default async function AdminUserPage({ params }: { params: Promise<{ id: 
             isOwner={user.isOwner}
             isSelf={isSelf}
             activeLogins={user.activeLogins}
+            mustChangePassword={user.mustChangePassword}
           />
         </CardContent>
       </Card>
