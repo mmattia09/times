@@ -43,6 +43,13 @@
       "when": 1785136966089,
       "tag": "0005_ambitious_mimic",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1785138359136,
+      "tag": "0006_woozy_avengers",
+      "breakpoints": true
     }
   ]
 }

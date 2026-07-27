@@ -45,9 +45,17 @@ export const users = pgTable("users", {
   emailVerified: boolean("email_verified").notNull().default(false),
   name: text("name"),
   image: text("image"),
-  // The admin is the first user, provisioned from ADMIN_EMAIL/ADMIN_PASSWORD in
-  // the environment. Their email/password are managed there, not in the UI.
+  /**
+   * Access to the admin area. The owner always has it; anyone else is granted
+   * it (and can have it taken away) from there.
+   */
   isAdmin: boolean("is_admin").notNull().default(false),
+  /**
+   * The one account provisioned from ADMIN_EMAIL / ADMIN_PASSWORD. Its
+   * credentials live in the environment, so the UI must never let it be
+   * renamed, demoted or deleted — the environment would just recreate it.
+   */
+  isOwner: boolean("is_owner").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });

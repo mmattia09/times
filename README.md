@@ -40,7 +40,11 @@ on a phone as a PWA, and works the same in any time zone.
   de-duplicated.
 - **Full JSON import/export** — migrating instance is *export → register → import*.
 - **REST API** — `/api/v1/*` with per-user API keys.
-- **Multi-user** — isolated accounts; one env-managed admin plus self-service users.
+- **Multi-user** — isolated accounts; nobody can see anyone else's training.
+- **Admin area** — the owner (and anyone they promote) gets a page listing every user
+  with what they have logged and whether they are still signed in, plus the controls to
+  create an account, grant or revoke admin, sign someone out of every device, and
+  delete a user with all their data.
 - **Four languages** — Italian, English, German and Spanish, picked per user in
   Settings (or guessed from the browser on first visit). Event names, seasons and
   dates all follow the choice.
@@ -118,10 +122,16 @@ set `APP_IMAGE=ghcr.io/mmattia09/times:vX.Y.Z` in `.env`.
 | `DISABLE_REGISTRATION` | `true` to block new sign-ups once your accounts exist.           |
 | `APP_IMAGE`            | Optional: pin the image version to run.                          |
 
-**Accounts.** The admin is the first user, provisioned from `ADMIN_EMAIL` /
+**Accounts.** The *owner* is the first user, provisioned from `ADMIN_EMAIL` /
 `ADMIN_PASSWORD`: edit `.env` and restart to change its credentials (they re-sync on
-every boot; the display name is editable in the app). Everyone else registers through
-the UI and self-manages name, email, password and language from **Settings**.
+every boot; the display name is editable in the app). Because the environment owns that
+account, the admin area refuses to demote or delete it.
+
+The owner can grant **admin** to anyone else from **Administration**, which is also
+where accounts get created when `DISABLE_REGISTRATION=true` leaves no other way in —
+there is no mail server, so the admin sets an initial password and passes it on.
+Everyone else registers through the UI and self-manages name, email, password,
+language and time zone from **Settings**.
 
 ## Usage
 

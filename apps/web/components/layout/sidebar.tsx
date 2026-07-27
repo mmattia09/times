@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Timer } from "lucide-react";
-import { navItems, settingsItem } from "@/components/layout/nav";
+import { adminItem, navItems, settingsItem } from "@/components/layout/nav";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n/client";
 
@@ -38,7 +38,7 @@ function NavLink({
   );
 }
 
-export function Sidebar() {
+export function Sidebar({ isAdmin = false }: { isAdmin?: boolean }) {
   const pathname = usePathname();
   const { t } = useI18n();
   return (
@@ -54,7 +54,8 @@ export function Sidebar() {
           <NavLink key={item.href} pathname={pathname} item={item} t={t} />
         ))}
       </nav>
-      <div className="border-t p-3">
+      <div className="space-y-1 border-t p-3">
+        {isAdmin && <NavLink pathname={pathname} item={adminItem} t={t} />}
         <NavLink pathname={pathname} item={settingsItem} t={t} />
       </div>
     </aside>

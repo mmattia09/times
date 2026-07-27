@@ -1,7 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { LogOut } from "lucide-react";
+import Link from "next/link";
+import { LogOut, Shield } from "lucide-react";
 import { signOut } from "@/lib/auth-client";
 import {
   DropdownMenu,
@@ -14,7 +15,15 @@ import {
 import { useI18n } from "@/lib/i18n/client";
 
 /** Compact avatar menu shown in the top-right of the header. */
-export function UserMenu({ userName, userEmail }: { userName?: string; userEmail: string }) {
+export function UserMenu({
+  userName,
+  userEmail,
+  isAdmin = false,
+}: {
+  userName?: string;
+  userEmail: string;
+  isAdmin?: boolean;
+}) {
   const router = useRouter();
   const { t } = useI18n();
   const initials = (userName ?? userEmail).slice(0, 2).toUpperCase();
@@ -39,6 +48,13 @@ export function UserMenu({ userName, userEmail }: { userName?: string; userEmail
           <span className="block truncate text-xs font-normal text-muted-foreground">{userEmail}</span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        {isAdmin && (
+          <DropdownMenuItem asChild>
+            <Link href="/admin">
+              <Shield className="h-4 w-4" /> {t("nav.admin")}
+            </Link>
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem onClick={logout}>
           <LogOut className="h-4 w-4" /> {t("nav.signOut")}
         </DropdownMenuItem>
