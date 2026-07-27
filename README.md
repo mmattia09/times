@@ -1,8 +1,8 @@
 # Times
 
-[![CI](https://img.shields.io/github/actions/workflow/status/mmattia09/times/ci.yml?branch=main&label=CI)](https://github.com/mmattia09/times/actions/workflows/ci.yml)
-[![Docker image](https://img.shields.io/github/actions/workflow/status/mmattia09/times/docker-image.yml?branch=main&label=docker)](https://github.com/mmattia09/times/actions/workflows/docker-image.yml)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![CI](https://img.shields.io/github/actions/workflow/status/mmattia09/times/ci.yml?branch=main&label=CI&style=for-the-badge)](https://github.com/mmattia09/times/actions/workflows/ci.yml)
+[![Docker image](https://img.shields.io/github/actions/workflow/status/mmattia09/times/docker-image.yml?branch=main&label=docker&style=for-the-badge)](https://github.com/mmattia09/times/actions/workflows/docker-image.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue?style=for-the-badge)](LICENSE)
 
 A self-hosted web app for track & field athletes: log training sessions and
 competitions, track personal and season bests, set goals, keep a library of
