@@ -9,14 +9,16 @@ competitions, track personal and season bests, set goals, keep a library of
 structured workouts, and visualise your progress — all on your own server.
 
 Built by a sprinter to replace a Notion database; useful for any athletics
-discipline. The UI is in Italian; dates render in `Europe/Rome`.
+discipline. The interface speaks Italian, English, German and Spanish, installs
+on a phone as a PWA, and renders dates in `Europe/Rome`.
 
 ## Features
 
 - **Sessions & performances** — a training day or a competition, with any number of
   results (e.g. 100m heat + 200m final) — or **none at all**: a session can just record
-  the day (or a multi-day period) you trained, optionally with a scheda attached.
-  Filters by season, type, discipline, level, organiser, indoor/outdoor.
+  the day (or a multi-day period) you trained, optionally with a workout attached.
+  Filters by season, type, discipline, level, organiser and indoor/outdoor, plus a
+  free-text search over venue and notes.
 - **Personal & season bests** — recomputed on every write. Wind-aware: a tailwind above
   **+2.0 m/s** flags the mark *ventosa* (kept and charted, but never a record — the
   [FIDAL](https://www.fidal.it) / World Athletics rule).
@@ -29,16 +31,23 @@ discipline. The UI is in Italian; dates render in `Europe/Rome`.
 - **Charts** — progress over time, best per season, improvement curve, training volume;
   theme-aware and colour-blind-safe.
 - **Goals** — set a target per event and watch the gap to your PB close.
-- **Workout library (schede)** — structured schemes in the classic coach-table format
-  (blocco · ripetute · recupero · pausa · ritmo · note), attachable to sessions as
-  immutable snapshots. Each scheda shows how many times you've done it and links to
-  those sessions (and back).
+- **Workout library** — structured schemes in the classic coach-table format
+  (block · reps · recovery · pause · pace · notes), attachable to sessions as immutable
+  snapshots. Each workout shows how many times you have done it and links to those
+  sessions (and back).
 - **Two seasons per year** — *estiva* (Apr–Sep) and *invernale* (Oct–Mar).
 - **FIDAL import** — paste your athlete profile URL and import official results,
   de-duplicated.
 - **Full JSON import/export** — migrating instance is *export → register → import*.
 - **REST API** — `/api/v1/*` with per-user API keys.
 - **Multi-user** — isolated accounts; one env-managed admin plus self-service users.
+- **Four languages** — Italian, English, German and Spanish, picked per user in
+  Settings (or guessed from the browser on first visit). Event names, seasons and
+  dates all follow the choice.
+- **Installable (PWA)** — add it to the home screen and log times at the track, with
+  an offline notice instead of a browser error when the signal drops.
+- **Repeat a session** — reopen a past session with its venue, timing, level and
+  workout, dated today and with the results blank, ready to fill in.
 
 ## Visuals
 
@@ -47,20 +56,20 @@ and monthly training volume.
 
 ![Dashboard](docs/screenshots/dashboard.png)
 
-**Record** — personal & season bests (wind-legal), goals, and per-event charts.
+**Records** — personal & season bests (wind-legal), goals, and per-event charts.
 
-![Record](docs/screenshots/records.png)
+![Records](docs/screenshots/records.png)
 
 <details>
 <summary>More screenshots — sessions & workout library</summary>
 
-**Sessioni** — every training day and competition, filterable.
+**Sessions** — every training day and competition, filterable and searchable.
 
-![Sessioni](docs/screenshots/sessions.png)
+![Sessions](docs/screenshots/sessions.png)
 
-**Schede** — the workout library in the coach-table format.
+**Workouts** — the library, in the coach-table format.
 
-![Schede](docs/screenshots/workouts.png)
+![Workouts](docs/screenshots/workouts.png)
 
 </details>
 
@@ -109,20 +118,20 @@ set `APP_IMAGE=ghcr.io/mmattia09/times:vX.Y.Z` in `.env`.
 **Accounts.** The admin is the first user, provisioned from `ADMIN_EMAIL` /
 `ADMIN_PASSWORD`: edit `.env` and restart to change its credentials (they re-sync on
 every boot; the display name is editable in the app). Everyone else registers through
-the UI and self-manages name, email and password from **Impostazioni**.
+the UI and self-manages name, email, password and language from **Settings**.
 
 ## Usage
 
-1. Log in with the admin credentials and set your **FIDAL profile URL** in
-   *Impostazioni → Integrazione FIDAL* to pull in your official results — or start
-   logging sessions by hand with **Nuova sessione**.
-2. Build your workout library under **Schede** and attach a scheda when logging a
-   training session.
-3. **Record** shows PBs, season bests and charts; set targets with **Obiettivi**.
-4. Your data is yours: *Impostazioni → Dati* exports everything as one JSON file, and
-   the import is idempotent (re-importing never duplicates).
+1. Log in with the admin credentials, pick your language in *Settings → Language*, and
+   set your **FIDAL profile URL** under *Settings → FIDAL integration* to pull in your
+   official results — or start logging by hand with **New session**.
+2. Build your workout library under **Workouts** and attach one when logging a training
+   session. Repeating a day you have already logged: open it and press **Repeat**.
+3. **Records** shows PBs, season bests and charts; set targets with **Goals**.
+4. Your data is yours: *Settings → Data* exports everything as one JSON file, and the
+   import is idempotent (re-importing never duplicates).
 
-Programmatic access — generate a key in *Impostazioni → Chiavi API*:
+Programmatic access — generate a key in *Settings → API keys*:
 
 ```bash
 curl -H "Authorization: Bearer ath_live_…" https://your-host/api/v1/records
@@ -137,14 +146,20 @@ curl -H "Authorization: Bearer ath_live_…" https://your-host/api/v1/records
 | `GET /api/v1/export` · `POST /api/v1/import` | Full backup / restore         |
 | `GET /api/v1/fidal/preview` · `POST /api/v1/fidal/sync` | FIDAL import      |
 
+A rejected write answers `400 {"error":"bad_request","issues":…}`, where each issue is
+a stable key such as `validation.dateRequired` — the same key the UI translates, so the
+message never changes with the caller's language.
+
 ## Support
 
 Questions and bug reports → [GitHub Issues](https://github.com/mmattia09/times/issues).
 
 ## Roadmap
 
-- **PWA / mobile** — installable on the phone, to log times right at the track.
-- **English UI (i18n)** — bilingual IT/EN interface.
+- **Offline logging** — queue sessions entered without signal and sync them on
+  reconnect (today the PWA needs the network to save).
+- **More languages** — the dictionaries are typed against Italian, so adding one is a
+  single file under `apps/web/lib/i18n/locales`.
 
 ## Contributing
 
@@ -167,7 +182,9 @@ pnpm --filter web build
 ```
 
 Schema changes go through Drizzle migrations (`pnpm db:generate`), committed with the
-change. Keep new UI text in Italian for now (English is on the roadmap).
+change. UI text goes through the dictionaries in `apps/web/lib/i18n/locales`: add the
+key to `it.ts` first — it is the source of truth the others are typed against, so a
+missing translation is a compile error, not a surprise at runtime.
 
 ## Authors and acknowledgment
 
