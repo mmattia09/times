@@ -122,6 +122,7 @@ export const sessionQuerySchema = z.object({
   livello: livelloSchema.optional(),
   tipo: tipoSchema.optional(),
   season: z.string().optional(), // season key, e.g. "estiva-2025"
+  q: z.string().max(100).optional(),
 });
 
 export const apiKeyInputSchema = z.object({

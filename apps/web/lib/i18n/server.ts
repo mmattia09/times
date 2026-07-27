@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { cookies, headers } from "next/headers";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
@@ -22,7 +23,7 @@ import {
  *   3. the browser's Accept-Language,
  *   4. Italian.
  */
-export async function getLocale(): Promise<Locale> {
+export const getLocale = cache(async (): Promise<Locale> => {
   const session = await getSession();
   if (session?.user) {
     const [row] = await db
@@ -33,7 +34,7 @@ export async function getLocale(): Promise<Locale> {
     if (isLocale(row?.locale)) return row.locale;
   }
   return getRequestLocale();
-}
+});
 
 /**
  * Locale from the request alone (cookie → Accept-Language → Italian).

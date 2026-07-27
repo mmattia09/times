@@ -1,8 +1,11 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Search, X } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { RUN_DISTANCES } from "@/lib/athletics";
 import { useI18n } from "@/lib/i18n/client";
 
@@ -12,6 +15,20 @@ export function SessionFilters({ seasons }: { seasons: { key: string; label: str
   const router = useRouter();
   const params = useSearchParams();
   const { t } = useI18n();
+  const queryParam = params.get("q") ?? "";
+  const [query, setQuery] = useState(queryParam);
+
+  // Keep the box in step with the URL (back button, "clear filters").
+  useEffect(() => setQuery(queryParam), [queryParam]);
+
+  // Debounced so typing doesn't fire a navigation per keystroke.
+  const typed = useRef(false);
+  useEffect(() => {
+    if (!typed.current || query === queryParam) return;
+    const id = setTimeout(() => set("q", query.trim()), 350);
+    return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query]);
 
   function set(key: string, value: string) {
     const next = new URLSearchParams(params.toString());
@@ -20,10 +37,15 @@ export function SessionFilters({ seasons }: { seasons: { key: string; label: str
     router.push(`/sessions?${next.toString()}`);
   }
 
-  const filter = (key: string, placeholder: string, options: { value: string; label: string }[]) => (
-    <Select value={params.get(key) ?? ALL} onValueChange={(v) => set(key, v)}>
+  const filter = (key: string, placeholder: string, options: { value: string; label: string }[]) => {
+    const value = params.get(key) ?? ALL;
+    // Radix only fills the trigger once the items mount, so the server would
+    // render six blank boxes. Passing the label as children avoids that flash.
+    const label = options.find((o) => o.value === value)?.label ?? placeholder;
+    return (
+    <Select value={value} onValueChange={(v) => set(key, v)}>
       <SelectTrigger className="h-8 w-auto min-w-[7.5rem] text-xs">
-        <SelectValue placeholder={placeholder} />
+        <SelectValue>{label}</SelectValue>
       </SelectTrigger>
       <SelectContent>
         <SelectItem value={ALL}>{placeholder}</SelectItem>
@@ -34,14 +56,41 @@ export function SessionFilters({ seasons }: { seasons: { key: string; label: str
         ))}
       </SelectContent>
     </Select>
-  );
+    );
+  };
 
-  const hasFilters = ["season", "type", "organizzatore", "distance", "livello", "tipo"].some((k) =>
-    params.get(k),
+  const hasFilters = ["season", "type", "organizzatore", "distance", "livello", "tipo", "q"].some(
+    (k) => params.get(k),
   );
 
   return (
     <div className="flex flex-wrap items-center gap-2">
+      <div className="relative">
+        <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={query}
+          onChange={(e) => {
+            typed.current = true;
+            setQuery(e.target.value);
+          }}
+          placeholder={t("sessions.searchPlaceholder")}
+          aria-label={t("sessions.searchPlaceholder")}
+          className="h-8 w-44 pl-8 pr-7 text-xs"
+        />
+        {query && (
+          <button
+            type="button"
+            onClick={() => {
+              typed.current = true;
+              setQuery("");
+            }}
+            aria-label={t("sessions.clearFilters")}
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        )}
+      </div>
       {filter(
         "season",
         t("sessions.allSeasons"),

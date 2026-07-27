@@ -36,6 +36,7 @@ export default async function SessionsPage({
     organizzatore: sp.organizzatore as Filters["organizzatore"],
     livello: sp.livello as Filters["livello"],
     tipo: sp.tipo as Filters["tipo"],
+    q: sp.q || undefined,
   };
 
   const [data, earliest] = await Promise.all([

@@ -117,6 +117,10 @@ export const it = {
     trainingsLegend: "Allenamenti",
   },
   sessions: {
+    searchPlaceholder: "Cerca luogo o note",
+    repeat: "Ripeti",
+    repeatTitle: "Ripeti sessione",
+    repeatDescription: "Stesso setup e stesse prove, in data odierna. I risultati sono da inserire.",
     title: "Sessioni",
     count: "{count} risultati",
     newSession: "Nuova sessione",

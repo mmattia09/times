@@ -41,7 +41,7 @@ export function LanguageSwitcher({ compact = false }: { compact?: boolean }) {
       <SelectTrigger className={compact ? "h-8 w-auto min-w-[8rem] text-xs" : "max-w-xs"}>
         <span className="flex items-center gap-2">
           {compact && <Languages className="h-3.5 w-3.5 text-muted-foreground" />}
-          <SelectValue />
+          <SelectValue>{LOCALE_NAMES[locale]}</SelectValue>
         </span>
       </SelectTrigger>
       <SelectContent>

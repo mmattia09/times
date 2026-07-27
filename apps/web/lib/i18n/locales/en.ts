@@ -115,6 +115,10 @@ export const en: Dictionary = {
     trainingsLegend: "Training",
   },
   sessions: {
+    searchPlaceholder: "Search venue or notes",
+    repeat: "Repeat",
+    repeatTitle: "Repeat session",
+    repeatDescription: "Same setup and same events, dated today. The results are yours to fill in.",
     title: "Sessions",
     count: "{count} results",
     newSession: "New session",

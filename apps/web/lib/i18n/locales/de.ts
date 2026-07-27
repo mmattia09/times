@@ -115,6 +115,10 @@ export const de: Dictionary = {
     trainingsLegend: "Training",
   },
   sessions: {
+    searchPlaceholder: "Ort oder Notizen suchen",
+    repeat: "Wiederholen",
+    repeatTitle: "Einheit wiederholen",
+    repeatDescription: "Gleiches Setup, gleiche Disziplinen, mit heutigem Datum. Die Ergebnisse trägst du ein.",
     title: "Einheiten",
     count: "{count} Ergebnisse",
     newSession: "Neue Einheit",

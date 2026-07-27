@@ -17,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useChartTokens, type ChartTokens } from "@/components/charts/chart-theme";
 import { formatResult, type EventKey } from "@/lib/athletics";
+import { formatDateShort } from "@/lib/format";
 import type { Discipline } from "@/lib/db/schema";
 import { useI18n } from "@/lib/i18n/client";
 
@@ -46,7 +47,8 @@ export type ChartPoint = {
 
 export function PerformanceCharts({ points }: { points: ChartPoint[] }) {
   const { tokens, mounted } = useChartTokens();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const axisDate = (v: string) => formatDateShort(v, locale);
 
   const eventKeys = useMemo(() => {
     const m = new Map<string, string>();
@@ -148,7 +150,9 @@ export function PerformanceCharts({ points }: { points: ChartPoint[] }) {
       <div className="flex flex-wrap items-center gap-2">
         <Select value={eventKey} onValueChange={setEventKey}>
           <SelectTrigger className="h-8 w-auto min-w-[8rem] text-xs">
-            <SelectValue />
+            {/* Radix fills the trigger only after the items mount; naming the
+                label here keeps the server render from showing an empty box. */}
+            <SelectValue>{current?.label}</SelectValue>
           </SelectTrigger>
           <SelectContent>
             {eventKeys.map((e) => (
@@ -160,7 +164,9 @@ export function PerformanceCharts({ points }: { points: ChartPoint[] }) {
         </Select>
         <Select value={seasonSel} onValueChange={setSeasonSel}>
           <SelectTrigger className="h-8 w-auto min-w-[8rem] text-xs">
-            <SelectValue />
+            <SelectValue>
+              {seasons.find((s) => s.key === seasonSel)?.label ?? t("records.allSeasons")}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">{t("records.allSeasons")}</SelectItem>
@@ -196,7 +202,13 @@ export function PerformanceCharts({ points }: { points: ChartPoint[] }) {
           <ChartFrame mounted={mounted}>
             <LineChart data={progress} margin={{ top: 8, right: 12, left: -8, bottom: 0 }}>
               <CartesianGrid stroke={tokens.grid} strokeWidth={1} vertical={false} />
-              <XAxis dataKey="date" tick={tick} tickLine={false} axisLine={false} />
+              <XAxis
+                dataKey="date"
+                tick={tick}
+                tickLine={false}
+                axisLine={false}
+                tickFormatter={axisDate}
+              />
               <YAxis
                 reversed={lowerIsBetter}
                 domain={yDomain}
@@ -206,7 +218,7 @@ export function PerformanceCharts({ points }: { points: ChartPoint[] }) {
                 width={44}
                 tickFormatter={tidyTick}
               />
-              <Tooltip content={<ChartTooltip fmt={fmt} />} cursor={{ stroke: tokens.grid }} />
+              <Tooltip content={<ChartTooltip fmt={fmt} labelFormat={axisDate} />} cursor={{ stroke: tokens.grid }} />
               <Line
                 type="monotone"
                 dataKey="competition"
@@ -249,7 +261,7 @@ export function PerformanceCharts({ points }: { points: ChartPoint[] }) {
                 <CartesianGrid stroke={tokens.grid} strokeWidth={1} vertical={false} />
                 <XAxis dataKey="season" tick={tick} tickLine={false} axisLine={false} />
                 <YAxis reversed={lowerIsBetter} domain={yDomain} tick={tick} tickLine={false} axisLine={false} width={44} tickFormatter={tidyTick} />
-                <Tooltip content={<ChartTooltip fmt={fmt} />} cursor={{ fill: tokens.grid, opacity: 0.35 }} />
+                <Tooltip content={<ChartTooltip fmt={fmt} labelFormat={axisDate} />} cursor={{ fill: tokens.grid, opacity: 0.35 }} />
                 <Bar
                   dataKey="best"
                   name={t("records.record")}
@@ -271,9 +283,15 @@ export function PerformanceCharts({ points }: { points: ChartPoint[] }) {
             <ChartFrame mounted={mounted}>
               <LineChart data={improvement} margin={{ top: 8, right: 12, left: -8, bottom: 0 }}>
                 <CartesianGrid stroke={tokens.grid} strokeWidth={1} vertical={false} />
-                <XAxis dataKey="date" tick={tick} tickLine={false} axisLine={false} />
+                <XAxis
+                dataKey="date"
+                tick={tick}
+                tickLine={false}
+                axisLine={false}
+                tickFormatter={axisDate}
+              />
                 <YAxis tick={tick} tickLine={false} axisLine={false} width={44} unit="%" />
-                <Tooltip content={<ChartTooltip suffix="%" />} cursor={{ stroke: tokens.grid }} />
+                <Tooltip content={<ChartTooltip suffix="%" labelFormat={axisDate} />} cursor={{ stroke: tokens.grid }} />
                 <Line
                   type="monotone"
                   dataKey="improvement"
@@ -344,18 +362,21 @@ function ChartTooltip({
   label,
   suffix = "",
   fmt,
+  labelFormat,
 }: {
   active?: boolean;
   payload?: Array<{ name: string; value: number | null; color: string; payload?: Record<string, unknown> }>;
   label?: string;
   suffix?: string;
   fmt?: (v: number) => string;
+  /** Axis labels are ISO dates; the tooltip shows them the same way the axis does. */
+  labelFormat?: (v: string) => string;
 }) {
   if (!active || !payload?.length) return null;
   const row = payload[0]?.payload as { wind?: number | null; legal?: boolean } | undefined;
   return (
     <div className="rounded-md border bg-popover px-3 py-2 text-xs shadow-md">
-      <p className="mb-1 font-medium">{label}</p>
+      <p className="mb-1 font-medium">{label && labelFormat ? labelFormat(label) : label}</p>
       {payload
         .filter((p) => p.value != null)
         .map((p) => (

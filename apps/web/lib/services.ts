@@ -19,6 +19,7 @@ export type SessionFilters = {
   livello?: "regionale" | "provinciale" | "nazionale" | "internazionale";
   tipo?: "outdoor" | "indoor";
   season?: string; // season key, e.g. "estiva-2025"
+  q?: string; // free text over venue and notes
 };
 
 export type CreateSessionOptions = {
@@ -195,6 +196,17 @@ export async function listSessions(
   if (filters.organizzatore) conds.push(eq(sessions.organizzatore, filters.organizzatore));
   if (filters.livello) conds.push(eq(sessions.livello, filters.livello));
   if (filters.tipo) conds.push(eq(sessions.tipo, filters.tipo));
+
+  // Free-text, case-insensitive search over the two prose fields. The pattern
+  // is a bound parameter and its wildcards are escaped, so a venue literally
+  // called "100%" searches for that and not for everything.
+  const q = filters.q?.trim().slice(0, 100);
+  if (q) {
+    const like = `%${q.replace(/[%_\\]/g, (c) => `\\${c}`)}%`;
+    conds.push(
+      sql`(${sessions.luogo} ilike ${like} escape '\\' or ${sessions.note} ilike ${like} escape '\\')`,
+    );
+  }
 
   // Filter by distance via a subquery on performances.
   if (filters.distance != null) {

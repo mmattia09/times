@@ -30,6 +30,11 @@ export function formatDateLong(date: Date | string, locale: Locale = DEFAULT_LOC
   return formatDate(date, "d MMMM yyyy", locale);
 }
 
+/** Compact form for chart axes, e.g. "4 lug 26" / "4 Jul 26". */
+export function formatDateShort(date: Date | string, locale: Locale = DEFAULT_LOCALE): string {
+  return formatDate(date, "d MMM yy", locale);
+}
+
 /** ISO yyyy-MM-dd in Europe/Rome (for <input type=date>). */
 export function toDateInputValue(date: Date | string): string {
   const d = typeof date === "string" ? new Date(date) : date;

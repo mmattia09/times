@@ -24,6 +24,7 @@ import type { WorkoutTemplate } from "@/lib/db/schema";
 import { RUN_DISTANCES, disciplineOptions, eventOptionsFor, isTimed } from "@/lib/athletics";
 import { useI18n } from "@/lib/i18n/client";
 import { sessionInputCheckedSchema, type SessionInput } from "@/lib/validation";
+import type { SessionFormInitial } from "@/lib/session-initial";
 import type { Discipline } from "@/lib/db/schema";
 
 const NONE = "__none__";
@@ -61,7 +62,7 @@ export function SessionForm({
   initial,
 }: {
   sessionId?: string;
-  initial?: Partial<FormValues>;
+  initial?: SessionFormInitial;
 }) {
   const router = useRouter();
   const { t, dict } = useI18n();
@@ -362,7 +363,9 @@ function EnumSelect({
       <Label>{label}</Label>
       <Select value={value ?? NONE} onValueChange={(v) => onChange(v === NONE ? null : v)}>
         <SelectTrigger>
-          <SelectValue placeholder="—" />
+          {/* Radix fills the trigger only after the items mount; naming the
+              label here keeps the server render from showing an empty box. */}
+          <SelectValue>{options.find((o) => o.value === value)?.label ?? "—"}</SelectValue>
         </SelectTrigger>
         <SelectContent>
           <SelectItem value={NONE}>—</SelectItem>
@@ -423,7 +426,9 @@ function PerformanceRow({
             }}
           >
             <SelectTrigger>
-              <SelectValue />
+              <SelectValue>
+                {disciplineOptions(dict).find((o) => o.value === discipline)?.label}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {disciplineOptions(dict).map((o) => (
@@ -443,7 +448,11 @@ function PerformanceRow({
               onValueChange={(v) => form.setValue(`performances.${index}.event`, v)}
             >
               <SelectTrigger>
-                <SelectValue />
+                <SelectValue>
+                  {eventOptions.find(
+                    (o) => o.event === form.watch(`performances.${index}.event`),
+                  )?.label}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {eventOptions.map((o) => (
