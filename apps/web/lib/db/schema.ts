@@ -256,6 +256,8 @@ export const userSettings = pgTable("user_settings", {
   seasonStartMonth: integer("season_start_month").notNull().default(10),
   defaultDistances: jsonb("default_distances").$type<number[]>().default([60, 100, 200]),
   theme: text("theme").notNull().default("system"),
+  /** UI language: it | en | de | es. */
+  locale: text("locale").notNull().default("it"),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

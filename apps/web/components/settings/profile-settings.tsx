@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
+import { useI18n } from "@/lib/i18n/client";
 
 export function ProfileSettings({
   initialName,
@@ -19,6 +20,7 @@ export function ProfileSettings({
   isAdmin: boolean;
 }) {
   const router = useRouter();
+  const { t } = useI18n();
   const [name, setName] = useState(initialName);
   const [email, setEmail] = useState(initialEmail);
   const [saving, setSaving] = useState(false);
@@ -40,12 +42,12 @@ export function ProfileSettings({
       });
       if (!res.ok) {
         const j = await res.json().catch(() => ({}));
-        throw new Error(j.message ?? "Aggiornamento non riuscito");
+        throw new Error(j.message ?? t("settings.updateFailed"));
       }
-      toast({ title: "Profilo aggiornato" });
+      toast({ title: t("settings.profileUpdated") });
       router.refresh();
     } catch (err) {
-      toast({ variant: "destructive", title: "Errore", description: (err as Error).message });
+      toast({ variant: "destructive", title: t("common.error"), description: (err as Error).message });
     } finally {
       setSaving(false);
     }
@@ -56,11 +58,11 @@ export function ProfileSettings({
       <form onSubmit={save} className="space-y-4">
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
-            <Label htmlFor="profile-name">Nome</Label>
+            <Label htmlFor="profile-name">{t("auth.name")}</Label>
             <Input id="profile-name" value={name} onChange={(e) => setName(e.target.value)} />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="profile-email">Email</Label>
+            <Label htmlFor="profile-email">{t("auth.email")}</Label>
             <Input
               id="profile-email"
               type="email"
@@ -71,17 +73,13 @@ export function ProfileSettings({
           </div>
         </div>
         <Button type="submit" variant="outline" disabled={saving || !dirty}>
-          {saving ? "Salvataggio…" : "Salva profilo"}
+          {saving ? t("common.saving") : t("settings.saveProfile")}
         </Button>
       </form>
       {isAdmin ? (
         <div className="flex items-start gap-2 rounded-md border bg-muted/40 p-3 text-xs text-muted-foreground">
           <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-          <span>
-            Account amministratore: email e password si cambiano solo dal file <code>.env</code>{" "}
-            del server (<code>ADMIN_EMAIL</code>, <code>ADMIN_PASSWORD</code>), poi riavvia il
-            container. Il nome invece è modificabile qui.
-          </span>
+          <span>{t("settings.adminNotice")}</span>
         </div>
       ) : (
         <div className="border-t pt-4">

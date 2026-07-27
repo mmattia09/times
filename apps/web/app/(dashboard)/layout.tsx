@@ -5,9 +5,11 @@ import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { UserMenu } from "@/components/layout/user-menu";
 import { Button } from "@/components/ui/button";
 import { requireUser } from "@/lib/current-user";
+import { getT } from "@/lib/i18n/server";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
+  const { t } = await getT();
   return (
     <div className="flex min-h-screen">
       <Sidebar />
@@ -18,13 +20,13 @@ export default async function DashboardLayout({ children }: { children: React.Re
             <Button asChild size="sm">
               <Link href="/sessions/new">
                 <Plus className="h-4 w-4" />
-                <span className="hidden sm:inline">Nuova sessione</span>
+                <span className="hidden sm:inline">{t("nav.newSession")}</span>
               </Link>
             </Button>
             <Button asChild size="sm" variant="outline">
               <Link href="/workouts/new">
                 <ClipboardList className="h-4 w-4" />
-                <span className="hidden sm:inline">Nuova scheda</span>
+                <span className="hidden sm:inline">{t("nav.newWorkout")}</span>
               </Link>
             </Button>
             <ThemeToggle />

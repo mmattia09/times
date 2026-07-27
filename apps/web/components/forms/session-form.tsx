@@ -21,15 +21,8 @@ import { WorkoutTable } from "@/components/workouts/workout-table";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import type { WorkoutTemplate } from "@/lib/db/schema";
-import {
-  DISCIPLINES,
-  JUMP_EVENTS,
-  RELAY_EVENTS,
-  TEST_EVENTS,
-  RUN_DISTANCES,
-  THROW_EVENTS,
-  isTimed,
-} from "@/lib/athletics";
+import { RUN_DISTANCES, disciplineOptions, eventOptionsFor, isTimed } from "@/lib/athletics";
+import { useI18n } from "@/lib/i18n/client";
 import { sessionInputCheckedSchema, type SessionInput } from "@/lib/validation";
 import type { Discipline } from "@/lib/db/schema";
 
@@ -71,6 +64,7 @@ export function SessionForm({
   initial?: Partial<FormValues>;
 }) {
   const router = useRouter();
+  const { t, dict } = useI18n();
   const [submitting, setSubmitting] = useState(false);
   const [luoghi, setLuoghi] = useState<string[]>([]);
   const [templates, setTemplates] = useState<WorkoutTemplate[]>([]);
@@ -121,11 +115,11 @@ export function SessionForm({
     );
     setSubmitting(false);
     if (!res.ok) {
-      toast({ variant: "destructive", title: "Errore", description: "Salvataggio non riuscito." });
+      toast({ variant: "destructive", title: t("common.error"), description: t("common.saveFailed") });
       return;
     }
     const json = await res.json();
-    toast({ title: "Salvato", description: "Sessione salvata correttamente." });
+    toast({ title: t("common.saved"), description: t("sessions.savedOk") });
     router.push(`/sessions/${sessionId ?? json.id}`);
     router.refresh();
   }
@@ -149,56 +143,56 @@ export function SessionForm({
       className="space-y-6"
     >
       <div className="space-y-3">
-      <h2 className="text-sm font-semibold">Dettagli</h2>
+      <h2 className="text-sm font-semibold">{t("sessions.details")}</h2>
       <Card>
         <CardContent className="grid gap-5 p-5 sm:grid-cols-2">
           {/* Type toggle */}
           <div className="flex items-center gap-4 sm:col-span-2">
-            <Label>Tipo</Label>
+            <Label>{t("common.type")}</Label>
             <div className="inline-flex rounded-md border p-0.5">
-              {(["training", "competition"] as const).map((t) => (
+              {(["training", "competition"] as const).map((option) => (
                 <button
-                  key={t}
+                  key={option}
                   type="button"
-                  onClick={() => form.setValue("type", t)}
+                  onClick={() => form.setValue("type", option)}
                   className={cn(
                     "rounded px-4 py-1.5 text-sm font-medium transition-colors",
-                    type === t ? "bg-primary text-primary-foreground" : "text-muted-foreground",
+                    type === option ? "bg-primary text-primary-foreground" : "text-muted-foreground",
                   )}
                 >
-                  {t === "training" ? "Allenamento" : "Gara"}
+                  {option === "training" ? t("common.training") : t("common.competition")}
                 </button>
               ))}
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="date">Data</Label>
+            <Label htmlFor="date">{t("common.date")}</Label>
             <Input id="date" type="date" {...form.register("date")} />
-            {errors.date && <p className="text-xs text-destructive">{errors.date.message}</p>}
+            {errors.date && <p className="text-xs text-destructive">{t(errors.date.message ?? "")}</p>}
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="endDate">Data fine (opzionale)</Label>
+            <Label htmlFor="endDate">{t("sessions.endDate", { optional: t("common.optional") })}</Label>
             <Input id="endDate" type="date" min={form.watch("date") || undefined} {...form.register("endDate")} />
-            <p className="text-xs text-muted-foreground">Per periodi su più giorni.</p>
-            {errors.endDate && <p className="text-xs text-destructive">{errors.endDate.message}</p>}
+            <p className="text-xs text-muted-foreground">{t("sessions.endDateHint")}</p>
+            {errors.endDate && <p className="text-xs text-destructive">{t(errors.endDate.message ?? "")}</p>}
           </div>
 
           <EnumSelect
-            label="Cronometraggio"
+            label={t("common.timing")}
             value={form.watch("tempo")}
             onChange={(v) => form.setValue("tempo", v as FormValues["tempo"])}
             options={[
-              { value: "elettronico", label: "Elettronico" },
-              { value: "cronometro", label: "Cronometro" },
-              { value: "manuale", label: "Manuale" },
+              { value: "elettronico", label: t("enums.tempo.elettronico") },
+              { value: "cronometro", label: t("enums.tempo.cronometro") },
+              { value: "manuale", label: t("enums.tempo.manuale") },
             ]}
           />
 
           <div className="space-y-1.5">
-            <Label htmlFor="luogo">Luogo</Label>
-            <Input id="luogo" list="luoghi" placeholder="Es. Venezia" {...form.register("luogo")} />
+            <Label htmlFor="luogo">{t("common.place")}</Label>
+            <Input id="luogo" list="luoghi" placeholder={t("sessions.placePlaceholder")} {...form.register("luogo")} />
             <datalist id="luoghi">
               {luoghi.map((l) => (
                 <option key={l} value={l} />
@@ -209,42 +203,42 @@ export function SessionForm({
           {type === "competition" && (
             <>
               <EnumSelect
-                label="Livello"
+                label={t("common.level")}
                 value={form.watch("livello")}
                 onChange={(v) => form.setValue("livello", v as FormValues["livello"])}
                 options={[
-                  { value: "regionale", label: "Regionale" },
-                  { value: "provinciale", label: "Provinciale" },
-                  { value: "nazionale", label: "Nazionale" },
-                  { value: "internazionale", label: "Internazionale" },
+                  { value: "regionale", label: t("enums.livello.regionale") },
+                  { value: "provinciale", label: t("enums.livello.provinciale") },
+                  { value: "nazionale", label: t("enums.livello.nazionale") },
+                  { value: "internazionale", label: t("enums.livello.internazionale") },
                 ]}
               />
               <EnumSelect
-                label="Organizzatore"
+                label={t("common.organiser")}
                 value={form.watch("organizzatore")}
                 onChange={(v) => form.setValue("organizzatore", v as FormValues["organizzatore"])}
                 options={[
-                  { value: "fidal", label: "FIDAL" },
-                  { value: "csi", label: "CSI" },
-                  { value: "altro", label: "Altro" },
+                  { value: "fidal", label: t("enums.organizzatore.fidal") },
+                  { value: "csi", label: t("enums.organizzatore.csi") },
+                  { value: "altro", label: t("enums.organizzatore.altro") },
                 ]}
               />
             </>
           )}
 
           <EnumSelect
-            label="Ambiente"
+            label={t("common.environment")}
             value={form.watch("tipo")}
             onChange={(v) => form.setValue("tipo", v as FormValues["tipo"])}
             options={[
-              { value: "outdoor", label: "Outdoor" },
-              { value: "indoor", label: "Indoor" },
+              { value: "outdoor", label: t("enums.tipo.outdoor") },
+              { value: "indoor", label: t("enums.tipo.indoor") },
             ]}
           />
 
           <div className="space-y-1.5 sm:col-span-2">
-            <Label htmlFor="note">Note</Label>
-            <Textarea id="note" placeholder="Dettagli, sensazioni, condizioni…" {...form.register("note")} />
+            <Label htmlFor="note">{t("common.notes")}</Label>
+            <Textarea id="note" placeholder={t("sessions.notesPlaceholder")} {...form.register("note")} />
           </div>
         </CardContent>
       </Card>
@@ -253,10 +247,10 @@ export function SessionForm({
       {/* Workout (scheda allenamento) */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold">Scheda allenamento</h2>
+          <h2 className="text-sm font-semibold">{t("sessions.workoutSection")}</h2>
           {workout && (
             <Button type="button" variant="ghost" size="sm" onClick={() => form.setValue("workout", null)}>
-              <Trash2 className="h-4 w-4" /> Rimuovi
+              <Trash2 className="h-4 w-4" /> {t("common.remove")}
             </Button>
           )}
         </div>
@@ -280,7 +274,7 @@ export function SessionForm({
             }}
           >
             <SelectTrigger className="max-w-sm">
-              <SelectValue placeholder="Aggancia una scheda dalla libreria…" />
+              <SelectValue placeholder={t("sessions.attachWorkout")} />
             </SelectTrigger>
             <SelectContent>
               {templates.map((t) => (
@@ -293,7 +287,7 @@ export function SessionForm({
           </Select>
         ) : (
           <p className="text-xs text-muted-foreground">
-            Nessuna scheda in libreria: creane una nella pagina Schede per agganciarla qui.
+            {t("sessions.noWorkoutsYet")}
           </p>
         )}
       </div>
@@ -302,7 +296,8 @@ export function SessionForm({
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold">
-            Prestazioni <span className="font-normal text-muted-foreground">(opzionali)</span>
+            {t("sessions.performancesOptional")}{" "}
+            <span className="font-normal text-muted-foreground">({t("common.optional")})</span>
           </h2>
           <Button
             type="button"
@@ -312,17 +307,17 @@ export function SessionForm({
               append({ discipline: "sprint", distance: 100, event: null, result: 0, wind: null, lane: null, position: null, heat: null })
             }
           >
-            <Plus className="h-4 w-4" /> Aggiungi
+            <Plus className="h-4 w-4" /> {t("common.add")}
           </Button>
         </div>
         {typeof errors.performances?.message === "string" && (
-          <p className="text-xs text-destructive">{errors.performances.message}</p>
+          <p className="text-xs text-destructive">{t(errors.performances.message)}</p>
         )}
 
         {fields.length === 0 ? (
           <Card>
             <CardContent className="py-6 text-center text-sm text-muted-foreground">
-              Nessuna prestazione: la sessione registra solo la data.
+              {t("sessions.noPerformancesHint")}
             </CardContent>
           </Card>
         ) : (
@@ -339,12 +334,12 @@ export function SessionForm({
       </div>
 
       <div className="flex items-center justify-end gap-3">
-        <span className="mr-auto text-xs text-muted-foreground">⌘ + Invio: salva</span>
+        <span className="mr-auto text-xs text-muted-foreground">{t("common.saveShortcut")}</span>
         <Button type="button" variant="ghost" onClick={() => router.back()}>
-          Annulla
+          {t("common.cancel")}
         </Button>
         <Button type="submit" disabled={submitting}>
-          {submitting ? "Salvataggio…" : sessionId ? "Aggiorna sessione" : "Crea sessione"}
+          {submitting ? t("common.saving") : sessionId ? t("sessions.updateSession") : t("sessions.createSession")}
         </Button>
       </div>
     </form>
@@ -393,6 +388,7 @@ function PerformanceRow({
   onRemove: () => void;
   canRemove: boolean;
 }) {
+  const { t, dict } = useI18n();
   const discipline = form.watch(`performances.${index}.discipline`);
   const isJump = discipline === "jump";
   const isThrow = discipline === "throw";
@@ -400,30 +396,22 @@ function PerformanceRow({
   const isCombined = discipline === "combined";
   const isTest = discipline === "test";
   const timed = isTimed(discipline);
-  const eventOptions = isJump
-    ? JUMP_EVENTS
-    : isThrow
-      ? THROW_EVENTS
-      : isRelay
-        ? RELAY_EVENTS
-        : isTest
-          ? TEST_EVENTS
-          : null;
+  const eventOptions = eventOptionsFor(discipline, dict);
   const resultErr = form.formState.errors.performances?.[index]?.result;
 
   const resultLabel = isThrow
-    ? "(m)"
+    ? t("sessions.resultM")
     : isJump || isTest
-      ? "(cm)"
+      ? t("sessions.resultCm")
       : isCombined
-        ? "(punti)"
-        : "(tempo, s)";
+        ? t("sessions.resultPoints")
+        : t("sessions.resultSeconds");
 
   return (
     <Card>
       <CardContent className="grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="space-y-1.5">
-          <Label>Disciplina</Label>
+          <Label>{t("common.discipline")}</Label>
           <Select
             value={discipline}
             onValueChange={(v) => {
@@ -438,7 +426,7 @@ function PerformanceRow({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {DISCIPLINES.map((o) => (
+              {disciplineOptions(dict).map((o) => (
                 <SelectItem key={o.value} value={o.value}>
                   {o.label}
                 </SelectItem>
@@ -449,7 +437,7 @@ function PerformanceRow({
 
         {eventOptions ? (
           <div className="space-y-1.5">
-            <Label>Specialità</Label>
+            <Label>{t("common.event")}</Label>
             <Select
               value={form.watch(`performances.${index}.event`) ?? ""}
               onValueChange={(v) => form.setValue(`performances.${index}.event`, v)}
@@ -468,16 +456,16 @@ function PerformanceRow({
           </div>
         ) : isCombined ? (
           <div className="space-y-1.5">
-            <Label>Specialità</Label>
-            <Input placeholder="es. Eptathlon" {...form.register(`performances.${index}.event`)} />
+            <Label>{t("common.event")}</Label>
+            <Input placeholder={t("events.proveMultiple")} {...form.register(`performances.${index}.event`)} />
           </div>
         ) : (
           <div className="space-y-1.5">
-            <Label>Distanza (m)</Label>
+            <Label>{t("common.distance")} (m)</Label>
             <Input
               type="number"
               list={`distances-${index}`}
-              placeholder="metri"
+              placeholder={t("sessions.metres")}
               {...form.register(`performances.${index}.distance`)}
             />
             <datalist id={`distances-${index}`}>
@@ -489,27 +477,27 @@ function PerformanceRow({
         )}
 
         <div className="space-y-1.5">
-          <Label>Risultato {resultLabel}</Label>
+          <Label>{t("common.result")} {resultLabel}</Label>
           <Input type="number" step="0.01" {...form.register(`performances.${index}.result`)} />
-          {resultErr && <p className="text-xs text-destructive">{resultErr.message}</p>}
+          {resultErr && <p className="text-xs text-destructive">{t(resultErr.message ?? "")}</p>}
         </div>
 
         <div className="space-y-1.5">
-          <Label>Vento (m/s)</Label>
-          <Input type="number" step="0.1" placeholder="opz." {...form.register(`performances.${index}.wind`)} />
+          <Label>{t("common.wind")} (m/s)</Label>
+          <Input type="number" step="0.1" placeholder={t("sessions.optionalShort")} {...form.register(`performances.${index}.wind`)} />
         </div>
 
         <div className="space-y-1.5">
-          <Label>Corsia</Label>
-          <Input type="number" placeholder="opz." {...form.register(`performances.${index}.lane`)} />
+          <Label>{t("common.lane")}</Label>
+          <Input type="number" placeholder={t("sessions.optionalShort")} {...form.register(`performances.${index}.lane`)} />
         </div>
         <div className="space-y-1.5">
-          <Label>Posizione</Label>
-          <Input type="number" placeholder="opz." {...form.register(`performances.${index}.position`)} />
+          <Label>{t("common.position")}</Label>
+          <Input type="number" placeholder={t("sessions.optionalShort")} {...form.register(`performances.${index}.position`)} />
         </div>
         <div className="space-y-1.5">
-          <Label>Batteria / turno</Label>
-          <Input placeholder="es. finale" {...form.register(`performances.${index}.heat`)} />
+          <Label>{t("common.heat")}</Label>
+          <Input placeholder={t("sessions.finalExample")} {...form.register(`performances.${index}.heat`)} />
         </div>
 
         <div className="flex items-end">
@@ -521,7 +509,7 @@ function PerformanceRow({
             disabled={!canRemove}
             className="text-muted-foreground"
           >
-            <Trash2 className="h-4 w-4" /> Rimuovi
+            <Trash2 className="h-4 w-4" /> {t("common.remove")}
           </Button>
         </div>
       </CardContent>

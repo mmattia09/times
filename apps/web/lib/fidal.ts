@@ -56,11 +56,11 @@ export function assertFidalUrl(raw: string): URL {
   try {
     url = new URL(raw);
   } catch {
-    throw new Error("URL non valido.");
+    throw new Error("errors.fidalInvalidUrl");
   }
-  if (url.protocol !== "https:") throw new Error("L'URL FIDAL deve usare https.");
+  if (url.protocol !== "https:") throw new Error("errors.fidalHttps");
   if (!ALLOWED_HOSTS.has(url.hostname.toLowerCase())) {
-    throw new Error("L'URL deve puntare a fidal.it.");
+    throw new Error("errors.fidalHost");
   }
   return url;
 }
@@ -107,7 +107,7 @@ export async function fetchFidalProfile(url: string): Promise<string> {
     return new TextDecoder().decode(body);
   }
 
-  throw new Error("Troppi redirect dalla pagina FIDAL.");
+  throw new Error("errors.fidalTooManyRedirects");
 }
 
 /** Parse an Italian dd/mm/yyyy (or dd-mm-yyyy) date string. */

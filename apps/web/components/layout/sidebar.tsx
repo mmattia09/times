@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { Timer } from "lucide-react";
 import { navItems, settingsItem } from "@/components/layout/nav";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n/client";
 
 function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
@@ -13,9 +14,11 @@ function isActive(pathname: string, href: string) {
 function NavLink({
   pathname,
   item,
+  t,
 }: {
   pathname: string;
-  item: { href: string; label: string; icon: React.ComponentType<{ className?: string }> };
+  item: { href: string; key: string; icon: React.ComponentType<{ className?: string }> };
+  t: (k: string) => string;
 }) {
   const Icon = item.icon;
   const active = isActive(pathname, item.href);
@@ -30,13 +33,14 @@ function NavLink({
       )}
     >
       <Icon className="h-4 w-4" />
-      {item.label}
+      {t(item.key)}
     </Link>
   );
 }
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { t } = useI18n();
   return (
     // Sticky + full-height so the nav (and Impostazioni) stays visible while
     // the main content scrolls.
@@ -47,11 +51,11 @@ export function Sidebar() {
       </div>
       <nav className="flex-1 space-y-1 overflow-y-auto p-3">
         {navItems.map((item) => (
-          <NavLink key={item.href} pathname={pathname} item={item} />
+          <NavLink key={item.href} pathname={pathname} item={item} t={t} />
         ))}
       </nav>
       <div className="border-t p-3">
-        <NavLink pathname={pathname} item={settingsItem} />
+        <NavLink pathname={pathname} item={settingsItem} t={t} />
       </div>
     </aside>
   );
@@ -59,6 +63,7 @@ export function Sidebar() {
 
 export function BottomNav() {
   const pathname = usePathname();
+  const { t } = useI18n();
   return (
     // pb-[env(safe-area-inset-bottom)] keeps the tabs above the iOS home
     // indicator when the app is installed to the home screen.
@@ -76,7 +81,7 @@ export function BottomNav() {
             )}
           >
             <Icon className="h-5 w-5" />
-            {item.label}
+            {t(item.key)}
           </Link>
         );
       })}

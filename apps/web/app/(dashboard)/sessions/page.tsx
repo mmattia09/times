@@ -13,15 +13,20 @@ import { eventLabel, formatResult, isWindLegal } from "@/lib/athletics";
 import { formatDate, formatOrganizzatore } from "@/lib/format";
 import { listSeasons, seasonKey, seasonLabel } from "@/lib/season";
 import { listSessions, type SessionFilters as Filters } from "@/lib/services";
+import { getT } from "@/lib/i18n/server";
 
 
-export const metadata = { title: "Sessioni" };
+export async function generateMetadata() {
+  const { t } = await getT();
+  return { title: t("sessions.title") };
+}
 export default async function SessionsPage({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | undefined>>;
 }) {
   const user = await requireUser();
+  const { t, dict, locale } = await getT();
   const sp = await searchParams;
 
   const filters: Filters = {
@@ -44,17 +49,17 @@ export default async function SessionsPage({
   ]);
 
   const seasons = earliest[0]
-    ? listSeasons(earliest[0].date).map((s) => ({ key: seasonKey(s), label: seasonLabel(s) }))
+    ? listSeasons(earliest[0].date).map((s) => ({ key: seasonKey(s), label: seasonLabel(s, dict) }))
     : [];
 
   const rows: SessionRow[] = data.map((s) => ({
     id: s.id,
-    date: formatDate(s.date),
+    date: formatDate(s.date, undefined, locale),
     type: s.type,
     tempo: s.tempo,
     livello: s.livello,
     luogo: s.luogo,
-    organizzatore: formatOrganizzatore(s.organizzatore),
+    organizzatore: formatOrganizzatore(s.organizzatore, dict),
     tipo: s.tipo,
     note: s.note,
     // No results? Show the attached scheda (or a dash) so the row still says
@@ -64,20 +69,20 @@ export default async function SessionsPage({
         ? s.performances
             .map((p) => {
               const windy = !isWindLegal(p, p.wind != null ? Number(p.wind) : null);
-              return `${eventLabel(p)} ${formatResult(p.result, p)}${windy ? "w" : ""}`;
+              return `${eventLabel(p, dict)} ${formatResult(p.result, p)}${windy ? "w" : ""}`;
             })
             .join(" · ")
         : s.workout?.name
-          ? `Scheda: ${s.workout.name}`
-          : "—",
+          ? `${dict.sessions.workoutSection}: ${s.workout.name}`
+          : dict.common.none,
   }));
 
   return (
     <>
-      <PageHeader title="Sessioni" description={`${data.length} risultati`}>
+      <PageHeader title={t("sessions.title")} description={t("sessions.count", { count: data.length })}>
         <Button asChild size="sm">
           <Link href="/sessions/new">
-            <Plus className="h-4 w-4" /> Nuova
+            <Plus className="h-4 w-4" /> {t("common.new")}
           </Link>
         </Button>
       </PageHeader>
@@ -89,10 +94,10 @@ export default async function SessionsPage({
       {rows.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center gap-3 py-16 text-center">
-            <p className="text-sm text-muted-foreground">Nessuna sessione trovata.</p>
+            <p className="text-sm text-muted-foreground">{t("sessions.none")}</p>
             <Button asChild size="sm">
               <Link href="/sessions/new">
-                <Plus className="h-4 w-4" /> Aggiungi la prima
+                <Plus className="h-4 w-4" /> {t("sessions.addFirst")}
               </Link>
             </Button>
           </CardContent>

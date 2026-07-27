@@ -1,17 +1,24 @@
 import type { MetadataRoute } from "next";
+import { LOCALE_TAGS } from "@/lib/i18n";
+import { getRequestLocale, translator } from "@/lib/i18n/server";
 
-export default function manifest(): MetadataRoute.Manifest {
+export default async function manifest(): Promise<MetadataRoute.Manifest> {
+  // Manifests are fetched without credentials, so the locale comes from the
+  // cookie / Accept-Language rather than the signed-in user's preference.
+  const locale = await getRequestLocale();
+  const { t } = translator(locale);
+
   return {
-    name: "Times — atletica leggera",
+    name: `Times — ${t("meta.tagline")}`,
     short_name: "Times",
-    description: "Allenamenti, gare e record di atletica leggera.",
+    description: t("meta.shortDescription"),
     start_url: "/dashboard",
     scope: "/",
     display: "standalone",
     orientation: "portrait",
     background_color: "#0b0b0f",
     theme_color: "#7c5cf0",
-    lang: "it",
+    lang: LOCALE_TAGS[locale],
     categories: ["sports", "health", "productivity"],
     icons: [
       { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
@@ -20,9 +27,9 @@ export default function manifest(): MetadataRoute.Manifest {
     ],
     // Long-press the installed icon to jump straight into logging.
     shortcuts: [
-      { name: "Nuova sessione", url: "/sessions/new" },
-      { name: "Nuova scheda", url: "/workouts/new" },
-      { name: "Record", url: "/records" },
+      { name: t("sessions.newSession"), url: "/sessions/new" },
+      { name: t("workouts.newTitle"), url: "/workouts/new" },
+      { name: t("records.title"), url: "/records" },
     ],
   };
 }

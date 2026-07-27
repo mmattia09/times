@@ -18,6 +18,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useChartTokens, type ChartTokens } from "@/components/charts/chart-theme";
 import { formatResult, type EventKey } from "@/lib/athletics";
 import type { Discipline } from "@/lib/db/schema";
+import { useI18n } from "@/lib/i18n/client";
 
 /** Axis tick label without floating-point noise (12.000001 → "12"). */
 function tidyTick(v: number): string {
@@ -45,6 +46,7 @@ export type ChartPoint = {
 
 export function PerformanceCharts({ points }: { points: ChartPoint[] }) {
   const { tokens, mounted } = useChartTokens();
+  const { t } = useI18n();
 
   const eventKeys = useMemo(() => {
     const m = new Map<string, string>();
@@ -135,7 +137,7 @@ export function PerformanceCharts({ points }: { points: ChartPoint[] }) {
     return (
       <Card>
         <CardContent className="py-16 text-center text-sm text-muted-foreground">
-          Nessun dato disponibile per i grafici.
+          {t("records.noChartData")}
         </CardContent>
       </Card>
     );
@@ -161,7 +163,7 @@ export function PerformanceCharts({ points }: { points: ChartPoint[] }) {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Tutte le stagioni</SelectItem>
+            <SelectItem value="all">{t("records.allSeasons")}</SelectItem>
             {seasons.map((s) => (
               <SelectItem key={s.key} value={s.key}>
                 {s.label}
@@ -171,23 +173,23 @@ export function PerformanceCharts({ points }: { points: ChartPoint[] }) {
         </Select>
         <Tabs value={ctx} onValueChange={(v) => setCtx(v as typeof ctx)}>
           <TabsList className="h-8">
-            <TabsTrigger value="all" className="text-xs">Tutto</TabsTrigger>
-            <TabsTrigger value="competition" className="text-xs">Gare</TabsTrigger>
-            <TabsTrigger value="training" className="text-xs">Allen.</TabsTrigger>
+            <TabsTrigger value="all" className="text-xs">{t("records.all")}</TabsTrigger>
+            <TabsTrigger value="competition" className="text-xs">{t("records.competitionsOnly")}</TabsTrigger>
+            <TabsTrigger value="training" className="text-xs">{t("records.trainingsOnly")}</TabsTrigger>
           </TabsList>
         </Tabs>
         <Tabs value={ambiente} onValueChange={(v) => setAmbiente(v as typeof ambiente)}>
           <TabsList className="h-8">
-            <TabsTrigger value="all" className="text-xs">Tutti</TabsTrigger>
-            <TabsTrigger value="outdoor" className="text-xs">Outdoor</TabsTrigger>
-            <TabsTrigger value="indoor" className="text-xs">Indoor</TabsTrigger>
+            <TabsTrigger value="all" className="text-xs">{t("records.allEnvironments")}</TabsTrigger>
+            <TabsTrigger value="outdoor" className="text-xs">{t("records.outdoor")}</TabsTrigger>
+            <TabsTrigger value="indoor" className="text-xs">{t("records.indoor")}</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
 
       <Card>
         <CardHeader className="flex-row items-center justify-between space-y-0">
-          <CardTitle className="text-base">Andamento nel tempo — {current?.label}</CardTitle>
+          <CardTitle className="text-base">{t("records.trendTitle", { event: current?.label ?? "" })}</CardTitle>
           <ChartLegend tokens={tokens} />
         </CardHeader>
         <CardContent>
@@ -208,7 +210,7 @@ export function PerformanceCharts({ points }: { points: ChartPoint[] }) {
               <Line
                 type="monotone"
                 dataKey="competition"
-                name="Gara"
+                name={t("dashboard.competitionsLegend")}
                 stroke={tokens.gara}
                 strokeWidth={2}
                 strokeLinecap="round"
@@ -219,7 +221,7 @@ export function PerformanceCharts({ points }: { points: ChartPoint[] }) {
               <Line
                 type="monotone"
                 dataKey="training"
-                name="Allenamento"
+                name={t("dashboard.trainingsLegend")}
                 stroke={tokens.allenamento}
                 strokeWidth={2}
                 strokeLinecap="round"
@@ -231,7 +233,7 @@ export function PerformanceCharts({ points }: { points: ChartPoint[] }) {
             </LineChart>
           </ChartFrame>
           <p className="mt-2 text-xs text-muted-foreground">
-            {lowerIsBetter ? "Asse Y invertito: più in alto = più veloce." : "Più in alto = miglior misura."}
+            {lowerIsBetter ? t("records.yAxisInverted") : t("records.yAxisNormal")}
           </p>
         </CardContent>
       </Card>
@@ -239,7 +241,7 @@ export function PerformanceCharts({ points }: { points: ChartPoint[] }) {
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Miglior risultato per stagione</CardTitle>
+            <CardTitle className="text-base">{t("records.bestPerSeason")}</CardTitle>
           </CardHeader>
           <CardContent>
             <ChartFrame mounted={mounted}>
@@ -250,20 +252,20 @@ export function PerformanceCharts({ points }: { points: ChartPoint[] }) {
                 <Tooltip content={<ChartTooltip fmt={fmt} />} cursor={{ fill: tokens.grid, opacity: 0.35 }} />
                 <Bar
                   dataKey="best"
-                  name="Migliore"
+                  name={t("records.record")}
                   fill={tokens.gara}
                   maxBarSize={24}
                   radius={[4, 4, 0, 0]}
                 />
               </BarChart>
             </ChartFrame>
-            <p className="mt-2 text-xs text-muted-foreground">Solo prestazioni regolari (vento ≤ +2.0).</p>
+            <p className="mt-2 text-xs text-muted-foreground">{t("records.legalOnly")}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Curva di miglioramento</CardTitle>
+            <CardTitle className="text-base">{t("records.improvementCurve")}</CardTitle>
           </CardHeader>
           <CardContent>
             <ChartFrame mounted={mounted}>
@@ -275,7 +277,7 @@ export function PerformanceCharts({ points }: { points: ChartPoint[] }) {
                 <Line
                   type="monotone"
                   dataKey="improvement"
-                  name="Miglioramento"
+                  name={t("records.improvementCurve")}
                   stroke={tokens.gara}
                   strokeWidth={2}
                   strokeLinecap="round"
@@ -285,7 +287,7 @@ export function PerformanceCharts({ points }: { points: ChartPoint[] }) {
               </LineChart>
             </ChartFrame>
             <p className="mt-2 text-xs text-muted-foreground">
-              % di miglioramento del record rispetto alla prima prestazione registrata.
+              {t("records.improvementCaption")}
             </p>
           </CardContent>
         </Card>
@@ -296,13 +298,14 @@ export function PerformanceCharts({ points }: { points: ChartPoint[] }) {
 
 /** Legend for the two-series chart: line-key swatches, text in text tokens. */
 function ChartLegend({ tokens }: { tokens: ChartTokens }) {
+  const { t } = useI18n();
   return (
     <div className="flex items-center gap-4 text-xs text-muted-foreground">
       <span className="flex items-center gap-1.5">
         <svg width="20" height="6" aria-hidden>
           <line x1="1" y1="3" x2="19" y2="3" stroke={tokens.gara} strokeWidth="2" strokeLinecap="round" />
         </svg>
-        Gara
+        {t("dashboard.competitionsLegend")}
       </span>
       <span className="flex items-center gap-1.5">
         <svg width="20" height="6" aria-hidden>
@@ -317,7 +320,7 @@ function ChartLegend({ tokens }: { tokens: ChartTokens }) {
             strokeDasharray="4 3"
           />
         </svg>
-        Allenamento
+        {t("dashboard.trainingsLegend")}
       </span>
     </div>
   );

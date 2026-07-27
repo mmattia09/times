@@ -10,14 +10,15 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import type { WorkoutBlock, WorkoutTemplate } from "@/lib/db/schema";
+import { useI18n } from "@/lib/i18n/client";
 
-const COLUMNS: { field: keyof WorkoutBlock; label: string; placeholder: string; width: string }[] = [
-  { field: "label", label: "Blocco", placeholder: "1", width: "minmax(64px,0.6fr)" },
-  { field: "ripetute", label: "Ripetute", placeholder: "4 x 60m", width: "minmax(110px,1.2fr)" },
-  { field: "recupero", label: "Recupero", placeholder: "2' 30\"", width: "minmax(84px,0.8fr)" },
-  { field: "pausa", label: "Pausa", placeholder: "4'", width: "minmax(64px,0.6fr)" },
-  { field: "ritmo", label: "Ritmo", placeholder: "85%", width: "minmax(72px,0.7fr)" },
-  { field: "note", label: "Note", placeholder: "chiodate", width: "minmax(120px,1.4fr)" },
+const COLUMNS: { field: keyof WorkoutBlock; labelKey: string; placeholder: string; width: string }[] = [
+  { field: "label", labelKey: "workouts.blockCol", placeholder: "1", width: "minmax(64px,0.6fr)" },
+  { field: "ripetute", labelKey: "workouts.repsCol", placeholder: "4 x 60m", width: "minmax(110px,1.2fr)" },
+  { field: "recupero", labelKey: "workouts.recoveryCol", placeholder: "2' 30\"", width: "minmax(84px,0.8fr)" },
+  { field: "pausa", labelKey: "workouts.pauseCol", placeholder: "4'", width: "minmax(64px,0.6fr)" },
+  { field: "ritmo", labelKey: "workouts.paceCol", placeholder: "85%", width: "minmax(72px,0.7fr)" },
+  { field: "note", labelKey: "workouts.notesCol", placeholder: "", width: "minmax(120px,1.4fr)" },
 ];
 const GRID = { gridTemplateColumns: `${COLUMNS.map((c) => c.width).join(" ")} 36px` };
 
@@ -32,6 +33,7 @@ const emptyBlock = (): WorkoutBlock => ({
 
 export function TemplateForm({ template }: { template?: WorkoutTemplate }) {
   const router = useRouter();
+  const { t } = useI18n();
   const [name, setName] = useState(template?.name ?? "");
   const [category, setCategory] = useState(template?.category ?? "");
   const [description, setDescription] = useState(template?.description ?? "");
@@ -93,11 +95,11 @@ export function TemplateForm({ template }: { template?: WorkoutTemplate }) {
       blocks: blocks.filter((b) => b.ripetute.trim() !== "" || b.label),
     };
     if (!name.trim()) {
-      toast({ variant: "destructive", title: "Nome mancante", description: "Dai un nome alla scheda." });
+      toast({ variant: "destructive", title: t("workouts.nameMissing"), description: t("workouts.nameMissingDescription") });
       return;
     }
     if (payload.blocks.length === 0) {
-      toast({ variant: "destructive", title: "Scheda vuota", description: "Aggiungi almeno un blocco." });
+      toast({ variant: "destructive", title: t("workouts.emptyWorkout"), description: t("workouts.emptyWorkoutDescription") });
       return;
     }
     setSaving(true);
@@ -111,10 +113,10 @@ export function TemplateForm({ template }: { template?: WorkoutTemplate }) {
     );
     setSaving(false);
     if (!res.ok) {
-      toast({ variant: "destructive", title: "Errore", description: "Salvataggio non riuscito." });
+      toast({ variant: "destructive", title: t("common.error"), description: t("common.saveFailed") });
       return;
     }
-    toast({ title: "Salvata", description: "Scheda salvata." });
+    toast({ title: t("common.saved"), description: t("workouts.savedOk") });
     router.push("/workouts");
     router.refresh();
   }
@@ -135,41 +137,45 @@ export function TemplateForm({ template }: { template?: WorkoutTemplate }) {
       className="space-y-6"
     >
       <div className="space-y-3">
-        <h2 className="text-sm font-semibold">Informazioni</h2>
+        <h2 className="text-sm font-semibold">{t("workouts.info")}</h2>
         <Card>
           <CardContent className="grid gap-5 p-5 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label htmlFor="tpl-name">Nome</Label>
+              <Label htmlFor="tpl-name">{t("workouts.name")}</Label>
               <Input
                 id="tpl-name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="es. piramidale corto"
+                placeholder={t("workouts.namePlaceholder")}
                 autoFocus
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="tpl-cat">Categoria</Label>
+              <Label htmlFor="tpl-cat">{t("workouts.category")}</Label>
               <Input
                 id="tpl-cat"
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                placeholder="velocità, tecnica, resistenza…"
+                placeholder={t("workouts.categoryPlaceholder")}
                 list="tpl-categories"
               />
               <datalist id="tpl-categories">
-                {["velocità", "velocità corta", "tecnica", "partenza dai blocchi", "resistenza", "per i 200m"].map((c) => (
-                  <option key={c} value={c} />
-                ))}
+                {t("workouts.categorySuggestions")
+                  .split(",")
+                  .map((c) => c.trim())
+                  .filter(Boolean)
+                  .map((c) => (
+                    <option key={c} value={c} />
+                  ))}
               </datalist>
             </div>
             <div className="space-y-1.5 sm:col-span-2">
-              <Label htmlFor="tpl-desc">Descrizione</Label>
+              <Label htmlFor="tpl-desc">{t("workouts.description")}</Label>
               <Textarea
                 id="tpl-desc"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="note generali sulla scheda (opzionale)"
+                placeholder={t("workouts.descriptionPlaceholder")}
               />
             </div>
           </CardContent>
@@ -178,9 +184,9 @@ export function TemplateForm({ template }: { template?: WorkoutTemplate }) {
 
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold">Blocchi</h2>
+          <h2 className="text-sm font-semibold">{t("workouts.blocks")}</h2>
           <Button type="button" variant="outline" size="sm" onClick={() => addRow()}>
-            <Plus className="h-4 w-4" /> Riga
+            <Plus className="h-4 w-4" /> {t("workouts.row")}
           </Button>
         </div>
         <Card>
@@ -190,7 +196,7 @@ export function TemplateForm({ template }: { template?: WorkoutTemplate }) {
                 <div className="grid border-b bg-muted/40" style={GRID}>
                   {COLUMNS.map((c) => (
                     <div key={c.field} className="px-3 py-2 text-xs font-medium text-muted-foreground">
-                      {c.label}
+                      {t(c.labelKey)}
                     </div>
                   ))}
                   <div />
@@ -213,7 +219,7 @@ export function TemplateForm({ template }: { template?: WorkoutTemplate }) {
                       tabIndex={-1}
                       onClick={() => setBlocks((prev) => (prev.length > 1 ? prev.filter((_, i) => i !== row) : prev))}
                       className="flex items-center justify-center text-muted-foreground transition-colors hover:text-destructive"
-                      aria-label={`Rimuovi riga ${row + 1}`}
+                      aria-label={`${t("common.remove")} ${row + 1}`}
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
@@ -224,16 +230,16 @@ export function TemplateForm({ template }: { template?: WorkoutTemplate }) {
           </CardContent>
         </Card>
         <p className="text-xs text-muted-foreground">
-          Invio: riga successiva (o nuova riga in fondo) · ⌘ + Invio: salva
+          {t("workouts.keyboardHint")}
         </p>
       </div>
 
       <div className="flex justify-end gap-2">
         <Button type="button" variant="ghost" onClick={() => router.push("/workouts")}>
-          Annulla
+          {t("common.cancel")}
         </Button>
         <Button type="submit" disabled={saving}>
-          {saving ? "Salvataggio…" : template ? "Aggiorna scheda" : "Crea scheda"}
+          {saving ? t("common.saving") : template ? t("workouts.updateWorkout") : t("workouts.createWorkout")}
         </Button>
       </div>
     </form>

@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { toast } from "@/hooks/use-toast";
 import { formatDate } from "@/lib/format";
+import { useI18n } from "@/lib/i18n/client";
 
 type Key = {
   id: string;
@@ -19,6 +20,7 @@ type Key = {
 };
 
 export function ApiKeysManager() {
+  const { t, locale } = useI18n();
   const [keys, setKeys] = useState<Key[]>([]);
   const [label, setLabel] = useState("");
   const [creating, setCreating] = useState(false);
@@ -45,7 +47,7 @@ export function ApiKeysManager() {
     });
     setCreating(false);
     if (!res.ok) {
-      toast({ variant: "destructive", title: "Errore", description: "Creazione chiave non riuscita." });
+      toast({ variant: "destructive", title: t("common.error"), description: t("settings.keyCreateFailed") });
       return;
     }
     const json = await res.json();
@@ -57,7 +59,7 @@ export function ApiKeysManager() {
   async function revoke(id: string) {
     const res = await fetch(`/api/keys/${id}`, { method: "DELETE" });
     if (res.ok) {
-      toast({ title: "Revocata", description: "Chiave API revocata." });
+      toast({ title: t("settings.revoked"), description: t("settings.revokedOk") });
       load();
     }
   }
@@ -73,19 +75,19 @@ export function ApiKeysManager() {
     <div className="space-y-4">
       <div className="flex gap-2">
         <Input
-          placeholder="Etichetta (es. script personale)"
+          placeholder={t("settings.keyLabelPlaceholder")}
           value={label}
           onChange={(e) => setLabel(e.target.value)}
         />
         <Button onClick={create} disabled={creating}>
-          <KeyRound className="h-4 w-4" /> Genera
+          <KeyRound className="h-4 w-4" /> {t("settings.generate")}
         </Button>
       </div>
 
       {newKey && (
         <div className="rounded-md border border-primary/40 bg-primary/5 p-3">
           <p className="mb-2 text-xs text-muted-foreground">
-            Copia questa chiave adesso: non sarà più mostrata.
+            {t("settings.copyKeyNow")}
           </p>
           <div className="flex items-center gap-2">
             <code className="flex-1 break-all rounded bg-background px-2 py-1.5 text-xs">{newKey}</code>
@@ -97,7 +99,7 @@ export function ApiKeysManager() {
       )}
 
       {keys.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Nessuna chiave API.</p>
+        <p className="text-sm text-muted-foreground">{t("settings.noKeys")}</p>
       ) : (
         <ul className="divide-y rounded-md border">
           {keys.map((k) => (
@@ -105,16 +107,16 @@ export function ApiKeysManager() {
               <div className="min-w-0">
                 <p className="flex items-center gap-2 text-sm font-medium">
                   {k.label}
-                  {k.revokedAt && <Badge variant="secondary">Revocata</Badge>}
+                  {k.revokedAt && <Badge variant="secondary">{t("settings.revoked")}</Badge>}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  <code>{k.prefix}…</code> · creata {formatDate(k.createdAt)}
-                  {k.lastUsedAt ? ` · usata ${formatDate(k.lastUsedAt)}` : " · mai usata"}
+                  <code>{k.prefix}…</code> · {t("settings.keyCreated", { date: formatDate(k.createdAt, undefined, locale) })}
+                  {k.lastUsedAt ? ` · ${t("settings.keyUsed", { date: formatDate(k.lastUsedAt, undefined, locale) })}` : ` · ${t("settings.keyNeverUsed")}`}
                 </p>
               </div>
               {!k.revokedAt && (
                 <Button variant="ghost" size="sm" className="text-destructive" onClick={() => setToRevoke(k)}>
-                  <Trash2 className="h-4 w-4" /> Revoca
+                  <Trash2 className="h-4 w-4" /> {t("settings.revoke")}
                 </Button>
               )}
             </li>
@@ -125,9 +127,9 @@ export function ApiKeysManager() {
       <ConfirmDialog
         open={toRevoke !== null}
         onOpenChange={(o) => !o && setToRevoke(null)}
-        title="Revocare la chiave?"
-        description={`"${toRevoke?.label ?? ""}" smetterà di funzionare immediatamente per qualsiasi client che la usa.`}
-        confirmLabel="Revoca"
+        title={t("settings.revokeTitle")}
+        description={t("settings.revokeDescription", { label: toRevoke?.label ?? "" })}
+        confirmLabel={t("settings.revoke")}
         onConfirm={() => (toRevoke ? revoke(toRevoke.id) : undefined)}
       />
     </div>

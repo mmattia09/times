@@ -19,10 +19,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "@/hooks/use-toast";
 import { eventKey, eventLabel, formatResult, lowerIsBetter, resultUnit, type EventKey } from "@/lib/athletics";
 import type { Goal } from "@/lib/db/schema";
+import { useI18n } from "@/lib/i18n/client";
 
 export type PbSummary = EventKey & { keyStr: string; label: string; result: number };
 
 export function GoalsCard({ pbs }: { pbs: PbSummary[] }) {
+  const { t, dict } = useI18n();
   const [goals, setGoals] = useState<Goal[] | null>(null);
   const [open, setOpen] = useState(false);
   const [toDelete, setToDelete] = useState<Goal | null>(null);
@@ -46,18 +48,18 @@ export function GoalsCard({ pbs }: { pbs: PbSummary[] }) {
     <Card>
       <CardHeader className="flex-row items-center justify-between space-y-0">
         <CardTitle className="flex items-center gap-2 text-base">
-          <Target className="h-4 w-4 text-primary" /> Obiettivi
+          <Target className="h-4 w-4 text-primary" /> {t("records.goals")}
         </CardTitle>
         <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
-          <Plus className="h-4 w-4" /> Obiettivo
+          <Plus className="h-4 w-4" /> {t("records.goalButton")}
         </Button>
       </CardHeader>
       <CardContent>
         {goals === null ? (
-          <p className="text-sm text-muted-foreground">Caricamento…</p>
+          <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
         ) : goals.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            Nessun obiettivo. Fissa un tempo o una misura da inseguire: vedrai quanto manca rispetto al tuo PB.
+            {t("records.noGoals")}
           </p>
         ) : (
           <ul className="divide-y">
@@ -76,7 +78,7 @@ export function GoalsCard({ pbs }: { pbs: PbSummary[] }) {
                 <li key={g.id} className="flex items-center gap-3 py-2.5">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2 text-sm">
-                      <span className="font-medium">{eventLabel(ek)}</span>
+                      <span className="font-medium">{eventLabel(ek, dict)}</span>
                       <span className="tabular-nums text-muted-foreground">
                         {pb ? formatResult(pb.result, ek) : "—"} → <span className="font-medium text-foreground">{formatResult(target, ek)}</span>
                       </span>
@@ -88,19 +90,19 @@ export function GoalsCard({ pbs }: { pbs: PbSummary[] }) {
                   </div>
                   <div className="flex w-28 shrink-0 items-center justify-end gap-1">
                     {achieved ? (
-                      <Badge variant="success">raggiunto</Badge>
+                      <Badge variant="success">{t("records.achieved")}</Badge>
                     ) : gap != null ? (
                       <span className="text-xs tabular-nums text-muted-foreground">
-                        {formatGap(gap, ek)}
+                        {formatGap(gap, ek, t)}
                       </span>
                     ) : (
-                      <span className="text-xs text-muted-foreground">nessun PB</span>
+                      <span className="text-xs text-muted-foreground">{t("records.noPb")}</span>
                     )}
                     <button
                       type="button"
                       onClick={() => setToDelete(g)}
                       className="text-muted-foreground transition-colors hover:text-destructive"
-                      aria-label="Elimina obiettivo"
+                      aria-label={t("records.deleteGoalAria")}
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
@@ -115,10 +117,10 @@ export function GoalsCard({ pbs }: { pbs: PbSummary[] }) {
       <ConfirmDialog
         open={toDelete !== null}
         onOpenChange={(o) => !o && setToDelete(null)}
-        title="Eliminare l'obiettivo?"
+        title={t("records.deleteGoalTitle")}
         description={
           toDelete
-            ? `L'obiettivo su ${eventLabel({ discipline: toDelete.discipline, distance: toDelete.distance, event: toDelete.event })} verrà rimosso.`
+            ? t("records.deleteGoalDescription", { event: eventLabel({ discipline: toDelete.discipline, distance: toDelete.distance, event: toDelete.event }, dict) })
             : ""
         }
         onConfirm={() => (toDelete ? remove(toDelete.id) : undefined)}
@@ -127,12 +129,12 @@ export function GoalsCard({ pbs }: { pbs: PbSummary[] }) {
   );
 }
 
-function formatGap(gap: number, ek: EventKey): string {
+function formatGap(gap: number, ek: EventKey, t: (k: string, v?: Record<string, string | number>) => string): string {
   const unit = resultUnit(ek);
-  if (unit === "s" || unit === "min") return `manca ${gap.toFixed(2)}`;
-  if (unit === "cm") return `mancano ${gap.toFixed(0)} cm`;
-  if (unit === "pts") return `mancano ${gap.toFixed(0)} pti`;
-  return `mancano ${gap.toFixed(2)} m`;
+  if (unit === "s" || unit === "min") return t("records.missing", { gap: gap.toFixed(2) });
+  if (unit === "cm") return t("records.missingPlural", { gap: `${gap.toFixed(0)} cm` });
+  if (unit === "pts") return t("records.missingPlural", { gap: `${gap.toFixed(0)} pti` });
+  return t("records.missingPlural", { gap: `${gap.toFixed(2)} m` });
 }
 
 function AddGoalDialog({
@@ -146,6 +148,7 @@ function AddGoalDialog({
   pbs: PbSummary[];
   onSaved: () => void;
 }) {
+  const { t } = useI18n();
   const [selected, setSelected] = useState(pbs[0]?.keyStr ?? "");
   const [target, setTarget] = useState("");
   const [note, setNote] = useState("");
@@ -169,10 +172,10 @@ function AddGoalDialog({
     });
     setSaving(false);
     if (!res.ok) {
-      toast({ variant: "destructive", title: "Errore", description: "Salvataggio non riuscito." });
+      toast({ variant: "destructive", title: t("common.error"), description: t("common.saveFailed") });
       return;
     }
-    toast({ title: "Obiettivo aggiunto" });
+    toast({ title: t("records.goalAdded") });
     onOpenChange(false);
     onSaved();
   }
@@ -181,19 +184,19 @@ function AddGoalDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Nuovo obiettivo</DialogTitle>
+          <DialogTitle>{t("records.newGoal")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label>Specialità</Label>
+            <Label>{t("common.event")}</Label>
             <Select value={selected} onValueChange={setSelected}>
               <SelectTrigger>
-                <SelectValue placeholder="Scegli…" />
+                <SelectValue placeholder={t("common.loading")} />
               </SelectTrigger>
               <SelectContent>
                 {pbs.map((p) => (
                   <SelectItem key={p.keyStr} value={p.keyStr}>
-                    {p.label} — PB {formatResult(p.result, p)}
+                    {p.label} — {t("records.pbWith", { result: formatResult(p.result, p) })}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -201,7 +204,7 @@ function AddGoalDialog({
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="goal-target">
-              Obiettivo {ek ? `(${resultUnit(ek)})` : ""}
+              {t("records.goalTarget")} {ek ? `(${resultUnit(ek)})` : ""}
             </Label>
             <Input
               id="goal-target"
@@ -213,16 +216,16 @@ function AddGoalDialog({
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="goal-note">Nota (opzionale)</Label>
-            <Input id="goal-note" value={note} onChange={(e) => setNote(e.target.value)} placeholder="es. entro fine stagione" />
+            <Label htmlFor="goal-note">{t("records.goalNote")}</Label>
+            <Input id="goal-note" value={note} onChange={(e) => setNote(e.target.value)} placeholder={t("records.goalNotePlaceholder")} />
           </div>
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
-            Annulla
+            {t("common.cancel")}
           </Button>
           <Button onClick={save} disabled={saving || !target || !ek}>
-            {saving ? "Salvataggio…" : "Aggiungi"}
+            {saving ? t("common.saving") : t("common.add")}
           </Button>
         </DialogFooter>
       </DialogContent>

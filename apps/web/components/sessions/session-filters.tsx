@@ -4,12 +4,14 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { RUN_DISTANCES } from "@/lib/athletics";
+import { useI18n } from "@/lib/i18n/client";
 
 const ALL = "__all__";
 
 export function SessionFilters({ seasons }: { seasons: { key: string; label: string }[] }) {
   const router = useRouter();
   const params = useSearchParams();
+  const { t } = useI18n();
 
   function set(key: string, value: string) {
     const next = new URLSearchParams(params.toString());
@@ -42,36 +44,36 @@ export function SessionFilters({ seasons }: { seasons: { key: string; label: str
     <div className="flex flex-wrap items-center gap-2">
       {filter(
         "season",
-        "Tutte le stagioni",
+        t("sessions.allSeasons"),
         seasons.map((s) => ({ value: s.key, label: s.label })),
       )}
-      {filter("type", "Tipo", [
-        { value: "training", label: "Allenamento" },
-        { value: "competition", label: "Gara" },
+      {filter("type", t("sessions.filterType"), [
+        { value: "training", label: t("common.training") },
+        { value: "competition", label: t("common.competition") },
       ])}
       {filter(
         "distance",
-        "Distanza",
+        t("sessions.filterDistance"),
         RUN_DISTANCES.map((d) => ({ value: String(d), label: `${d}m` })),
       )}
-      {filter("organizzatore", "Organizzatore", [
-        { value: "fidal", label: "FIDAL" },
-        { value: "csi", label: "CSI" },
-        { value: "altro", label: "Altro" },
+      {filter("organizzatore", t("sessions.filterOrganiser"), [
+        { value: "fidal", label: t("enums.organizzatore.fidal") },
+        { value: "csi", label: t("enums.organizzatore.csi") },
+        { value: "altro", label: t("enums.organizzatore.altro") },
       ])}
-      {filter("livello", "Livello", [
-        { value: "regionale", label: "Regionale" },
-        { value: "provinciale", label: "Provinciale" },
-        { value: "nazionale", label: "Nazionale" },
-        { value: "internazionale", label: "Internazionale" },
+      {filter("livello", t("sessions.filterLevel"), [
+        { value: "regionale", label: t("enums.livello.regionale") },
+        { value: "provinciale", label: t("enums.livello.provinciale") },
+        { value: "nazionale", label: t("enums.livello.nazionale") },
+        { value: "internazionale", label: t("enums.livello.internazionale") },
       ])}
-      {filter("tipo", "Ambiente", [
-        { value: "outdoor", label: "Outdoor" },
-        { value: "indoor", label: "Indoor" },
+      {filter("tipo", t("sessions.filterEnvironment"), [
+        { value: "outdoor", label: t("enums.tipo.outdoor") },
+        { value: "indoor", label: t("enums.tipo.indoor") },
       ])}
       {hasFilters && (
         <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => router.push("/sessions")}>
-          Azzera
+          {t("sessions.clearFilters")}
         </Button>
       )}
     </div>

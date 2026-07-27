@@ -1,5 +1,11 @@
 import { z } from "zod";
 
+/*
+ * Validation messages are i18n key paths ("validation.dateRequired"), not
+ * prose: the UI runs them through the translator, and API clients get a
+ * stable error code instead of a sentence that changes with the locale.
+ */
+
 export const disciplineSchema = z.enum([
   "sprint",
   "hurdles",
@@ -42,17 +48,17 @@ export const sessionWorkoutSchema = z.object({
 });
 
 export const workoutTemplateInputSchema = z.object({
-  name: z.string().min(1, "Nome richiesto").max(128),
+  name: z.string().min(1, "validation.nameRequired").max(128),
   category: emptyToNull(z.string().max(64)),
   description: emptyToNull(z.string().max(1000)),
-  blocks: z.array(workoutBlockSchema).min(1, "Aggiungi almeno un blocco"),
+  blocks: z.array(workoutBlockSchema).min(1, "validation.blockRequired"),
 });
 
 export const goalInputSchema = z.object({
   discipline: disciplineSchema.default("sprint"),
   distance: emptyToNull(z.coerce.number().int().positive()),
   event: emptyToNull(z.string().max(32)),
-  target: z.coerce.number().positive({ message: "Obiettivo richiesto" }),
+  target: z.coerce.number().positive({ message: "validation.targetRequired" }),
   note: emptyToNull(z.string().max(256)),
 });
 
@@ -63,7 +69,7 @@ export const performanceInputSchema = z.object({
   discipline: disciplineSchema.default("sprint"),
   distance: emptyToNull(z.coerce.number().int().positive()),
   event: emptyToNull(z.string().max(32)),
-  result: z.coerce.number().positive({ message: "Risultato richiesto" }),
+  result: z.coerce.number().positive({ message: "validation.resultRequired" }),
   wind: emptyToNull(z.coerce.number()),
   lane: emptyToNull(z.coerce.number().int()),
   position: emptyToNull(z.coerce.number().int()),
@@ -72,8 +78,8 @@ export const performanceInputSchema = z.object({
 
 const dateString = z
   .string()
-  .min(1, { message: "Data richiesta" })
-  .refine((s) => !Number.isNaN(Date.parse(s)), { message: "Data non valida" });
+  .min(1, { message: "validation.dateRequired" })
+  .refine((s) => !Number.isNaN(Date.parse(s)), { message: "validation.dateInvalid" });
 
 export const sessionInputSchema = z.object({
   date: dateString,
@@ -100,7 +106,7 @@ function endsAfterStart(s: { date: string; endDate?: string | null }): boolean {
 
 /** Session schema with the date-order check — use this to validate input. */
 export const sessionInputCheckedSchema = sessionInputSchema.refine(endsAfterStart, {
-  message: "La data di fine non può precedere quella di inizio",
+  message: "validation.endBeforeStart",
   path: ["endDate"],
 });
 
@@ -119,7 +125,7 @@ export const sessionQuerySchema = z.object({
 });
 
 export const apiKeyInputSchema = z.object({
-  label: z.string().min(1, "Etichetta richiesta").max(64),
+  label: z.string().min(1, "validation.labelRequired").max(64),
 });
 
 /**
@@ -140,6 +146,6 @@ function isFidalHost(raw: string): boolean {
 
 export const fidalUrlSchema = z.object({
   fidalUrl: z.string().refine(isFidalHost, {
-    message: "Deve essere un URL https di fidal.it",
+    message: "validation.fidalUrl",
   }),
 });

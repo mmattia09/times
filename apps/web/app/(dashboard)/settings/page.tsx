@@ -3,16 +3,22 @@ import { PageHeader } from "@/components/layout/page-header";
 import { ApiKeysManager } from "@/components/settings/api-keys-manager";
 import { DataTransferCard } from "@/components/settings/data-transfer-card";
 import { FidalSettings } from "@/components/settings/fidal-settings";
+import { LanguageSwitcher } from "@/components/settings/language-switcher";
 import { ProfileSettings } from "@/components/settings/profile-settings";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { db } from "@/lib/db";
 import { users, userSettings } from "@/lib/db/schema";
 import { requireUser } from "@/lib/current-user";
+import { getT } from "@/lib/i18n/server";
 
 
-export const metadata = { title: "Impostazioni" };
+export async function generateMetadata() {
+  const { t } = await getT();
+  return { title: t("settings.title") };
+}
 export default async function SettingsPage() {
   const user = await requireUser();
+  const { t } = await getT();
   const [[settings], [row]] = await Promise.all([
     db.select().from(userSettings).where(eq(userSettings.userId, user.id)).limit(1),
     db.select({ isAdmin: users.isAdmin }).from(users).where(eq(users.id, user.id)).limit(1),
@@ -21,15 +27,15 @@ export default async function SettingsPage() {
 
   return (
     <>
-      <PageHeader title="Impostazioni" />
+      <PageHeader title={t("settings.title")} />
 
       {/* Two independent columns so short cards pack together without gaps. */}
       <div className="grid items-start gap-6 lg:grid-cols-2">
         <div className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Profilo</CardTitle>
-            <CardDescription>I tuoi dati di accesso.</CardDescription>
+            <CardTitle className="text-base">{t("settings.profile")}</CardTitle>
+            <CardDescription>{t("settings.profileDescription")}</CardDescription>
           </CardHeader>
           <CardContent>
             <ProfileSettings
@@ -42,10 +48,19 @@ export default async function SettingsPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Chiavi API</CardTitle>
+            <CardTitle className="text-base">{t("settings.language")}</CardTitle>
+            <CardDescription>{t("settings.languageDescription")}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <LanguageSwitcher />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">{t("settings.apiKeys")}</CardTitle>
             <CardDescription>
-              Per l&apos;accesso programmatico a <code>/api/v1</code>. Usa l&apos;header{" "}
-              <code>Authorization: Bearer &lt;chiave&gt;</code>.
+{t("settings.apiKeysDescription")}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -57,8 +72,8 @@ export default async function SettingsPage() {
         <div className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Integrazione FIDAL</CardTitle>
-            <CardDescription>Importa automaticamente le gare dal tuo profilo FIDAL.</CardDescription>
+            <CardTitle className="text-base">{t("settings.fidal")}</CardTitle>
+            <CardDescription>{t("settings.fidalDescription")}</CardDescription>
           </CardHeader>
           <CardContent>
             <FidalSettings
@@ -70,9 +85,9 @@ export default async function SettingsPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Dati</CardTitle>
+            <CardTitle className="text-base">{t("settings.data")}</CardTitle>
             <CardDescription>
-              Esporta o importa tutti i tuoi dati. Cambiare istanza è: esporta → registrati → importa.
+{t("settings.dataDescription")}
             </CardDescription>
           </CardHeader>
           <CardContent>

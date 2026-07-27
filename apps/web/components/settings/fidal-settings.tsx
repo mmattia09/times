@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 import { formatDate } from "@/lib/format";
+import { useI18n } from "@/lib/i18n/client";
 
 type PreviewItem = { fidalId: string; date: string; specialita: string; prestazione: string };
 type Preview = { total: number; newItems: PreviewItem[]; skipped: PreviewItem[] };
@@ -21,6 +22,7 @@ export function FidalSettings({
   lastSyncAt: string | null;
 }) {
   const router = useRouter();
+  const { t, locale } = useI18n();
   const [url, setUrl] = useState(initialUrl);
   const [busy, setBusy] = useState<"" | "save" | "preview" | "sync">("");
   const [preview, setPreview] = useState<Preview | null>(null);
@@ -34,10 +36,10 @@ export function FidalSettings({
     });
     setBusy("");
     if (!res.ok) {
-      toast({ variant: "destructive", title: "Errore", description: "URL non valido o salvataggio fallito." });
+      toast({ variant: "destructive", title: t("common.error"), description: t("settings.fidalUrlInvalid") });
       return;
     }
-    toast({ title: "Salvato", description: "URL FIDAL aggiornato." });
+    toast({ title: t("common.saved"), description: t("settings.fidalUrlSaved") });
     router.refresh();
   }
 
@@ -48,13 +50,13 @@ export function FidalSettings({
     setBusy("");
     const json = await res.json();
     if (!res.ok) {
-      toast({ variant: "destructive", title: "Errore FIDAL", description: json.message ?? "Connessione fallita." });
+      toast({ variant: "destructive", title: t("settings.fidalError"), description: t(json.message ?? "settings.connectionFailed") });
       return;
     }
     setPreview(json.data);
     toast({
-      title: "Anteprima pronta",
-      description: `${json.data.newItems.length} nuovi · ${json.data.skipped.length} già importati`,
+      title: t("settings.previewReady"),
+      description: t("settings.previewSummary", { new: json.data.newItems.length, skipped: json.data.skipped.length }),
     });
   }
 
@@ -64,12 +66,12 @@ export function FidalSettings({
     setBusy("");
     const json = await res.json();
     if (!res.ok) {
-      toast({ variant: "destructive", title: "Errore FIDAL", description: json.message ?? "Sync fallita." });
+      toast({ variant: "destructive", title: t("settings.fidalError"), description: t(json.message ?? "settings.syncFailed") });
       return;
     }
     toast({
-      title: "Sincronizzato",
-      description: `${json.data.imported} importati · ${json.data.skipped} saltati`,
+      title: t("settings.synced"),
+      description: t("settings.syncSummary", { imported: json.data.imported, skipped: json.data.skipped }),
     });
     setPreview(null);
     router.refresh();
@@ -78,7 +80,7 @@ export function FidalSettings({
   return (
     <div className="space-y-4">
       <div className="space-y-1.5">
-        <Label htmlFor="fidal-url">URL profilo atleta FIDAL</Label>
+        <Label htmlFor="fidal-url">{t("settings.fidalUrlLabel")}</Label>
         <div className="flex gap-2">
           <Input
             id="fidal-url"
@@ -87,21 +89,21 @@ export function FidalSettings({
             placeholder="https://www.fidal.it/atleta/…"
           />
           <Button variant="outline" onClick={save} disabled={busy === "save" || !url}>
-            <Save className="h-4 w-4" /> Salva
+            <Save className="h-4 w-4" /> {t("common.save")}
           </Button>
         </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
         <Button variant="outline" onClick={testConnection} disabled={!!busy || !url}>
-          <RefreshCw className={`h-4 w-4 ${busy === "preview" ? "animate-spin" : ""}`} /> Testa connessione
+          <RefreshCw className={`h-4 w-4 ${busy === "preview" ? "animate-spin" : ""}`} /> {t("settings.testConnection")}
         </Button>
         <Button onClick={syncNow} disabled={!!busy || !url}>
-          <Download className="h-4 w-4" /> Sincronizza ora
+          <Download className="h-4 w-4" /> {t("settings.syncNow")}
         </Button>
         {lastSyncAt && (
           <span className="text-xs text-muted-foreground">
-            Ultima sync: {formatDate(lastSyncAt, "d MMM yyyy, HH:mm")}
+            {t("settings.lastSync", { date: formatDate(lastSyncAt, "d MMM yyyy, HH:mm", locale) })}
           </span>
         )}
       </div>
@@ -109,14 +111,14 @@ export function FidalSettings({
       {preview && (
         <div className="rounded-md border">
           <div className="flex items-center justify-between border-b p-3 text-sm">
-            <span className="font-medium">Anteprima import</span>
+            <span className="font-medium">{t("settings.importPreview")}</span>
             <span className="flex gap-2">
-              <Badge variant="success">{preview.newItems.length} nuovi</Badge>
-              <Badge variant="muted">{preview.skipped.length} già presenti</Badge>
+              <Badge variant="success">{t("settings.newItems", { count: preview.newItems.length })}</Badge>
+              <Badge variant="muted">{t("settings.alreadyPresent", { count: preview.skipped.length })}</Badge>
             </span>
           </div>
           {preview.newItems.length === 0 ? (
-            <p className="p-3 text-sm text-muted-foreground">Nessun nuovo risultato da importare.</p>
+            <p className="p-3 text-sm text-muted-foreground">{t("settings.nothingNew")}</p>
           ) : (
             <ul className="max-h-64 divide-y overflow-y-auto">
               {preview.newItems.map((i) => (

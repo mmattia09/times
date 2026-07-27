@@ -13,8 +13,10 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/hooks/use-toast";
 import type { WorkoutTemplate } from "@/lib/db/schema";
+import { useI18n } from "@/lib/i18n/client";
 
 export default function WorkoutsPage() {
+  const { t } = useI18n();
   const [templates, setTemplates] = useState<WorkoutTemplate[] | null>(null);
   const [toDelete, setToDelete] = useState<WorkoutTemplate | null>(null);
 
@@ -31,15 +33,15 @@ export default function WorkoutsPage() {
   async function remove(id: string) {
     const res = await fetch(`/api/internal/templates/${id}`, { method: "DELETE" });
     if (res.ok) {
-      toast({ title: "Eliminata", description: "Scheda eliminata." });
+      toast({ title: t("common.deleted"), description: t("workouts.deletedOk") });
       load();
     }
   }
 
   const byCategory = new Map<string, WorkoutTemplate[]>();
-  for (const t of templates ?? []) {
-    const c = t.category ?? "altro";
-    byCategory.set(c, [...(byCategory.get(c) ?? []), t]);
+  for (const tpl of templates ?? []) {
+    const c = tpl.category ?? "altro";
+    byCategory.set(c, [...(byCategory.get(c) ?? []), tpl]);
   }
 
   const count = templates?.length ?? 0;
@@ -47,16 +49,21 @@ export default function WorkoutsPage() {
   return (
     <>
       <PageHeader
-        title="Schede"
+        title={t("workouts.title")}
         description={
           templates === null
-            ? "La tua libreria di allenamenti."
-            : `${count} ${count === 1 ? "scheda" : "schede"} in libreria, in ${byCategory.size} ${byCategory.size === 1 ? "categoria" : "categorie"}.`
+            ? t("workouts.libraryEmptyDescription")
+            : t("workouts.summary", {
+                count,
+                schede: count === 1 ? t("workouts.schedaOne") : t("workouts.schedaMany"),
+                categories: byCategory.size,
+                categorie: byCategory.size === 1 ? t("workouts.categoryOne") : t("workouts.categoryMany"),
+              })
         }
       >
         <Button asChild size="sm">
           <Link href="/workouts/new">
-            <Plus className="h-4 w-4" /> Nuova
+            <Plus className="h-4 w-4" /> {t("common.new")}
           </Link>
         </Button>
       </PageHeader>
@@ -71,11 +78,11 @@ export default function WorkoutsPage() {
           <CardContent className="flex flex-col items-center gap-3 py-16 text-center">
             <ClipboardList className="h-8 w-8 text-muted-foreground" />
             <p className="text-sm text-muted-foreground">
-              Nessuna scheda. Crea la prima: potrai agganciarla alle sessioni di allenamento.
+              {t("workouts.empty")}
             </p>
             <Button asChild size="sm">
               <Link href="/workouts/new">
-                <Plus className="h-4 w-4" /> Nuova
+                <Plus className="h-4 w-4" /> {t("common.new")}
               </Link>
             </Button>
           </CardContent>
@@ -88,36 +95,36 @@ export default function WorkoutsPage() {
                 {category} <span className="font-normal text-muted-foreground">· {list.length}</span>
               </h2>
               <div className="grid gap-4 xl:grid-cols-2">
-                {list.map((t) => (
-                  <Card key={t.id}>
+                {list.map((tpl) => (
+                  <Card key={tpl.id}>
                     <CardHeader className="flex-row items-start justify-between space-y-0 pb-3">
                       <div>
-                        <CardTitle className="text-base">{t.name}</CardTitle>
-                        {t.description && (
-                          <p className="mt-1 text-xs text-muted-foreground">{t.description}</p>
+                        <CardTitle className="text-base">{tpl.name}</CardTitle>
+                        {tpl.description && (
+                          <p className="mt-1 text-xs text-muted-foreground">{tpl.description}</p>
                         )}
                       </div>
                       <div className="flex shrink-0 items-center gap-1">
-                        <Badge variant="muted">{t.blocks.length} righe</Badge>
-                        <Button asChild variant="ghost" size="icon" aria-label="Modifica">
-                          <Link href={`/workouts/${t.id}/edit`}>
+                        <Badge variant="muted">{t("workouts.rows", { count: tpl.blocks.length })}</Badge>
+                        <Button asChild variant="ghost" size="icon" aria-label={t("common.edit")}>
+                          <Link href={`/workouts/${tpl.id}/edit`}>
                             <Pencil className="h-4 w-4" />
                           </Link>
                         </Button>
                         <Button
                           variant="ghost"
                           size="icon"
-                          aria-label="Elimina"
+                          aria-label={t("common.delete")}
                           className="text-muted-foreground hover:text-destructive"
-                          onClick={() => setToDelete(t)}
+                          onClick={() => setToDelete(tpl)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     </CardHeader>
                     <CardContent className="p-0">
-                      <WorkoutTable blocks={t.blocks} />
-                      <TemplateUsage templateId={t.id} />
+                      <WorkoutTable blocks={tpl.blocks} />
+                      <TemplateUsage templateId={tpl.id} />
                     </CardContent>
                   </Card>
                 ))}
@@ -130,8 +137,8 @@ export default function WorkoutsPage() {
       <ConfirmDialog
         open={toDelete !== null}
         onOpenChange={(o) => !o && setToDelete(null)}
-        title="Eliminare la scheda?"
-        description={`"${toDelete?.name ?? ""}" verrà rimossa dalla libreria. Le sessioni a cui è già agganciata non cambiano.`}
+        title={t("workouts.deleteTitle")}
+        description={t("workouts.deleteDescription", { name: toDelete?.name ?? "" })}
         onConfirm={() => (toDelete ? remove(toDelete.id) : undefined)}
       />
     </>

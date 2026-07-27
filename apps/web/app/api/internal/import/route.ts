@@ -9,7 +9,7 @@ export async function POST(req: Request) {
   const parsed = exportFileSchema.safeParse(body);
   if (!parsed.success) {
     return Response.json(
-      { error: "bad_request", message: "File non valido: atteso un export JSON di athletics-tracker.", issues: parsed.error.flatten() },
+      { error: "bad_request", message: "errors.importBadFile", issues: parsed.error.flatten() },
       { status: 400 },
     );
   }

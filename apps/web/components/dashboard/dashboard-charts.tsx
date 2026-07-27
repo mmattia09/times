@@ -14,6 +14,7 @@ import {
 import { useChartTokens } from "@/components/charts/chart-theme";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatResult, type EventKey } from "@/lib/athletics";
+import { useI18n } from "@/lib/i18n/client";
 
 export type TrendPoint = { date: string; result: number };
 export type MonthVolume = { month: string; gare: number; allenamenti: number };
@@ -37,6 +38,7 @@ export function TrendChart({
   eventKey: EventKey;
 }) {
   const { tokens, mounted } = useChartTokens();
+  const { t } = useI18n();
   const tick = { fontSize: 11, fill: tokens.axis } as const;
   const fmt = (v: number) => formatResult(v, eventKey);
 
@@ -86,7 +88,7 @@ export function TrendChart({
           )}
         </div>
         <p className="mt-2 text-xs text-muted-foreground">
-          {lowerIsBetter ? "Prestazioni regolari, ultimi 12 mesi — più in alto = più veloce." : "Prestazioni regolari, ultimi 12 mesi."}
+          {lowerIsBetter ? t("dashboard.trendCaptionTimed") : t("dashboard.trendCaption")}
         </p>
       </CardContent>
     </Card>
@@ -96,20 +98,21 @@ export function TrendChart({
 /** Sessions per month, split gare / allenamenti (last 6 months). */
 export function MonthlyVolumeChart({ data }: { data: MonthVolume[] }) {
   const { tokens, mounted } = useChartTokens();
+  const { t } = useI18n();
   const tick = { fontSize: 11, fill: tokens.axis } as const;
 
   return (
     <Card>
       <CardHeader className="flex-row items-center justify-between space-y-0">
-        <CardTitle className="text-base">Volume di allenamento</CardTitle>
+        <CardTitle className="text-base">{t("dashboard.volume")}</CardTitle>
         <div className="flex items-center gap-4 text-xs text-muted-foreground">
           <span className="flex items-center gap-1.5">
             <span className="inline-block h-2.5 w-2.5 rounded-sm" style={{ background: tokens.gara }} />
-            Gare
+            {t("dashboard.competitionsLegend")}
           </span>
           <span className="flex items-center gap-1.5">
             <span className="inline-block h-2.5 w-2.5 rounded-sm" style={{ background: tokens.allenamento }} />
-            Allenamenti
+            {t("dashboard.trainingsLegend")}
           </span>
         </div>
       </CardHeader>
@@ -140,7 +143,7 @@ export function MonthlyVolumeChart({ data }: { data: MonthVolume[] }) {
                 {/* 2px surface gap between stacked segments via stroke. */}
                 <Bar
                   dataKey="allenamenti"
-                  name="Allenamenti"
+                  name={t("dashboard.trainingsLegend")}
                   stackId="v"
                   fill={tokens.allenamento}
                   stroke={tokens.surface}
@@ -149,7 +152,7 @@ export function MonthlyVolumeChart({ data }: { data: MonthVolume[] }) {
                 />
                 <Bar
                   dataKey="gare"
-                  name="Gare"
+                  name={t("dashboard.competitionsLegend")}
                   stackId="v"
                   fill={tokens.gara}
                   stroke={tokens.surface}
@@ -161,7 +164,7 @@ export function MonthlyVolumeChart({ data }: { data: MonthVolume[] }) {
             </ResponsiveContainer>
           )}
         </div>
-        <p className="mt-2 text-xs text-muted-foreground">Sessioni registrate negli ultimi 6 mesi.</p>
+        <p className="mt-2 text-xs text-muted-foreground">{t("dashboard.volumeCaption")}</p>
       </CardContent>
     </Card>
   );

@@ -7,20 +7,22 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useI18n } from "@/lib/i18n/client";
 
 /** Renders workout blocks in the athlete's usual table layout. */
 export function WorkoutTable({ blocks }: { blocks: WorkoutBlock[] }) {
+  const { t } = useI18n();
   const hasNotes = blocks.some((b) => b.note);
   return (
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Blocco</TableHead>
-          <TableHead>Ripetute</TableHead>
-          <TableHead>Recupero</TableHead>
-          <TableHead>Pausa</TableHead>
-          <TableHead>Ritmo</TableHead>
-          {hasNotes && <TableHead>Note</TableHead>}
+          <TableHead>{t("workouts.blockCol")}</TableHead>
+          <TableHead>{t("workouts.repsCol")}</TableHead>
+          <TableHead>{t("workouts.recoveryCol")}</TableHead>
+          <TableHead>{t("workouts.pauseCol")}</TableHead>
+          <TableHead>{t("workouts.paceCol")}</TableHead>
+          {hasNotes && <TableHead>{t("workouts.notesCol")}</TableHead>}
         </TableRow>
       </TableHeader>
       <TableBody>

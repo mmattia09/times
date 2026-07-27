@@ -4,8 +4,10 @@
  *   - invernale (indoor): October Y – March Y+1 (crosses NY) → "Invernale Y/Y+1"
  *
  * A season is identified by { type, year } and serialized as a key like
- * "estiva-2025" / "invernale-2024".
+ * "estiva-2025" / "invernale-2024" (the keys stay Italian — they're storage,
+ * not display).
  */
+import { DEFAULT_LOCALE, getDictionary, interpolate, type Dictionary } from "@/lib/i18n";
 
 export type SeasonType = "estiva" | "invernale";
 export type Season = { type: SeasonType; year: number };
@@ -41,9 +43,13 @@ export function parseSeasonKey(key: string): Season | null {
   return { type: m[1] as SeasonType, year: parseInt(m[2], 10) };
 }
 
-export function seasonLabel(s: Season): string {
-  if (s.type === "estiva") return `Estiva ${s.year}`;
-  return `Invernale ${s.year}/${((s.year + 1) % 100).toString().padStart(2, "0")}`;
+export function seasonLabel(s: Season, dict?: Dictionary): string {
+  const d = dict ?? getDictionary(DEFAULT_LOCALE);
+  if (s.type === "estiva") return interpolate(d.seasons.summer, { year: s.year });
+  return interpolate(d.seasons.winter, {
+    from: s.year,
+    to: ((s.year + 1) % 100).toString().padStart(2, "0"),
+  });
 }
 
 export function currentSeason(): Season {

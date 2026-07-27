@@ -19,6 +19,7 @@ import { requireUser } from "@/lib/current-user";
 import { getSessionById } from "@/lib/services";
 import { eventLabel, formatResult, isWindLegal } from "@/lib/athletics";
 import { formatDateLong, formatOrganizzatore } from "@/lib/format";
+import { getT } from "@/lib/i18n/server";
 
 function meta(label: string, value?: string | null) {
   if (!value) return null;
@@ -32,20 +33,21 @@ function meta(label: string, value?: string | null) {
 
 export default async function SessionDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await requireUser();
+  const { t, dict, locale } = await getT();
   const { id } = await params;
   const session = await getSessionById(user.id, id);
   if (!session) notFound();
 
   const dateLabel = session.endDate
-    ? `${formatDateLong(session.date)} → ${formatDateLong(session.endDate)}`
-    : formatDateLong(session.date);
+    ? `${formatDateLong(session.date, locale)} → ${formatDateLong(session.endDate, locale)}`
+    : formatDateLong(session.date, locale);
 
   return (
     <div className="mx-auto max-w-3xl">
       <PageHeader title={dateLabel}>
         <Button asChild variant="outline" size="sm">
           <Link href={`/sessions/${id}/edit`}>
-            <Pencil className="h-4 w-4" /> Modifica
+            <Pencil className="h-4 w-4" /> {t("common.edit")}
           </Link>
         </Button>
         <DeleteSessionButton sessionId={id} />
@@ -55,15 +57,15 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
         <CardContent className="p-5">
           <div className="mb-4 flex items-center gap-2">
             <Badge variant={session.type === "competition" ? "default" : "muted"}>
-              {session.type === "competition" ? "Gara" : "Allenamento"}
+              {session.type === "competition" ? t("common.competition") : t("common.training")}
             </Badge>
             {session.tipo && <Badge variant="secondary">{session.tipo}</Badge>}
           </div>
           <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-            {meta("Luogo", session.luogo)}
-            {meta("Cronometraggio", session.tempo)}
-            {meta("Livello", session.livello)}
-            {meta("Organizzatore", formatOrganizzatore(session.organizzatore))}
+            {meta(t("common.place"), session.luogo)}
+            {meta(t("common.timing"), session.tempo ? dict.enums.tempo[session.tempo] : null)}
+            {meta(t("common.level"), session.livello ? dict.enums.livello[session.livello] : null)}
+            {meta(t("common.organiser"), formatOrganizzatore(session.organizzatore, dict))}
           </dl>
           {session.note && (
             <p className="mt-4 whitespace-pre-wrap text-sm text-muted-foreground">{session.note}</p>
@@ -75,14 +77,14 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
         <>
           <div className="mb-2 mt-6 flex items-center justify-between gap-2">
             <h2 className="text-sm font-semibold">
-              Scheda allenamento{session.workout.name ? ` — ${session.workout.name}` : ""}
+              {t("sessions.workoutSection")}{session.workout.name ? ` — ${session.workout.name}` : ""}
             </h2>
             {session.workout.templateId && (
               <Link
                 href={`/workouts/${session.workout.templateId}/edit`}
                 className="text-xs text-muted-foreground hover:text-foreground hover:underline"
               >
-                Apri in libreria →
+                {t("sessions.openInLibrary")}
               </Link>
             )}
           </div>
@@ -96,18 +98,18 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
 
       {session.performances.length > 0 && (
         <>
-      <h2 className="mb-2 mt-6 text-sm font-semibold">Prestazioni</h2>
+      <h2 className="mb-2 mt-6 text-sm font-semibold">{t("sessions.performances")}</h2>
       <Card>
         <CardContent className="p-0">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Specialità</TableHead>
-                <TableHead>Risultato</TableHead>
-                <TableHead>Vento</TableHead>
-                <TableHead>Corsia</TableHead>
-                <TableHead>Pos.</TableHead>
-                <TableHead>Turno</TableHead>
+                <TableHead>{t("common.event")}</TableHead>
+                <TableHead>{t("common.result")}</TableHead>
+                <TableHead>{t("common.wind")}</TableHead>
+                <TableHead>{t("common.lane")}</TableHead>
+                <TableHead>{t("common.position")}</TableHead>
+                <TableHead>{t("common.heat")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -117,15 +119,15 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
                 return (
                 <TableRow key={p.id}>
                   <TableCell className="font-medium">
-                    {eventLabel(p)}
+                    {eventLabel(p, dict)}
                     {p.isPersonalBest && (
                       <Badge variant="success" className="ml-2">
                         PB
                       </Badge>
                     )}
                     {windy && (
-                      <Badge variant="muted" className="ml-2" title="Vento oltre +2.0 m/s: non valida come record">
-                        ventosa
+                      <Badge variant="muted" className="ml-2" title={t("sessions.windyTitle")}>
+                        {t("sessions.windy")}
                       </Badge>
                     )}
                   </TableCell>
@@ -152,7 +154,7 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
       {session.performances.length === 0 && !session.workout && (
         <Card className="mt-6">
           <CardContent className="py-8 text-center text-sm text-muted-foreground">
-            Sessione senza prestazioni: registra solo il giorno di allenamento.
+{t("sessions.emptySessionNote")}
           </CardContent>
         </Card>
       )}

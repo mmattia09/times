@@ -10,6 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useI18n } from "@/lib/i18n/client";
 
 /** Confirmation dialog for destructive actions. */
 export function ConfirmDialog({
@@ -17,7 +18,7 @@ export function ConfirmDialog({
   onOpenChange,
   title,
   description,
-  confirmLabel = "Elimina",
+  confirmLabel,
   onConfirm,
 }: {
   open: boolean;
@@ -27,6 +28,7 @@ export function ConfirmDialog({
   confirmLabel?: string;
   onConfirm: () => Promise<void> | void;
 }) {
+  const { t } = useI18n();
   const [loading, setLoading] = useState(false);
 
   async function confirm() {
@@ -48,10 +50,10 @@ export function ConfirmDialog({
         </DialogHeader>
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
-            Annulla
+            {t("common.cancel")}
           </Button>
           <Button variant="destructive" onClick={confirm} disabled={loading}>
-            {loading ? "…" : confirmLabel}
+            {loading ? "…" : (confirmLabel ?? t("common.delete"))}
           </Button>
         </DialogFooter>
       </DialogContent>

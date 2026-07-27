@@ -10,6 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useI18n } from "@/lib/i18n/client";
 
 export type SessionRow = {
   id: string;
@@ -24,20 +25,27 @@ export type SessionRow = {
   performances: string;
 };
 
+/** Enum columns hold the raw DB value; show the translation when there is one. */
+function enumLabel(labels: Record<string, string>, value: string | null): string {
+  if (!value) return "—";
+  return labels[value] ?? value;
+}
+
 export function SessionsTable({ rows }: { rows: SessionRow[] }) {
   const router = useRouter();
+  const { t, dict } = useI18n();
   return (
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Data</TableHead>
-          <TableHead>Tipo</TableHead>
-          <TableHead>Prestazioni</TableHead>
-          <TableHead>Cron.</TableHead>
-          <TableHead>Livello</TableHead>
-          <TableHead>Luogo</TableHead>
-          <TableHead>Org.</TableHead>
-          <TableHead>Ambiente</TableHead>
+          <TableHead>{t("common.date")}</TableHead>
+          <TableHead>{t("common.type")}</TableHead>
+          <TableHead>{t("sessions.performances")}</TableHead>
+          <TableHead>{t("sessions.timingShort")}</TableHead>
+          <TableHead>{t("common.level")}</TableHead>
+          <TableHead>{t("common.place")}</TableHead>
+          <TableHead>{t("sessions.organiserShort")}</TableHead>
+          <TableHead>{t("common.environment")}</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -50,15 +58,23 @@ export function SessionsTable({ rows }: { rows: SessionRow[] }) {
             <TableCell className="font-medium">{r.date}</TableCell>
             <TableCell>
               <Badge variant={r.type === "competition" ? "default" : "muted"}>
-                {r.type === "competition" ? "Gara" : "Allen."}
+                {r.type === "competition" ? t("common.competitionShort") : t("common.trainingShort")}
               </Badge>
             </TableCell>
             <TableCell className="max-w-[16rem] truncate">{r.performances}</TableCell>
-            <TableCell className="capitalize text-muted-foreground">{r.tempo ?? "—"}</TableCell>
-            <TableCell className="capitalize text-muted-foreground">{r.livello ?? "—"}</TableCell>
+            <TableCell className="text-muted-foreground">
+              {enumLabel(dict.enums.tempo, r.tempo)}
+            </TableCell>
+            <TableCell className="text-muted-foreground">
+              {enumLabel(dict.enums.livello, r.livello)}
+            </TableCell>
             <TableCell className="text-muted-foreground">{r.luogo ?? "—"}</TableCell>
-            <TableCell className="text-muted-foreground">{r.organizzatore ?? "—"}</TableCell>
-            <TableCell className="capitalize text-muted-foreground">{r.tipo ?? "—"}</TableCell>
+            <TableCell className="text-muted-foreground">
+              {enumLabel(dict.enums.organizzatore, r.organizzatore)}
+            </TableCell>
+            <TableCell className="text-muted-foreground">
+              {enumLabel(dict.enums.tipo, r.tipo)}
+            </TableCell>
           </TableRow>
         ))}
       </TableBody>

@@ -14,9 +14,11 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
+import { useI18n } from "@/lib/i18n/client";
 
 export function DeleteSessionButton({ sessionId }: { sessionId: string }) {
   const router = useRouter();
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -25,10 +27,10 @@ export function DeleteSessionButton({ sessionId }: { sessionId: string }) {
     const res = await fetch(`/api/internal/sessions/${sessionId}`, { method: "DELETE" });
     setLoading(false);
     if (!res.ok) {
-      toast({ variant: "destructive", title: "Errore", description: "Eliminazione non riuscita." });
+      toast({ variant: "destructive", title: t("common.error"), description: t("sessions.deleteFailed") });
       return;
     }
-    toast({ title: "Eliminata", description: "Sessione eliminata." });
+    toast({ title: t("common.deleted"), description: t("sessions.deletedOk") });
     setOpen(false);
     router.push("/sessions");
     router.refresh();
@@ -38,22 +40,22 @@ export function DeleteSessionButton({ sessionId }: { sessionId: string }) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="text-destructive">
-          <Trash2 className="h-4 w-4" /> Elimina
+          <Trash2 className="h-4 w-4" /> {t("common.delete")}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Eliminare la sessione?</DialogTitle>
+          <DialogTitle>{t("sessions.deleteTitle")}</DialogTitle>
           <DialogDescription>
-            Questa azione è irreversibile. Verranno eliminate anche tutte le prestazioni associate.
+{t("sessions.deleteDescription")}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
           <Button variant="ghost" onClick={() => setOpen(false)}>
-            Annulla
+            {t("common.cancel")}
           </Button>
           <Button variant="destructive" onClick={onDelete} disabled={loading}>
-            {loading ? "Eliminazione…" : "Elimina"}
+            {loading ? "…" : t("common.delete")}
           </Button>
         </DialogFooter>
       </DialogContent>

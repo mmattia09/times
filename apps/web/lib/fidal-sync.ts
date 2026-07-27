@@ -24,7 +24,7 @@ async function loadItemsForUser(userId: string): Promise<{ url: string; items: F
     .where(eq(userSettings.userId, userId))
     .limit(1);
   const url = settings?.fidalUrl;
-  if (!url) throw new Error("Nessun URL FIDAL configurato nelle impostazioni.");
+  if (!url) throw new Error("errors.fidalNotConfigured");
 
   const html = await fetchFidalProfile(url);
   const rows = parseFidalResults(html);

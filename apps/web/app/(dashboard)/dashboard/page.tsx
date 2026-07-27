@@ -20,11 +20,16 @@ import {
 import { formatDate } from "@/lib/format";
 import { currentSeason, seasonLabel, seasonRange } from "@/lib/season";
 import { listSessions } from "@/lib/services";
+import { getT } from "@/lib/i18n/server";
 
 
-export const metadata = { title: "Dashboard" };
+export async function generateMetadata() {
+  const { t } = await getT();
+  return { title: t("nav.dashboard") };
+}
 export default async function DashboardPage() {
   const user = await requireUser();
+  const { t, dict, locale } = await getT();
   const season = currentSeason();
   const { start, end } = seasonRange(season);
 
@@ -69,7 +74,7 @@ export default async function DashboardPage() {
     const lower = lowerIsBetter(p.discipline);
     const cur = seasonBest.get(key);
     if (!cur || (lower ? r < cur.result : r > cur.result)) {
-      seasonBest.set(key, { label: eventLabel(ek), result: r, ek });
+      seasonBest.set(key, { label: eventLabel(ek, dict), result: r, ek });
     }
   }
   const seasonBests = [...seasonBest.values()].sort(
@@ -77,11 +82,11 @@ export default async function DashboardPage() {
   );
 
   const stats = [
-    { label: "Sessioni totali", value: totalSessions, icon: ListChecks },
-    { label: "Gare", value: totalCompetitions, icon: Trophy },
-    { label: "Record assoluti", value: pbs.length, icon: CalendarDays },
-    { label: "PB di stagione", value: seasonBests.length, icon: Target },
-    { label: "Schede", value: templateCount, icon: ClipboardList },
+    { label: t("dashboard.totalSessions"), value: totalSessions, icon: ListChecks },
+    { label: t("dashboard.competitions"), value: totalCompetitions, icon: Trophy },
+    { label: t("dashboard.absoluteRecords"), value: pbs.length, icon: CalendarDays },
+    { label: t("dashboard.seasonBests"), value: seasonBests.length, icon: Target },
+    { label: t("dashboard.workouts"), value: templateCount, icon: ClipboardList },
   ];
 
   // Latest personal bests, newest first.
@@ -120,7 +125,7 @@ export default async function DashboardPage() {
       ? { discipline: topEventList[0].discipline, distance: topEventList[0].distance, event: topEventList[0].event }
       : null;
   const trendPoints: TrendPoint[] = topEventList.map((p) => ({
-    date: formatDate(p.date, "d MMM"),
+    date: formatDate(p.date, "d MMM", locale),
     result: Number(p.result),
   }));
 
@@ -143,7 +148,7 @@ export default async function DashboardPage() {
       (s) => `${s.date.getUTCFullYear()}-${s.date.getUTCMonth()}` === key,
     );
     monthlyVolume.push({
-      month: formatDate(d, "MMM"),
+      month: formatDate(d, "MMM", locale),
       gare: inMonth.filter((s) => s.type === "competition").length,
       allenamenti: inMonth.filter((s) => s.type === "training").length,
     });
@@ -163,7 +168,7 @@ export default async function DashboardPage() {
 
   return (
     <>
-      <PageHeader title="Dashboard" description={`Stagione ${seasonLabel(season)}`} />
+      <PageHeader title={t("dashboard.title")} description={t("dashboard.season", { season: seasonLabel(season, dict) })} />
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
         {stats.map((s) => {
@@ -185,11 +190,11 @@ export default async function DashboardPage() {
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Migliori prestazioni — Stagione {seasonLabel(season)}</CardTitle>
+            <CardTitle className="text-base">{t("dashboard.bestOfSeason", { season: seasonLabel(season, dict) })}</CardTitle>
           </CardHeader>
           <CardContent>
             {seasonBests.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Nessuna prestazione in questa stagione.</p>
+              <p className="text-sm text-muted-foreground">{t("dashboard.noSeasonResults")}</p>
             ) : (
               <ul className="divide-y">
                 {seasonBests.map((b) => (
@@ -205,14 +210,14 @@ export default async function DashboardPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Attività recente</CardTitle>
+            <CardTitle className="text-base">{t("dashboard.recentActivity")}</CardTitle>
           </CardHeader>
           <CardContent>
             {recent.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                Nessuna sessione.{" "}
+                {t("dashboard.noSessions")}{" "}
                 <Link href="/sessions/new" className="text-primary hover:underline">
-                  Aggiungine una
+                  {t("dashboard.addOne")}
                 </Link>
                 .
               </p>
@@ -223,13 +228,13 @@ export default async function DashboardPage() {
                     <Link href={`/sessions/${s.id}`} className="flex items-center justify-between gap-2 text-sm hover:underline">
                       <span className="flex items-center gap-2">
                         <Badge variant={s.type === "competition" ? "default" : "muted"}>
-                          {s.type === "competition" ? "Gara" : "Allenamento"}
+                          {s.type === "competition" ? t("common.competition") : t("common.training")}
                         </Badge>
-                        <span className="text-muted-foreground">{formatDate(s.date)}</span>
+                        <span className="text-muted-foreground">{formatDate(s.date, undefined, locale)}</span>
                       </span>
                       <span className="truncate text-muted-foreground">
                         {s.performances.length > 0
-                          ? s.performances.map((p) => eventLabel(p)).join(", ")
+                          ? s.performances.map((p) => eventLabel(p, dict)).join(", ")
                           : (s.workout?.name ?? "—")}
                       </span>
                     </Link>
@@ -242,14 +247,14 @@ export default async function DashboardPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Obiettivi</CardTitle>
+            <CardTitle className="text-base">{t("dashboard.goals")}</CardTitle>
           </CardHeader>
           <CardContent>
             {goalRows.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                Nessun obiettivo.{" "}
+                {t("dashboard.noGoals")}{" "}
                 <Link href="/records" className="text-primary hover:underline">
-                  Fissane uno nella pagina Record
+                  {t("dashboard.setOneInRecords")}
                 </Link>
                 .
               </p>
@@ -257,7 +262,7 @@ export default async function DashboardPage() {
               <ul className="divide-y">
                 {goalRows.slice(0, 5).map((g) => (
                   <li key={g.id} className="flex items-center justify-between gap-2 py-2 text-sm">
-                    <span className="font-medium">{eventLabel(g.ek)}</span>
+                    <span className="font-medium">{eventLabel(g.ek, dict)}</span>
                     <span className="flex items-center gap-2">
                       <span className="tabular-nums text-muted-foreground">
                         {g.pbVal != null ? formatResult(g.pbVal, g.ek) : "—"} →{" "}
@@ -280,11 +285,11 @@ export default async function DashboardPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Ultimi record personali</CardTitle>
+            <CardTitle className="text-base">{t("dashboard.latestPbs")}</CardTitle>
           </CardHeader>
           <CardContent>
             {latestPbs.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Ancora nessun record registrato.</p>
+              <p className="text-sm text-muted-foreground">{t("dashboard.noPbs")}</p>
             ) : (
               <ul className="divide-y">
                 {latestPbs.map((pb) => (
@@ -295,11 +300,11 @@ export default async function DashboardPage() {
                     >
                       <span className="flex items-center gap-2">
                         <Badge variant="success">PB</Badge>
-                        <span className="font-medium">{eventLabel(pb)}</span>
+                        <span className="font-medium">{eventLabel(pb, dict)}</span>
                       </span>
                       <span className="flex items-center gap-3">
                         <span className="tabular-nums font-medium">{formatResult(pb.result, pb)}</span>
-                        <span className="text-xs text-muted-foreground">{formatDate(pb.achievedAt)}</span>
+                        <span className="text-xs text-muted-foreground">{formatDate(pb.achievedAt, undefined, locale)}</span>
                       </span>
                     </Link>
                   </li>
@@ -313,7 +318,7 @@ export default async function DashboardPage() {
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         {trendEvent && (
           <TrendChart
-            title={`Andamento — ${eventLabel(trendEvent)}`}
+            title={t("dashboard.trend", { event: eventLabel(trendEvent, dict) })}
             points={trendPoints}
             lowerIsBetter={lowerIsBetter(trendEvent.discipline)}
             eventKey={trendEvent}

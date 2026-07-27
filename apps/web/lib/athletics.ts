@@ -1,4 +1,5 @@
 import type { Discipline } from "@/lib/db/schema";
+import { DEFAULT_LOCALE, getDictionary, type Dictionary } from "@/lib/i18n";
 
 /** Disciplines whose result is a time (lower is better). */
 const TIMED_DISCIPLINES: Discipline[] = [
@@ -17,18 +18,50 @@ export const RUN_DISTANCES = [
 ] as const;
 
 /** Discipline catalogue for the entry form and filters. */
-export const DISCIPLINES: { value: Discipline; label: string }[] = [
-  { value: "sprint", label: "Velocità" },
-  { value: "hurdles", label: "Ostacoli" },
-  { value: "middle_distance", label: "Mezzofondo" },
-  { value: "long_distance", label: "Fondo" },
-  { value: "relay", label: "Staffetta" },
-  { value: "walk", label: "Marcia" },
-  { value: "jump", label: "Salti" },
-  { value: "throw", label: "Lanci" },
-  { value: "combined", label: "Prove multiple" },
-  { value: "test", label: "Test" },
+/** Discipline order shown in the entry form. */
+export const DISCIPLINE_VALUES: Discipline[] = [
+  "sprint",
+  "hurdles",
+  "middle_distance",
+  "long_distance",
+  "relay",
+  "walk",
+  "jump",
+  "throw",
+  "combined",
+  "test",
 ];
+
+/** Discipline options with labels in the active language. */
+export function disciplineOptions(dict?: Dictionary): { value: Discipline; label: string }[] {
+  const d = dict ?? getDictionary(DEFAULT_LOCALE);
+  return DISCIPLINE_VALUES.map((value) => ({ value, label: d.disciplines[value] }));
+}
+
+/** Event options for a field/relay/test discipline, labelled in the active language. */
+export function eventOptionsFor(
+  discipline: Discipline,
+  dict?: Dictionary,
+): { event: string; label: string }[] | null {
+  const d = dict ?? getDictionary(DEFAULT_LOCALE);
+  const named = (key: string) => (d.events as Record<string, string>)[key] ?? key;
+  const keys =
+    discipline === "jump"
+      ? JUMP_EVENTS.map((e) => e.event)
+      : discipline === "throw"
+        ? THROW_EVENTS.map((e) => e.event)
+        : discipline === "relay"
+          ? RELAY_EVENTS.map((e) => e.event)
+          : discipline === "test"
+            ? TEST_EVENTS.map((e) => e.event)
+            : null;
+  if (!keys) return null;
+  // Relay labels are just "4x100"/"4x400" — no translation needed.
+  return keys.map((event) => ({
+    event,
+    label: discipline === "relay" ? event : named(event),
+  }));
+}
 
 export const JUMP_EVENTS = [
   { event: "alto", label: "Salto in alto" },
@@ -84,27 +117,38 @@ export function eventKey(p: EventKey): string {
 }
 
 /** Human label for an event. */
-export function eventLabel(p: EventKey): string {
+/**
+ * Human label for an event, in the active language. `dict` is optional so
+ * callers that don't have one (or don't care) still get Italian.
+ */
+export function eventLabel(p: EventKey, dict?: Dictionary): string {
+  const d = dict ?? getDictionary(DEFAULT_LOCALE);
+  const named = (key: string) => (d.events as Record<string, string>)[key];
+
   if (p.discipline === "test") {
-    const t = TEST_EVENTS.find((e) => e.event === p.event);
-    if (t) return t.label;
-    return p.event ? p.event.charAt(0).toUpperCase() + p.event.slice(1).replace(/_/g, " ") : "Test";
+    if (p.event && named(p.event)) return named(p.event);
+    return p.event
+      ? p.event.charAt(0).toUpperCase() + p.event.slice(1).replace(/_/g, " ")
+      : d.disciplines.test;
   }
   if (p.discipline === "jump" || p.discipline === "throw") {
-    const f = FIELD_EVENTS.find((e) => e.event === p.event);
-    if (f) return f.label;
-    return p.event ? p.event.charAt(0).toUpperCase() + p.event.slice(1) : "—";
+    if (p.event && named(p.event)) return named(p.event);
+    return p.event ? p.event.charAt(0).toUpperCase() + p.event.slice(1) : d.common.none;
   }
-  if (p.discipline === "relay") return p.event ?? "Staffetta";
-  if (p.discipline === "combined") return p.event ?? "Prove multiple";
-  if (p.discipline === "hurdles") return p.distance ? `${p.distance} hs` : "Ostacoli";
-  if (p.discipline === "walk") return p.distance ? `${formatDistance(p.distance)} marcia` : "Marcia";
+  if (p.discipline === "relay") return p.event ?? d.events.staffetta;
+  if (p.discipline === "combined") return p.event ?? d.events.proveMultiple;
+  if (p.discipline === "hurdles")
+    return p.distance ? `${p.distance} ${d.events.hurdlesSuffix}` : d.disciplines.hurdles;
+  if (p.discipline === "walk")
+    return p.distance
+      ? `${formatDistance(p.distance)} ${d.events.walkSuffix}`
+      : d.disciplines.walk;
   if (p.event === "campestre" || p.distance === 2000) {
     return p.discipline === "middle_distance" || p.event === "campestre"
-      ? "2km campestre"
+      ? d.events.campestre
       : `${formatDistance(p.distance!)}`;
   }
-  return p.distance ? formatDistance(p.distance) : "—";
+  return p.distance ? formatDistance(p.distance) : d.common.none;
 }
 
 function formatDistance(m: number): string {
@@ -172,7 +216,8 @@ export function formatResult(value: number | string, p: EventKey): string {
     case "cm":
       return `${n.toFixed(0)} cm`;
     case "pts":
-      return `${n.toFixed(0)} pti`;
+      // "pts" is the World Athletics abbreviation, so it needs no translation.
+      return `${n.toFixed(0)} pts`;
     default:
       return `${n.toFixed(2)} m`;
   }

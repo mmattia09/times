@@ -3,28 +3,33 @@ import { Inter } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ServiceWorkerRegistrar } from "@/components/pwa/service-worker";
 import { Toaster } from "@/components/ui/toaster";
+import { I18nProvider } from "@/lib/i18n/client";
+import { getLocale, getT } from "@/lib/i18n/server";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
-export const metadata: Metadata = {
-  title: {
-    default: "Times — atletica leggera",
-    template: "%s · Times",
-  },
-  description: "Tracker self-hosted per allenamenti e gare di atletica leggera.",
-  applicationName: "Times",
-  appleWebApp: {
-    capable: true,
-    title: "Times",
-    statusBarStyle: "black-translucent",
-  },
-  icons: {
-    icon: "/favicon.png",
-    apple: "/icons/apple-touch-icon.png",
-  },
-  formatDetection: { telephone: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getT();
+  return {
+    title: {
+      default: `Times — ${t("meta.tagline")}`,
+      template: "%s · Times",
+    },
+    description: t("meta.description"),
+    applicationName: "Times",
+    appleWebApp: {
+      capable: true,
+      title: "Times",
+      statusBarStyle: "black-translucent",
+    },
+    icons: {
+      icon: "/favicon.png",
+      apple: "/icons/apple-touch-icon.png",
+    },
+    formatDetection: { telephone: false },
+  };
+}
 
 export const viewport: Viewport = {
   // Fills the notch area when installed, and follows the active theme.
@@ -37,15 +42,18 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const locale = await getLocale();
   return (
-    <html lang="it" suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning>
       <body className={`${inter.variable} font-sans`}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          {children}
-          <Toaster />
-          <ServiceWorkerRegistrar />
-        </ThemeProvider>
+        <I18nProvider locale={locale}>
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+            {children}
+            <Toaster />
+            <ServiceWorkerRegistrar />
+          </ThemeProvider>
+        </I18nProvider>
       </body>
     </html>
   );

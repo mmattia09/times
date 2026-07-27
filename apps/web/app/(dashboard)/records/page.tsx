@@ -28,6 +28,7 @@ import {
 } from "@/lib/athletics";
 import { formatDate } from "@/lib/format";
 import { currentSeason, seasonKey, seasonLabel, seasonOf, seasonStart } from "@/lib/season";
+import { getT } from "@/lib/i18n/server";
 
 /** Gap between season best and PB, formatted per unit ("" when SB equals the PB). */
 function sbGap(pb: number, sb: number, ek: EventKey, lower: boolean): string {
@@ -36,14 +37,18 @@ function sbGap(pb: number, sb: number, ek: EventKey, lower: boolean): string {
   const unit = resultUnit(ek);
   if (unit === "s" || unit === "min") return `+${gap.toFixed(2)}`;
   if (unit === "cm") return `−${gap.toFixed(0)} cm`;
-  if (unit === "pts") return `−${gap.toFixed(0)} pti`;
+  if (unit === "pts") return `−${gap.toFixed(0)} pts`;
   return `−${gap.toFixed(2)} m`;
 }
 
 
-export const metadata = { title: "Record" };
+export async function generateMetadata() {
+  const { t } = await getT();
+  return { title: t("records.title") };
+}
 export default async function RecordsPage() {
   const user = await requireUser();
+  const { t, dict, locale } = await getT();
 
   const rows = await db
     .select({
@@ -76,7 +81,7 @@ export default async function RecordsPage() {
   });
 
   const season = currentSeason();
-  const seasonLbl = seasonLabel(season);
+  const seasonLbl = seasonLabel(season, dict);
   const seasonK = seasonKey(season);
 
   // Group by event key → PB (best wind-legal) + SB (best legal in current season).
@@ -108,11 +113,11 @@ export default async function RecordsPage() {
     return {
       date: r.date.toISOString(),
       seasonKey: seasonKey(s),
-      seasonLabel: seasonLabel(s),
+      seasonLabel: seasonLabel(s, dict),
       seasonSort: seasonStart(s).getTime(),
       type: r.type,
       key: eventKey(r),
-      label: eventLabel(r),
+      label: eventLabel(r, dict),
       discipline: r.discipline,
       distance: r.distance,
       event: r.event,
@@ -129,15 +134,15 @@ export default async function RecordsPage() {
     distance: best.distance,
     event: best.event,
     keyStr: eventKey(best),
-    label: eventLabel(best),
+    label: eventLabel(best, dict),
     result: best.resultNum,
   }));
 
   return (
     <>
       <PageHeader
-        title="Record"
-        description={`Migliori prestazioni regolari (vento ≤ +2.0) e stagione ${seasonLbl}.`}
+        title={t("records.title")}
+        description={t("records.description", { season: seasonLbl })}
       />
 
       <Card>
@@ -145,13 +150,13 @@ export default async function RecordsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Specialità</TableHead>
-                <TableHead>Record</TableHead>
-                <TableHead>Vento</TableHead>
-                <TableHead>Data</TableHead>
-                <TableHead>Luogo</TableHead>
-                <TableHead>{seasonLbl} (SB)</TableHead>
-                <TableHead>Δ vs PB</TableHead>
+                <TableHead>{t("records.speciality")}</TableHead>
+                <TableHead>{t("records.record")}</TableHead>
+                <TableHead>{t("common.wind")}</TableHead>
+                <TableHead>{t("common.date")}</TableHead>
+                <TableHead>{t("common.place")}</TableHead>
+                <TableHead>{t("records.seasonBest", { season: seasonLbl })}</TableHead>
+                <TableHead>{t("records.deltaVsPb")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -163,7 +168,7 @@ export default async function RecordsPage() {
                   <TableRow key={best.id}>
                     <TableCell className="font-medium">
                       <Link href={`/sessions/${best.sessionId}`} className="hover:underline">
-                        {eventLabel(best)}
+                        {eventLabel(best, dict)}
                       </Link>
                     </TableCell>
                     <TableCell className="tabular-nums font-semibold">
@@ -174,7 +179,7 @@ export default async function RecordsPage() {
                         ? `${best.windNum > 0 ? "+" : ""}${best.windNum.toFixed(1)}`
                         : "—"}
                     </TableCell>
-                    <TableCell className="text-muted-foreground">{formatDate(best.date)}</TableCell>
+                    <TableCell className="text-muted-foreground">{formatDate(best.date, undefined, locale)}</TableCell>
                     <TableCell className="text-muted-foreground">{best.luogo ?? "—"}</TableCell>
                     <TableCell className="tabular-nums">
                       {sb ? (
@@ -189,7 +194,7 @@ export default async function RecordsPage() {
                       {sb == null ? (
                         <span className="text-xs text-muted-foreground">—</span>
                       ) : sbIsPb ? (
-                        <Badge variant="success">= PB</Badge>
+                        <Badge variant="success">{t("records.equalsPb")}</Badge>
                       ) : (
                         <span className="text-xs tabular-nums text-muted-foreground">{gap}</span>
                       )}
@@ -206,7 +211,7 @@ export default async function RecordsPage() {
         <GoalsCard pbs={pbSummaries} />
       </div>
 
-      <h2 className="mb-3 mt-8 text-sm font-semibold">Grafici</h2>
+      <h2 className="mb-3 mt-8 text-sm font-semibold">{t("records.charts")}</h2>
       <PerformanceCharts points={points} />
     </>
   );

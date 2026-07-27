@@ -5,9 +5,11 @@ import { requireUser } from "@/lib/current-user";
 import { getSessionById } from "@/lib/services";
 import { toDateInputValue } from "@/lib/format";
 import type { SessionInput } from "@/lib/validation";
+import { getT } from "@/lib/i18n/server";
 
 export default async function EditSessionPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await requireUser();
+  const { t } = await getT();
   const { id } = await params;
   const session = await getSessionById(user.id, id);
   if (!session) notFound();
@@ -37,7 +39,7 @@ export default async function EditSessionPage({ params }: { params: Promise<{ id
 
   return (
     <div className="mx-auto max-w-3xl">
-      <PageHeader title="Modifica sessione" />
+      <PageHeader title={t("sessions.editSession")} />
       <SessionForm sessionId={id} initial={initial} />
     </div>
   );
