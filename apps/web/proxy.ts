@@ -37,9 +37,9 @@ export function proxy(req: NextRequest) {
   // /api/v1 is authenticated per-handler with API keys.
   if (pathname.startsWith("/api/v1")) return NextResponse.next();
 
-  // Switching language must work on the login screen too; the handler only
-  // touches the user row when there is a session.
-  if (pathname === "/api/internal/locale") return NextResponse.next();
+  // Language and timezone must be settable on the login screen too; the
+  // handler only touches the user row when there is a session.
+  if (pathname === "/api/internal/preferences") return NextResponse.next();
 
   const isProtectedApi = pathname.startsWith("/api/internal") || pathname.startsWith("/api/keys");
   if (isProtectedApi && !hasSession) {

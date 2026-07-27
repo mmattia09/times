@@ -258,6 +258,12 @@ export const userSettings = pgTable("user_settings", {
   theme: text("theme").notNull().default("system"),
   /** UI language: it | en | de | es. */
   locale: text("locale").notNull().default("it"),
+  /**
+   * IANA zone for rendering timestamps (last sync, API-key activity). Null
+   * means "follow the browser". Session dates are calendar days and never
+   * depend on this.
+   */
+  timezone: text("timezone"),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

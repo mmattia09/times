@@ -5,6 +5,7 @@ import { DataTransferCard } from "@/components/settings/data-transfer-card";
 import { FidalSettings } from "@/components/settings/fidal-settings";
 import { LanguageSwitcher } from "@/components/settings/language-switcher";
 import { ProfileSettings } from "@/components/settings/profile-settings";
+import { TimeZoneSwitcher } from "@/components/settings/timezone-switcher";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { db } from "@/lib/db";
 import { users, userSettings } from "@/lib/db/schema";
@@ -58,10 +59,18 @@ export default async function SettingsPage() {
 
         <Card>
           <CardHeader>
+            <CardTitle className="text-base">{t("settings.timezone")}</CardTitle>
+            <CardDescription>{t("settings.timezoneDescription")}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <TimeZoneSwitcher saved={settings?.timezone ?? null} />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
             <CardTitle className="text-base">{t("settings.apiKeys")}</CardTitle>
-            <CardDescription>
-{t("settings.apiKeysDescription")}
-            </CardDescription>
+            <CardDescription>{t("settings.apiKeysDescription")}</CardDescription>
           </CardHeader>
           <CardContent>
             <ApiKeysManager />
@@ -86,9 +95,7 @@ export default async function SettingsPage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-base">{t("settings.data")}</CardTitle>
-            <CardDescription>
-{t("settings.dataDescription")}
-            </CardDescription>
+            <CardDescription>{t("settings.dataDescription")}</CardDescription>
           </CardHeader>
           <CardContent>
             <DataTransferCard />

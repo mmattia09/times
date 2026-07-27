@@ -262,6 +262,12 @@ export const it = {
     pbWith: "PB {result}",
   },
   settings: {
+    timezone: "Fuso orario",
+    timezoneDescription: "Usato per gli orari (ultima sincronizzazione, chiavi API). Le date delle sessioni sono giorni di calendario e non cambiano mai.",
+    timezoneAuto: "dal browser",
+    timezoneSearch: "Cerca fuso orario",
+    timezoneNone: "Nessun fuso orario trovato.",
+    timezoneUseBrowser: "Usa quello del browser",
     title: "Impostazioni",
     profile: "Profilo",
     profileDescription: "I tuoi dati di accesso.",
@@ -334,6 +340,8 @@ export const it = {
     settingsMissing: "non presenti",
   },
   errors: {
+    invalidLocale: "Lingua non valida.",
+    invalidTimezone: "Fuso orario non valido.",
     fidalInvalidUrl: "URL non valido.",
     fidalHttps: "L'URL FIDAL deve usare https.",
     fidalHost: "L'URL deve puntare a fidal.it.",

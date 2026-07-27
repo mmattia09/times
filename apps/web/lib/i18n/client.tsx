@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useMemo } from "react";
+import { DEFAULT_TIME_ZONE } from "@/lib/timezone";
 import {
   DEFAULT_LOCALE,
   LOCALE_TAGS,
@@ -13,6 +14,8 @@ import {
 type I18nValue = {
   locale: Locale;
   dict: Dictionary;
+  /** IANA zone for instants; calendar days ignore it (see lib/timezone.ts). */
+  timeZone: string;
   t: (path: string, vars?: Record<string, string | number>) => string;
   /** BCP-47 tag for Intl formatting. */
   tag: string;
@@ -20,12 +23,21 @@ type I18nValue = {
 
 const I18nContext = createContext<I18nValue | null>(null);
 
-export function I18nProvider({ locale, children }: { locale: Locale; children: React.ReactNode }) {
+export function I18nProvider({
+  locale,
+  timeZone,
+  children,
+}: {
+  locale: Locale;
+  timeZone: string;
+  children: React.ReactNode;
+}) {
   const value = useMemo<I18nValue>(() => {
     const dict = getDictionary(locale);
     return {
       locale,
       dict,
+      timeZone,
       tag: LOCALE_TAGS[locale],
       t: (path, vars) => {
         const found = path
@@ -34,7 +46,7 @@ export function I18nProvider({ locale, children }: { locale: Locale; children: R
         return typeof found === "string" ? interpolate(found, vars) : path;
       },
     };
-  }, [locale]);
+  }, [locale, timeZone]);
 
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
 }
@@ -49,6 +61,7 @@ export function useI18n(): I18nValue {
   return {
     locale: DEFAULT_LOCALE,
     dict,
+    timeZone: DEFAULT_TIME_ZONE,
     tag: LOCALE_TAGS[DEFAULT_LOCALE],
     t: (path, vars) => {
       const found = path

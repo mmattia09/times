@@ -2,7 +2,6 @@ import { PageHeader } from "@/components/layout/page-header";
 import { SessionForm } from "@/components/forms/session-form";
 import { requireUser } from "@/lib/current-user";
 import { getSessionById } from "@/lib/services";
-import { toDateInputValue } from "@/lib/format";
 import { toRepeatInitial } from "@/lib/session-initial";
 import { getT } from "@/lib/i18n/server";
 
@@ -26,7 +25,7 @@ export default async function NewSessionPage({
 
   // ?from=<id> repeats an earlier session: same setup, today's date, no results.
   const source = from ? await getSessionById((await requireUser()).id, from) : null;
-  const initial = source ? toRepeatInitial(source, toDateInputValue(new Date())) : undefined;
+  const initial = source ? toRepeatInitial(source) : undefined;
 
   return (
     <div className="mx-auto max-w-3xl">

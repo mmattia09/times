@@ -24,6 +24,7 @@ import type { WorkoutTemplate } from "@/lib/db/schema";
 import { RUN_DISTANCES, disciplineOptions, eventOptionsFor, isTimed } from "@/lib/athletics";
 import { useI18n } from "@/lib/i18n/client";
 import { sessionInputCheckedSchema, type SessionInput } from "@/lib/validation";
+import { localTodayInputValue } from "@/lib/format";
 import type { SessionFormInitial } from "@/lib/session-initial";
 import type { Discipline } from "@/lib/db/schema";
 
@@ -73,7 +74,7 @@ export function SessionForm({
   const form = useForm<FormValues>({
     resolver: zodResolver(sessionInputCheckedSchema),
     defaultValues: {
-      date: initial?.date ?? new Date().toISOString().slice(0, 10),
+      date: initial?.date ?? localTodayInputValue(),
       endDate: initial?.endDate ?? null,
       type: initial?.type ?? "training",
       tempo: initial?.tempo ?? null,

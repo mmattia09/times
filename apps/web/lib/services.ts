@@ -1,5 +1,6 @@
 import { and, asc, desc, eq, gte, inArray, lt, lte, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
+import { fromDateInputValue } from "@/lib/format";
 import {
   performances,
   personalBests,
@@ -30,7 +31,9 @@ export type CreateSessionOptions = {
 
 function toDate(value?: string | null): Date | null {
   if (!value) return null;
-  const d = new Date(value);
+  // A bare yyyy-MM-dd is a calendar day — pin it to midnight UTC instead of
+  // letting the runtime pick a zone for it. Anything else is a full instant.
+  const d = /^\d{4}-\d{2}-\d{2}$/.test(value) ? fromDateInputValue(value) : new Date(value);
   return Number.isNaN(d.getTime()) ? null : d;
 }
 

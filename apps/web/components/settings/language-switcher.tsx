@@ -22,7 +22,7 @@ export function LanguageSwitcher({ compact = false }: { compact?: boolean }) {
   async function change(next: string) {
     if (next === locale) return;
     setSaving(true);
-    const res = await fetch("/api/internal/locale", {
+    const res = await fetch("/api/internal/preferences", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ locale: next as Locale }),

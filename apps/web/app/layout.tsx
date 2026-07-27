@@ -2,9 +2,10 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ServiceWorkerRegistrar } from "@/components/pwa/service-worker";
+import { TimeZoneProbe } from "@/components/i18n/timezone-probe";
 import { Toaster } from "@/components/ui/toaster";
 import { I18nProvider } from "@/lib/i18n/client";
-import { getLocale, getT } from "@/lib/i18n/server";
+import { getPreferences, getT } from "@/lib/i18n/server";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -43,15 +44,16 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const locale = await getLocale();
+  const { locale, timeZone } = await getPreferences();
   return (
     <html lang={locale} suppressHydrationWarning>
       <body className={`${inter.variable} font-sans`}>
-        <I18nProvider locale={locale}>
+        <I18nProvider locale={locale} timeZone={timeZone}>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
             {children}
             <Toaster />
             <ServiceWorkerRegistrar />
+            <TimeZoneProbe current={timeZone} />
           </ThemeProvider>
         </I18nProvider>
       </body>

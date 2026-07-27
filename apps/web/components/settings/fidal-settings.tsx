@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { formatDate } from "@/lib/format";
+import { formatMoment } from "@/lib/format";
 import { useI18n } from "@/lib/i18n/client";
 
 type PreviewItem = { fidalId: string; date: string; specialita: string; prestazione: string };
@@ -22,7 +22,7 @@ export function FidalSettings({
   lastSyncAt: string | null;
 }) {
   const router = useRouter();
-  const { t, locale } = useI18n();
+  const { t, locale, timeZone } = useI18n();
   const [url, setUrl] = useState(initialUrl);
   const [busy, setBusy] = useState<"" | "save" | "preview" | "sync">("");
   const [preview, setPreview] = useState<Preview | null>(null);
@@ -103,7 +103,7 @@ export function FidalSettings({
         </Button>
         {lastSyncAt && (
           <span className="text-xs text-muted-foreground">
-            {t("settings.lastSync", { date: formatDate(lastSyncAt, "d MMM yyyy, HH:mm", locale) })}
+            {t("settings.lastSync", { date: formatMoment(lastSyncAt, timeZone, "d MMM yyyy, HH:mm", locale) })}
           </span>
         )}
       </div>

@@ -8,6 +8,8 @@ import {
   userSettings,
   workoutTemplates,
 } from "@/lib/db/schema";
+import { isLocale } from "@/lib/i18n";
+import { isValidTimeZone } from "@/lib/timezone";
 import { recomputePersonalBests } from "@/lib/records";
 import { createSession, listSessions } from "@/lib/services";
 import {
@@ -56,6 +58,9 @@ export const exportFileSchema = z.object({
       fidalUrl: z.string().nullable(),
       seasonStartMonth: z.number().int().min(1).max(12),
       defaultDistances: z.array(z.number()).max(50).nullable(),
+      // Optional so exports taken before these existed still import.
+      locale: z.string().max(8).optional(),
+      timezone: z.string().max(64).nullable().optional(),
     })
     .nullable(),
   goals: z.array(goalInputSchema).max(MAX_GOALS),
@@ -84,6 +89,8 @@ export async function buildExport(userId: string): Promise<ExportFile> {
           fidalUrl: settings.fidalUrl,
           seasonStartMonth: settings.seasonStartMonth,
           defaultDistances: settings.defaultDistances,
+          locale: settings.locale,
+          timezone: settings.timezone,
         }
       : null,
     goals: allGoals.map((g) => ({
@@ -245,12 +252,16 @@ export async function importData(userId: string, data: ExportFile): Promise<Impo
         fidalUrl: data.settings.fidalUrl,
         seasonStartMonth: data.settings.seasonStartMonth,
         defaultDistances: data.settings.defaultDistances ?? undefined,
+        ...(isLocale(data.settings.locale) ? { locale: data.settings.locale } : {}),
+        ...(isValidTimeZone(data.settings.timezone) ? { timezone: data.settings.timezone } : {}),
       })
       .onConflictDoUpdate({
         target: userSettings.userId,
         set: {
           fidalUrl: data.settings.fidalUrl,
           seasonStartMonth: data.settings.seasonStartMonth,
+          ...(isLocale(data.settings.locale) ? { locale: data.settings.locale } : {}),
+          ...(isValidTimeZone(data.settings.timezone) ? { timezone: data.settings.timezone } : {}),
           updatedAt: new Date(),
         },
       });

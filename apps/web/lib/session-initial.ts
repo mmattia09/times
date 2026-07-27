@@ -39,14 +39,16 @@ export function toSessionInitial(session: SessionWithPerformances): SessionFormI
 
 /**
  * Same session, ready to be logged again today: the setup (venue, timing,
- * level, workout) and the list of events carry over, the date resets and the
- * results are blank so nothing is copied in by accident.
+ * level, workout) and the list of events carry over, the date resets to today
+ * and the results are blank so nothing is copied in by accident.
  */
-export function toRepeatInitial(session: SessionWithPerformances, today: string): SessionFormInitial {
+export function toRepeatInitial(session: SessionWithPerformances): SessionFormInitial {
   const base = toSessionInitial(session);
   return {
     ...base,
-    date: today,
+    // No date: the form defaults to today as the browser sees it, which is the
+    // day the athlete is actually living in.
+    date: undefined,
     endDate: null,
     performances: base.performances?.map((p) => ({
       discipline: p.discipline,

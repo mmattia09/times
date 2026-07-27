@@ -10,7 +10,7 @@ structured workouts, and visualise your progress — all on your own server.
 
 Built by a sprinter to replace a Notion database; useful for any athletics
 discipline. The interface speaks Italian, English, German and Spanish, installs
-on a phone as a PWA, and renders dates in `Europe/Rome`.
+on a phone as a PWA, and works the same in any time zone.
 
 ## Features
 
@@ -44,6 +44,9 @@ on a phone as a PWA, and renders dates in `Europe/Rome`.
 - **Four languages** — Italian, English, German and Spanish, picked per user in
   Settings (or guessed from the browser on first visit). Event names, seasons and
   dates all follow the choice.
+- **Time-zone safe** — a session date is a calendar day: the 24th of May stays the
+  24th whether the server runs in Rome, London or UTC. Timestamps (last sync, API-key
+  activity) render in your own zone, taken from the browser or set in Settings.
 - **Installable (PWA)** — add it to the home screen and log times at the track, with
   an offline notice instead of a browser error when the signal drops.
 - **Repeat a session** — reopen a past session with its venue, timing, level and

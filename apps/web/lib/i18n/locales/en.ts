@@ -258,6 +258,12 @@ export const en: Dictionary = {
     pbWith: "PB {result}",
   },
   settings: {
+    timezone: "Time zone",
+    timezoneDescription: "Used for timestamps (last sync, API keys). Session dates are calendar days and never shift.",
+    timezoneAuto: "from the browser",
+    timezoneSearch: "Search time zone",
+    timezoneNone: "No time zone found.",
+    timezoneUseBrowser: "Use the browser's",
     title: "Settings",
     profile: "Profile",
     profileDescription: "Your sign-in details.",
@@ -329,6 +335,8 @@ export const en: Dictionary = {
     settingsMissing: "not included",
   },
   errors: {
+    invalidLocale: "Invalid language.",
+    invalidTimezone: "Invalid time zone.",
     fidalInvalidUrl: "Invalid URL.",
     fidalHttps: "The FIDAL URL must use https.",
     fidalHost: "The URL must point to fidal.it.",

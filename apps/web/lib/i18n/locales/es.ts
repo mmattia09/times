@@ -260,6 +260,12 @@ export const es: Dictionary = {
     pbWith: "MMP {result}",
   },
   settings: {
+    timezone: "Zona horaria",
+    timezoneDescription: "Se usa para las marcas de tiempo (última sincronización, claves API). Las fechas de las sesiones son días de calendario y nunca cambian.",
+    timezoneAuto: "del navegador",
+    timezoneSearch: "Buscar zona horaria",
+    timezoneNone: "No se ha encontrado ninguna zona horaria.",
+    timezoneUseBrowser: "Usar la del navegador",
     title: "Ajustes",
     profile: "Perfil",
     profileDescription: "Tus datos de acceso.",
@@ -332,6 +338,8 @@ export const es: Dictionary = {
     settingsMissing: "no incluidos",
   },
   errors: {
+    invalidLocale: "Idioma no válido.",
+    invalidTimezone: "Zona horaria no válida.",
     fidalInvalidUrl: "URL no válida.",
     fidalHttps: "La URL de FIDAL debe usar https.",
     fidalHost: "La URL debe apuntar a fidal.it.",

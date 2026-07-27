@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { toast } from "@/hooks/use-toast";
-import { formatDate } from "@/lib/format";
+import { formatMoment } from "@/lib/format";
 import { useI18n } from "@/lib/i18n/client";
 
 type Key = {
@@ -20,7 +20,7 @@ type Key = {
 };
 
 export function ApiKeysManager() {
-  const { t, locale } = useI18n();
+  const { t, locale, timeZone } = useI18n();
   const [keys, setKeys] = useState<Key[]>([]);
   const [label, setLabel] = useState("");
   const [creating, setCreating] = useState(false);
@@ -110,8 +110,8 @@ export function ApiKeysManager() {
                   {k.revokedAt && <Badge variant="secondary">{t("settings.revoked")}</Badge>}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  <code>{k.prefix}…</code> · {t("settings.keyCreated", { date: formatDate(k.createdAt, undefined, locale) })}
-                  {k.lastUsedAt ? ` · ${t("settings.keyUsed", { date: formatDate(k.lastUsedAt, undefined, locale) })}` : ` · ${t("settings.keyNeverUsed")}`}
+                  <code>{k.prefix}…</code> · {t("settings.keyCreated", { date: formatMoment(k.createdAt, timeZone, "d MMM yyyy", locale) })}
+                  {k.lastUsedAt ? ` · ${t("settings.keyUsed", { date: formatMoment(k.lastUsedAt, timeZone, "d MMM yyyy", locale) })}` : ` · ${t("settings.keyNeverUsed")}`}
                 </p>
               </div>
               {!k.revokedAt && (

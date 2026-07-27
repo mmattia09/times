@@ -261,6 +261,12 @@ export const de: Dictionary = {
     pbWith: "PB {result}",
   },
   settings: {
+    timezone: "Zeitzone",
+    timezoneDescription: "Für Zeitstempel (letzte Synchronisierung, API-Schlüssel). Einheitsdaten sind Kalendertage und verschieben sich nie.",
+    timezoneAuto: "vom Browser",
+    timezoneSearch: "Zeitzone suchen",
+    timezoneNone: "Keine Zeitzone gefunden.",
+    timezoneUseBrowser: "Die des Browsers verwenden",
     title: "Einstellungen",
     profile: "Profil",
     profileDescription: "Deine Anmeldedaten.",
@@ -333,6 +339,8 @@ export const de: Dictionary = {
     settingsMissing: "nicht enthalten",
   },
   errors: {
+    invalidLocale: "Ungültige Sprache.",
+    invalidTimezone: "Ungültige Zeitzone.",
     fidalInvalidUrl: "Ungültige URL.",
     fidalHttps: "Die FIDAL-URL muss https verwenden.",
     fidalHost: "Die URL muss auf fidal.it verweisen.",
