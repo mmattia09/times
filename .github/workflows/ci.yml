@@ -8,7 +8,7 @@ on:
 
 jobs:
   check:
-    name: Lint · Types · Build
+    name: Lint · Types · Import · Build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -33,6 +33,12 @@ jobs:
 
       - name: Typecheck
         run: pnpm --filter web exec tsc --noEmit
+
+      # The FIDAL parser reads someone else's HTML into an athlete's records,
+      # and has been wrong about units, event names, separators and the sign of
+      # the wind. These run without a database.
+      - name: Import checks
+        run: pnpm --filter web check
 
       - name: Build
         run: pnpm --filter web build
