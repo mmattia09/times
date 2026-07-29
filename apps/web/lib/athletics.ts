@@ -232,6 +232,13 @@ export function mapSpecialitaToEvent(raw: string): EventKey | null {
   const s = raw.trim().toLowerCase();
   if (!s) return null;
 
+  /**
+   * Whole-word match. Substring matching filed every "salto in lungo",
+   * "salto triplo" and "salto con l'asta" as a high jump, because "salto"
+   * contains "alto".
+   */
+  const word = (w: string) => new RegExp(`\\b${w}`, "i").test(s);
+
   // Combined events.
   if (/(prove multiple|eptathlon|ettathlon|decathlon|tetrathlon|pentathlon)/.test(s))
     return { discipline: "combined", distance: null, event: s.replace(/\s+/g, " ").trim() };
@@ -240,22 +247,22 @@ export function mapSpecialitaToEvent(raw: string): EventKey | null {
   // would match plain "lungo".
   if (s.includes("sargent")) return { discipline: "test", distance: null, event: "sargent" };
   if (/(da fermo|fermo|standing)/.test(s)) {
-    if (s.includes("decuplo")) return { discipline: "test", distance: null, event: "decuplo_fermo" };
-    if (s.includes("quintuplo")) return { discipline: "test", distance: null, event: "quintuplo_fermo" };
-    if (s.includes("triplo")) return { discipline: "test", distance: null, event: "triplo_fermo" };
-    if (s.includes("alto")) return { discipline: "test", distance: null, event: "alto_fermo" };
-    if (s.includes("lungo")) return { discipline: "test", distance: null, event: "lungo_fermo" };
+    if (word("decuplo")) return { discipline: "test", distance: null, event: "decuplo_fermo" };
+    if (word("quintuplo")) return { discipline: "test", distance: null, event: "quintuplo_fermo" };
+    if (word("triplo")) return { discipline: "test", distance: null, event: "triplo_fermo" };
+    if (word("alto")) return { discipline: "test", distance: null, event: "alto_fermo" };
+    if (word("lungo")) return { discipline: "test", distance: null, event: "lungo_fermo" };
   }
 
   // Field events.
-  if (s.includes("alto")) return { discipline: "jump", distance: null, event: "alto" };
-  if (s.includes("triplo")) return { discipline: "jump", distance: null, event: "triplo" };
-  if (s.includes("lungo")) return { discipline: "jump", distance: null, event: "lungo" };
-  if (s.includes("asta")) return { discipline: "jump", distance: null, event: "asta" };
-  if (s.includes("peso")) return { discipline: "throw", distance: null, event: "peso" };
-  if (s.includes("disco")) return { discipline: "throw", distance: null, event: "disco" };
-  if (s.includes("martello")) return { discipline: "throw", distance: null, event: "martello" };
-  if (s.includes("giavellotto") || s.includes("giav"))
+  if (word("alto")) return { discipline: "jump", distance: null, event: "alto" };
+  if (word("triplo")) return { discipline: "jump", distance: null, event: "triplo" };
+  if (word("lungo")) return { discipline: "jump", distance: null, event: "lungo" };
+  if (word("asta")) return { discipline: "jump", distance: null, event: "asta" };
+  if (word("peso")) return { discipline: "throw", distance: null, event: "peso" };
+  if (word("disco")) return { discipline: "throw", distance: null, event: "disco" };
+  if (word("martello")) return { discipline: "throw", distance: null, event: "martello" };
+  if (word("giavellotto") || word("giav"))
     return { discipline: "throw", distance: null, event: "giavellotto" };
 
   // Relays: "staffetta 4x100", "4x400".
