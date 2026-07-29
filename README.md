@@ -191,7 +191,8 @@ pnpm db:migrate && pnpm db:seed    # migrations + admin provisioning
 pnpm dev                           # http://localhost:3000
 ```
 
-Before opening a PR, please make sure these pass (CI runs the same checks):
+Before opening a PR, please make sure these pass (CI runs lint, types and the
+build; the import checks are not wired into it yet):
 
 ```bash
 pnpm --filter web lint
