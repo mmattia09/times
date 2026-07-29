@@ -197,12 +197,15 @@ export function isBetter(a: number, b: number, discipline: Discipline): boolean 
   return lowerIsBetter(discipline) ? a < b : a > b;
 }
 
-/** Format seconds as "12.34" (sub-minute) or "1:58.40" (minute+). */
+/** Format seconds as "12.34", "1:58.40", or "2:35:10.00" once past the hour. */
 function formatSeconds(n: number): string {
   if (n < 60) return n.toFixed(2);
-  const m = Math.floor(n / 60);
-  const s = n - m * 60;
-  return `${m}:${s.toFixed(2).padStart(5, "0")}`;
+  const secs = n % 60;
+  const totalMinutes = Math.floor(n / 60);
+  const tail = `${secs.toFixed(2).padStart(5, "0")}`;
+  if (totalMinutes < 60) return `${totalMinutes}:${tail}`;
+  const h = Math.floor(totalMinutes / 60);
+  return `${h}:${String(totalMinutes % 60).padStart(2, "0")}:${tail}`;
 }
 
 /** Format a numeric result with its unit for display. */
@@ -274,11 +277,23 @@ export function mapSpecialitaToEvent(raw: string): EventKey | null {
   if (s.includes("campestre") || s.includes("cross"))
     return { discipline: "long_distance", distance: 2000, event: "campestre" };
 
+  // Distance in metres. Track events carry it in the name ("3000 siepi"), road
+  // races give kilometres ("10 km"), and the classics give neither.
+  const km = s.match(/(\d+(?:[.,]\d+)?)\s*km\b/);
   const numMatch = s.match(/(\d{2,5})/);
-  const dist = numMatch ? parseInt(numMatch[1], 10) : null;
+  const dist = km
+    ? Math.round(parseFloat(km[1].replace(",", ".")) * 1000)
+    : numMatch
+      ? parseInt(numMatch[1], 10)
+      : null;
 
-  // Race walking.
-  if (s.includes("marcia")) return { discipline: "walk", distance: dist, event: null };
+  // Race walking, on the track or on the road.
+  if (word("marcia")) return { discipline: "walk", distance: dist, event: null };
+
+  // Named road distances. "mezza" first: "maratona" is a prefix of "maratonina".
+  if (/\bmaratonina\b|\bmezza\s+maratona\b/.test(s))
+    return { discipline: "long_distance", distance: 21097, event: null };
+  if (word("maratona")) return { discipline: "long_distance", distance: 42195, event: null };
 
   if (!dist) return null;
 

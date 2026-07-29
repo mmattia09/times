@@ -8,10 +8,12 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
+    "check": "tsx --conditions=react-server scripts/check-import.ts && tsx --conditions=react-server scripts/check-repair.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx lib/db/migrate.ts",
     "db:push": "drizzle-kit push",
     "db:seed": "tsx lib/db/seed.ts",
+    "db:repair": "tsx lib/db/repair.ts",
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
@@ -57,6 +59,7 @@
     "eslint-config-next": "16.2.10",
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.17",
+    "server-only": "^0.0.1",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2"
   }

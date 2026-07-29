@@ -196,6 +196,7 @@ Before opening a PR, please make sure these pass (CI runs the same checks):
 ```bash
 pnpm --filter web lint
 pnpm --filter web exec tsc --noEmit
+pnpm --filter web check    # FIDAL parsing: units, event names, repair rules
 pnpm --filter web build
 ```
 

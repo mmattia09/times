@@ -1,7 +1,7 @@
 import "server-only";
 import { createHash } from "node:crypto";
 import * as cheerio from "cheerio";
-import { mapSpecialitaToEvent } from "@/lib/athletics";
+import { mapSpecialitaToEvent, resultUnit, type EventKey } from "@/lib/athletics";
 import type { SessionInput } from "@/lib/validation";
 
 const FIDAL_HEADERS: Record<string, string> = {
@@ -122,21 +122,43 @@ export function parseItalianDate(raw: string): Date | null {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
-/** Parse a prestazione like "12.15", `12"15`, "1:58.4", "5,32" into seconds/meters. */
+/** True when the mark is written with minutes: "2:05.30" or `2\'05"30`. */
+export function hasMinutes(raw: string): boolean {
+  return /\d\s*[:'\u2019\u2032]\s*\d/.test(raw);
+}
+
+/**
+ * Parse a prestazione into seconds (times) or metres (field events).
+ *
+ * FIDAL is not consistent about separators between meets: the same minute can
+ * be written `2:05.30` or `2\'05"30`, and decimals arrive as either a comma or
+ * a dot. Normalise the punctuation first, then read it.
+ */
 export function parsePrestazione(raw: string): number | null {
-  let s = raw.trim().replace(/[^\d:.,"']/g, "");
-  if (!s) return null;
-  // mm:ss(.cc) → seconds
-  const time = s.match(/^(\d+):(\d+(?:[.,]\d+)?)$/);
-  if (time) {
-    return parseInt(time[1], 10) * 60 + parseFloat(time[2].replace(",", "."));
+  const kept = raw.trim().replace(/[^\d:.,"'\u2019\u2032\u2033]/g, "");
+  if (!kept) return null;
+
+  // Minutes/hours use ' or :, decimals use " or , or .
+  const s = kept
+    .replace(/[\u2019\u2032']/g, ":")
+    .replace(/[\u2033"]/g, ".")
+    .replace(/,/g, ".");
+
+  // h:mm:ss(.cc) — marathons and race walks.
+  const hms = s.match(/^(\d+):(\d{1,2}):(\d{1,2}(?:\.\d+)?)$/);
+  if (hms) {
+    return parseInt(hms[1], 10) * 3600 + parseInt(hms[2], 10) * 60 + parseFloat(hms[3]);
   }
-  // 12"15 → 12.15
-  s = s.replace(/["']/g, ".").replace(",", ".");
-  // collapse multiple dots
-  const parts = s.split(".");
-  if (parts.length > 2) s = `${parts[0]}.${parts.slice(1).join("")}`;
-  const n = parseFloat(s);
+  // m:ss(.cc) → seconds.
+  const ms = s.match(/^(\d+):(\d{1,2}(?:\.\d+)?)$/);
+  if (ms) {
+    return parseInt(ms[1], 10) * 60 + parseFloat(ms[2]);
+  }
+
+  // Plain number, possibly with a stray separator left over ("12.34.5").
+  const parts = s.replace(/:/g, ".").split(".");
+  const flat = parts.length > 2 ? `${parts[0]}.${parts.slice(1).join("")}` : parts.join(".");
+  const n = parseFloat(flat);
   return Number.isNaN(n) ? null : n;
 }
 
@@ -227,6 +249,25 @@ export function parseFidalResults(html: string): FidalRow[] {
   return rows;
 }
 
+/**
+ * FIDAL publishes field results in metres and times in seconds; the app stores
+ * jumps in centimetres and the long cross-country events in minutes. Without
+ * this a 1,49 high jump is filed as 1.49 cm.
+ */
+export function toStoredResult(ev: EventKey, parsed: number, raw: string): number {
+  switch (resultUnit(ev)) {
+    case "cm":
+      // Rounded on purpose: 5.2 * 100 is 520.0000000000001 in binary floating point.
+      return Math.round(parsed * 100);
+    case "min":
+      // Only a mark actually written with minutes was parsed into seconds; one
+      // written "7.35" is already the minutes the app wants.
+      return hasMinutes(raw) ? Number((parsed / 60).toFixed(2)) : parsed;
+    default:
+      return parsed;
+  }
+}
+
 /** Convert parsed rows into importable session inputs (one performance each). */
 export function toImportItems(rows: FidalRow[]): FidalImportItem[] {
   const items: FidalImportItem[] = [];
@@ -235,6 +276,7 @@ export function toImportItems(rows: FidalRow[]): FidalImportItem[] {
     const ev = mapSpecialitaToEvent(r.specialita);
     if (!ev) continue;
 
+    const result = toStoredResult(ev, r.result, r.prestazione);
     const fidalId = fidalHash(r.date, r.specialita, r.prestazione);
     items.push({
       fidalId,
@@ -256,7 +298,7 @@ export function toImportItems(rows: FidalRow[]): FidalImportItem[] {
             discipline: ev.discipline,
             distance: ev.distance,
             event: ev.event,
-            result: r.result,
+            result,
             wind: r.vento,
             lane: null,
             position: r.position,

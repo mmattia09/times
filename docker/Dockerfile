@@ -20,7 +20,7 @@ COPY . .
 RUN pnpm --filter web build
 # Bundle the migrate + seed scripts into self-contained CJS so the runtime needs
 # neither tsx nor node_modules for them (keeps the final image slim).
-RUN cd apps/web && for s in migrate seed; do \
+RUN cd apps/web && for s in migrate seed repair; do \
       node_modules/.bin/esbuild lib/db/$s.ts --bundle --platform=node --target=node22 \
         --format=cjs --outfile=dist/$s.cjs \
         --external:pg-native --external:cloudflare:sockets; \
@@ -42,6 +42,7 @@ COPY --from=builder /app/apps/web/public ./apps/web/public
 # migration SQL (read relative to the working dir).
 COPY --from=builder /app/apps/web/dist/migrate.cjs ./migrate.cjs
 COPY --from=builder /app/apps/web/dist/seed.cjs ./seed.cjs
+COPY --from=builder /app/apps/web/dist/repair.cjs ./repair.cjs
 COPY --from=builder /app/apps/web/lib/db/migrations ./lib/db/migrations
 COPY docker/entrypoint.sh ./entrypoint.sh
 RUN chmod +x ./entrypoint.sh && chown -R nextjs:nodejs /app
