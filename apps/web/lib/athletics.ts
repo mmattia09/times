@@ -244,7 +244,13 @@ export function mapSpecialitaToEvent(raw: string): EventKey | null {
 
   // Combined events.
   if (/(prove multiple|eptathlon|ettathlon|decathlon|tetrathlon|pentathlon)/.test(s))
-    return { discipline: "combined", distance: null, event: s.replace(/\s+/g, " ").trim() };
+    return {
+      discipline: "combined",
+      distance: null,
+      // The whole name is the event here, and the column holds 32 characters —
+      // "prove multiple maschili indoor cadetti" would fail the insert.
+      event: s.replace(/\s+/g, " ").trim().slice(0, 32).trim(),
+    };
 
   // Athletic tests — checked before the flat jumps, otherwise "lungo da fermo"
   // would match plain "lungo".

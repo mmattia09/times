@@ -1,5 +1,5 @@
 import { mapSpecialitaToEvent, formatResult, resultUnit } from "@/lib/athletics";
-import { parsePrestazione, toStoredResult } from "@/lib/fidal";
+import { parsePrestazione, parseVento, toStoredResult } from "@/lib/fidal";
 
 /**
  * Every shape a FIDAL prestazione arrives in, through the whole chain:
@@ -99,6 +99,45 @@ for (const [specialita, unit] of [
   const ok = resultUnit(ev) === unit;
   if (!ok) failures++;
   console.log(`  ${ok ? "ok  " : "FAIL"} ${specialita.padEnd(26)} stored in ${resultUnit(ev)}`);
+}
+
+// Wind decides whether a mark counts as a record, so its sign has to survive
+// whichever dash the meet used.
+console.log();
+for (const [raw, expected] of [
+  ["+1,5", 1.5],
+  ["-0,3", -0.3],
+  ["\u22120,3", -0.3],
+  ["\u20130,3", -0.3],
+  ["0.0", 0],
+  ["", null],
+  ["n.d.", null],
+] as Array<[string, number | null]>) {
+  const got = parseVento(raw);
+  const ok = got === expected;
+  if (!ok) failures++;
+  console.log(`  ${ok ? "ok  " : "FAIL"} wind ${JSON.stringify(raw).padEnd(10)} → ${got}`);
+}
+
+// A no-mark is published as 0,00; importing it would beat every real time.
+console.log();
+for (const raw of ["0,00", "0.00"]) {
+  const parsed = parsePrestazione(raw);
+  const ok = parsed !== null && parsed <= 0; // toImportItems drops these
+  if (!ok) failures++;
+  console.log(`  ${ok ? "ok  " : "FAIL"} no-mark ${JSON.stringify(raw)} parses to ${parsed}, dropped on import`);
+}
+
+// The event column holds 32 characters and combined events use the whole name.
+console.log();
+for (const specialita of [
+  "prove multiple maschili indoor cadetti",
+  "Eptathlon Allievi su pista outdoor",
+]) {
+  const ev = mapSpecialitaToEvent(specialita);
+  const ok = (ev?.event?.length ?? 0) <= 32;
+  if (!ok) failures++;
+  console.log(`  ${ok ? "ok  " : "FAIL"} ${String(ev?.event?.length).padStart(2)} chars  ${ev?.event}`);
 }
 
 console.log(failures === 0 ? "\nALL PASS" : `\n${failures} FAILURES`);

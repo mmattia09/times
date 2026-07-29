@@ -162,8 +162,16 @@ export function parsePrestazione(raw: string): number | null {
   return Number.isNaN(n) ? null : n;
 }
 
-function parseVento(raw: string): number | null {
-  const cleaned = raw.trim().replace(",", ".");
+/**
+ * Wind, in m/s. The sign decides whether a mark counts as a record, and FIDAL
+ * writes the minus as a hyphen, a true minus sign or an en dash depending on
+ * the meet — read as unsigned, a 2,5 headwind would disqualify a legal mark.
+ */
+export function parseVento(raw: string): number | null {
+  const cleaned = raw
+    .trim()
+    .replace(/[\u2212\u2013\u2014\u2010\u2011]/g, "-")
+    .replace(/,/g, ".");
   if (!cleaned) return null;
   const m = cleaned.match(/-?\d+(?:\.\d+)?/);
   if (!m) return null;
@@ -272,7 +280,9 @@ export function toStoredResult(ev: EventKey, parsed: number, raw: string): numbe
 export function toImportItems(rows: FidalRow[]): FidalImportItem[] {
   const items: FidalImportItem[] = [];
   for (const r of rows) {
-    if (!r.date || r.result == null) continue;
+    // A no-mark is published as 0,00. Importing it would be worse than skipping
+    // it: zero seconds is an unbeatable time, and zero centimetres is not a jump.
+    if (!r.date || r.result == null || r.result <= 0) continue;
     const ev = mapSpecialitaToEvent(r.specialita);
     if (!ev) continue;
 
