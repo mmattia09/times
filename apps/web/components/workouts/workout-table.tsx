@@ -1,3 +1,5 @@
+"use client";
+
 import type { WorkoutBlock } from "@/lib/db/schema";
 import {
   Table,
@@ -9,7 +11,12 @@ import {
 } from "@/components/ui/table";
 import { useI18n } from "@/lib/i18n/client";
 
-/** Renders workout blocks in the athlete's usual table layout. */
+/**
+ * Renders workout blocks in the athlete's usual table layout.
+ *
+ * A client component because it translates its own headers: the session detail
+ * page is a server component, and rendering a hook there throws.
+ */
 export function WorkoutTable({ blocks }: { blocks: WorkoutBlock[] }) {
   const { t } = useI18n();
   const hasNotes = blocks.some((b) => b.note);
