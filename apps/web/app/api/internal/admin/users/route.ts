@@ -5,6 +5,7 @@ import { requireAdminApi } from "@/lib/admin";
 import { db } from "@/lib/db";
 import { authSessions, userSettings, users } from "@/lib/db/schema";
 import { clientIp, rateLimit, tooManyRequests } from "@/lib/rate-limit";
+import { logEvent, maskEmail } from "@/lib/log";
 
 const createUserSchema = z.object({
   name: z.string().trim().min(1, "validation.nameRequired").max(128),
@@ -59,5 +60,12 @@ export async function POST(req: Request) {
   // out and the user list doesn't show them as online.
   await db.delete(authSessions).where(eq(authSessions.userId, created.id));
 
+  logEvent("admin.user.created", {
+    by: auth_.userId,
+    id: created.id,
+    user: maskEmail(email),
+    admin: isAdmin,
+    mustChangePassword,
+  });
   return Response.json({ ok: true, id: created.id }, { status: 201 });
 }

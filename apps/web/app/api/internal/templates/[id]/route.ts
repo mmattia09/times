@@ -3,6 +3,7 @@ import { requireApiUser } from "@/lib/current-user";
 import { db } from "@/lib/db";
 import { workoutTemplates } from "@/lib/db/schema";
 import { workoutTemplateInputSchema } from "@/lib/validation";
+import { logEvent } from "@/lib/log";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -21,6 +22,7 @@ export async function PUT(req: Request, { params }: Params) {
     .where(and(eq(workoutTemplates.id, id), eq(workoutTemplates.userId, auth.user.id)))
     .returning({ id: workoutTemplates.id });
   if (updated.length === 0) return Response.json({ error: "not_found" }, { status: 404 });
+  logEvent("workout.updated", { user: auth.user.id, id, name: parsed.data.name });
   return Response.json({ id });
 }
 
@@ -33,5 +35,6 @@ export async function DELETE(_req: Request, { params }: Params) {
     .where(and(eq(workoutTemplates.id, id), eq(workoutTemplates.userId, auth.user.id)))
     .returning({ id: workoutTemplates.id });
   if (deleted.length === 0) return Response.json({ error: "not_found" }, { status: 404 });
+  logEvent("workout.deleted", { user: auth.user.id, id });
   return Response.json({ ok: true });
 }

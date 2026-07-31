@@ -6,6 +6,7 @@ import { TimeZoneProbe } from "@/components/i18n/timezone-probe";
 import { Toaster } from "@/components/ui/toaster";
 import { I18nProvider } from "@/lib/i18n/client";
 import { getPreferences, getT } from "@/lib/i18n/server";
+import { announceConfig } from "@/lib/boot";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -44,6 +45,7 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  announceConfig();
   const { locale, timeZone } = await getPreferences();
   return (
     <html lang={locale} suppressHydrationWarning>

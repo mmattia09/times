@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { apiKeys } from "@/lib/db/schema";
 import { generateApiKey } from "@/lib/api-key";
 import { apiKeyInputSchema } from "@/lib/validation";
+import { logEvent } from "@/lib/log";
 
 export async function GET() {
   const auth = await requireApiUser();
@@ -39,6 +40,7 @@ export async function POST(req: Request) {
     .values({ userId: auth.user.id, label: parsed.data.label, keyHash, prefix })
     .returning({ id: apiKeys.id });
 
+  logEvent("apikey.created", { user: auth.user.id, id: row.id, label: parsed.data.label, prefix });
   // The raw key is returned exactly once.
   return Response.json({ id: row.id, key: raw, prefix }, { status: 201 });
 }

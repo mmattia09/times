@@ -3,6 +3,7 @@ import { requireApiUser } from "@/lib/current-user";
 import { db } from "@/lib/db";
 import { userSettings } from "@/lib/db/schema";
 import { fidalUrlSchema } from "@/lib/validation";
+import { logEvent } from "@/lib/log";
 
 export async function PUT(req: Request) {
   const auth = await requireApiUser();
@@ -22,5 +23,6 @@ export async function PUT(req: Request) {
       set: { fidalUrl: parsed.data.fidalUrl, updatedAt: new Date() },
     });
 
+  logEvent("settings.updated", { user: auth.user.id, what: "fidalUrl" });
   return Response.json({ ok: true });
 }

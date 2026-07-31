@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireApiUser } from "@/lib/current-user";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
+import { logEvent } from "@/lib/log";
 
 const profileSchema = z.object({
   name: z.string().min(1).max(120).optional(),
@@ -60,5 +61,6 @@ export async function PUT(req: Request) {
   }
 
   await db.update(users).set(update).where(eq(users.id, auth.user.id));
+  logEvent("settings.updated", { user: auth.user.id, what: Object.keys(update).filter((k) => k !== "updatedAt").join(",") });
   return Response.json({ ok: true });
 }

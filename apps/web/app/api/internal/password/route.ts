@@ -6,6 +6,7 @@ import { getSession } from "@/lib/current-user";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { clientIp, rateLimit, tooManyRequests } from "@/lib/rate-limit";
+import { logEvent, maskEmail } from "@/lib/log";
 
 const schema = z.object({
   currentPassword: z.string().min(1, "validation.passwordRequired").max(128),
@@ -65,6 +66,7 @@ export async function POST(req: Request) {
     .set({ mustChangePassword: false, updatedAt: new Date() })
     .where(eq(users.id, session.user.id));
 
+  logEvent("auth.password.forced", { user: session.user.id });
   const res = Response.json({ ok: true });
   for (const cookie of authResponse.headers.getSetCookie()) {
     res.headers.append("set-cookie", cookie);

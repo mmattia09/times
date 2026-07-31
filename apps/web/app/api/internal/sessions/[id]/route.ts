@@ -1,6 +1,7 @@
 import { requireApiUser } from "@/lib/current-user";
 import { deleteSession, getSessionById, updateSession } from "@/lib/services";
 import { sessionInputCheckedSchema } from "@/lib/validation";
+import { logEvent } from "@/lib/log";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -24,6 +25,7 @@ export async function PUT(req: Request, { params }: Params) {
   }
   const ok = await updateSession(auth.user.id, id, parsed.data);
   if (!ok) return Response.json({ error: "not_found" }, { status: 404 });
+  logEvent("session.updated", { user: auth.user.id, id, date: parsed.data.date });
   return Response.json({ id });
 }
 
@@ -33,5 +35,6 @@ export async function DELETE(_req: Request, { params }: Params) {
   const { id } = await params;
   const ok = await deleteSession(auth.user.id, id);
   if (!ok) return Response.json({ error: "not_found" }, { status: 404 });
+  logEvent("session.deleted", { user: auth.user.id, id });
   return Response.json({ ok: true });
 }

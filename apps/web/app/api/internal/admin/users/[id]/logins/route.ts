@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { requireAdminApi } from "@/lib/admin";
 import { db } from "@/lib/db";
 import { authSessions, users } from "@/lib/db/schema";
+import { logEvent, maskEmail } from "@/lib/log";
 
 /**
  * Sign a user out of every device. Useful when someone leaves a browser logged
@@ -21,5 +22,6 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
     .where(eq(authSessions.userId, id))
     .returning({ id: authSessions.id });
 
+  logEvent("admin.user.logins.revoked", { by: caller.userId, id, revoked: removed.length });
   return Response.json({ ok: true, revoked: removed.length });
 }

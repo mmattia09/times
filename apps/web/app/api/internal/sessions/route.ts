@@ -1,6 +1,7 @@
 import { requireApiUser } from "@/lib/current-user";
 import { createSession, listSessions, type SessionFilters } from "@/lib/services";
 import { sessionInputCheckedSchema, sessionQuerySchema } from "@/lib/validation";
+import { logEvent } from "@/lib/log";
 
 export async function GET(req: Request) {
   const auth = await requireApiUser();
@@ -25,5 +26,6 @@ export async function POST(req: Request) {
     return Response.json({ error: "bad_request", issues: parsed.error.flatten() }, { status: 400 });
   }
   const id = await createSession(auth.user.id, parsed.data);
+  logEvent("session.created", { user: auth.user.id, id, date: parsed.data.date, type: parsed.data.type, results: parsed.data.performances.length });
   return Response.json({ id }, { status: 201 });
 }

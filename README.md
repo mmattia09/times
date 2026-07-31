@@ -116,7 +116,9 @@ set `APP_IMAGE=ghcr.io/mmattia09/times:vX.Y.Z` in `.env`.
 | `DB_PASSWORD`          | Password for the Postgres container.                             |
 | `DATABASE_URL`         | Postgres connection string (used by local dev).                  |
 | `BETTER_AUTH_SECRET`   | Session-signing secret (`openssl rand -base64 32`).              |
-| `BETTER_AUTH_URL`      | Public URL where the app is reachable.                           |
+| `BETTER_AUTH_URL`      | Public URL where the app is reachable (see *Behind a proxy*).    |
+| `TRUSTED_ORIGINS`      | Extra public names the same instance answers to, comma separated.|
+| `SECURE_COOKIES`       | `false` when the app is also opened over plain http on the LAN.  |
 | `ADMIN_EMAIL`          | Admin login email.                                               |
 | `ADMIN_PASSWORD`       | Admin login password.                                            |
 | `DISABLE_REGISTRATION` | `true` to block new sign-ups once your accounts exist.           |
@@ -137,6 +139,43 @@ password opens their account until they change it.
 
 Everyone else registers through the UI and self-manages name, email, password,
 language and time zone from **Settings**.
+
+### Behind a proxy or a tunnel
+
+Set `BETTER_AUTH_URL` to the address you actually type in the browser — a
+Cloudflare tunnel hostname, or whatever your reverse proxy serves. Logins are
+refused from any origin the app doesn't recognise, which is what stops another
+site from driving your session, so this has to be right.
+
+Two things follow from that:
+
+- **Reaching it by LAN address as well.** Private addresses — `192.168.x`,
+  `10.x`, `172.16–31.x`, `*.local`, `localhost` — are always accepted, so
+  logging in at `http://192.168.1.40:3000` needs no configuration. A second
+  *public* name does: list it in `TRUSTED_ORIGINS`.
+- **Cookies over plain http.** A session cookie is marked `Secure` when
+  `BETTER_AUTH_URL` is https, and browsers drop `Secure` cookies on an http
+  page — so the LAN login would appear to succeed and leave you signed out.
+  Set `SECURE_COOKIES=false` when you use both. It is the one trade-off here:
+  the cookie is then no longer https-only.
+
+The app prints its effective configuration on the first request, so
+`docker compose logs app | grep boot` tells you what it thinks it is.
+
+### Logs
+
+Every login, sign-up, password change, and every record the app writes appears
+on stdout as one line, with a timestamp and key=value fields:
+
+```
+2026-07-31T19:30:51.523Z  auth.signin  user=ma***@example.com  ip=203.0.113.9  origin=https://times.example.com  status=200
+2026-07-31T19:31:37.882Z  session.created  user=lWC6l…  id=nTSdA…  date=2026-07-30  type=training  results=1
+2026-07-31T19:31:06.638Z  auth.origin.rejected  origin=https://elsewhere.example  trusted=https://times.example.com  hint=…
+```
+
+Emails are masked and passwords and tokens are never logged. Follow along with
+`docker compose logs -f app`, or pick out one kind with
+`docker compose logs app | grep auth.signin`.
 
 ## Usage
 

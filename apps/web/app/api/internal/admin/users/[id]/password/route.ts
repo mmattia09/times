@@ -4,6 +4,7 @@ import { z } from "zod";
 import { requireAdminApi } from "@/lib/admin";
 import { db } from "@/lib/db";
 import { accounts, authSessions, users } from "@/lib/db/schema";
+import { logEvent, maskEmail } from "@/lib/log";
 
 const schema = z.object({
   password: z.string().min(8, "validation.passwordShort").max(128),
@@ -69,5 +70,6 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
   // The old password is gone; sessions opened with it shouldn't outlive it.
   await db.delete(authSessions).where(eq(authSessions.userId, id));
 
+  logEvent("admin.user.password", { by: caller.userId, id, mustChange: parsed.data.mustChange });
   return Response.json({ ok: true, mustChange: parsed.data.mustChange });
 }

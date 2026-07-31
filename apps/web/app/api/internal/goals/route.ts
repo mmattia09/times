@@ -3,6 +3,7 @@ import { requireApiUser } from "@/lib/current-user";
 import { db } from "@/lib/db";
 import { goals } from "@/lib/db/schema";
 import { goalInputSchema } from "@/lib/validation";
+import { logEvent } from "@/lib/log";
 
 export async function GET() {
   const auth = await requireApiUser();
@@ -28,5 +29,6 @@ export async function POST(req: Request) {
     .insert(goals)
     .values({ userId: auth.user.id, ...parsed.data, target: parsed.data.target.toString() })
     .returning({ id: goals.id });
+  logEvent("goal.created", { user: auth.user.id, id: row.id, discipline: parsed.data.discipline, target: parsed.data.target });
   return Response.json({ id: row.id }, { status: 201 });
 }

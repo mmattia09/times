@@ -3,6 +3,7 @@ import { requireApiUser } from "@/lib/current-user";
 import { db } from "@/lib/db";
 import { workoutTemplates } from "@/lib/db/schema";
 import { workoutTemplateInputSchema } from "@/lib/validation";
+import { logEvent } from "@/lib/log";
 
 export async function GET() {
   const auth = await requireApiUser();
@@ -28,5 +29,6 @@ export async function POST(req: Request) {
     .insert(workoutTemplates)
     .values({ userId: auth.user.id, ...parsed.data })
     .returning({ id: workoutTemplates.id });
+  logEvent("workout.created", { user: auth.user.id, id: row.id, name: parsed.data.name, blocks: parsed.data.blocks.length });
   return Response.json({ id: row.id }, { status: 201 });
 }

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireAdminApi } from "@/lib/admin";
 import { db } from "@/lib/db";
 import { authSessions, users } from "@/lib/db/schema";
+import { logEvent, maskEmail } from "@/lib/log";
 
 const patchSchema = z.object({ isAdmin: z.boolean() });
 
@@ -51,6 +52,12 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     await db.delete(authSessions).where(eq(authSessions.userId, id));
   }
 
+  logEvent("admin.user.role", {
+    by: caller.userId,
+    id,
+    user: maskEmail(target.email),
+    admin: parsed.data.isAdmin,
+  });
   return Response.json({ ok: true, isAdmin: parsed.data.isAdmin });
 }
 
@@ -84,5 +91,6 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   }
 
   await db.delete(users).where(eq(users.id, id));
+  logEvent("admin.user.deleted", { by: caller.userId, id, user: maskEmail(target.email) });
   return Response.json({ ok: true });
 }
