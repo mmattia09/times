@@ -19,6 +19,11 @@ on a phone as a PWA, and works the same in any time zone.
   the day (or a multi-day period) you trained, optionally with a workout attached.
   Filters by season, type, discipline, level, organiser and indoor/outdoor, plus a
   free-text search over venue and notes.
+- **List or calendar** — the same sessions laid out by day, one month at a time, with
+  races and training as separate markers and multi-day meets spanning their days.
+- **Links on a session** — the Strava activity, the race video, the start list. Strava,
+  Instagram, YouTube and TikTok are recognised and drawn with their own mark in the
+  app's own colours.
 - **Personal & season bests** — recomputed on every write. Wind-aware: a tailwind above
   **+2.0 m/s** flags the mark *ventosa* (kept and charted, but never a record — the
   [FIDAL](https://www.fidal.it) / World Athletics rule).
@@ -51,8 +56,9 @@ on a phone as a PWA, and works the same in any time zone.
 - **Time-zone safe** — a session date is a calendar day: the 24th of May stays the
   24th whether the server runs in Rome, London or UTC. Timestamps (last sync, API-key
   activity) render in your own zone, taken from the browser or set in Settings.
-- **Installable (PWA)** — add it to the home screen and log times at the track, with
-  an offline notice instead of a browser error when the signal drops.
+- **Installable (PWA)** — add it to the home screen and log times at the track. With no
+  signal the logging page still opens and the session is kept on the phone, then sent
+  by itself when the network comes back.
 - **Repeat a session** — reopen a past session with its venue, timing, level and
   workout, dated today and with the results blank, ready to fill in.
 
@@ -213,8 +219,8 @@ Questions and bug reports → [GitHub Issues](https://github.com/mmattia09/times
 
 ## Roadmap
 
-- **Offline logging** — queue sessions entered without signal and sync them on
-  reconnect (today the PWA needs the network to save).
+- **Offline editing** — changing an existing session still needs the network; only new
+  ones are queued.
 - **More languages** — the dictionaries are typed against Italian, so adding one is a
   single file under `apps/web/lib/i18n/locales`.
 

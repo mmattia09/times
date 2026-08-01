@@ -106,6 +106,8 @@ export const sessionInputSchema = z.object({
     .preprocess((v) => (v === "" || v === undefined ? null : v), sessionWorkoutSchema.nullable())
     .optional(),
   links: z.array(sessionLinkSchema).max(20).default([]),
+  /** Set by the app for a session written offline; makes the retry idempotent. */
+  clientId: emptyToNull(z.string().max(64)).optional(),
   // May be empty: a session can just mark that you trained (or a multi-day
   // competition you attended) without any measured result.
   performances: z.array(performanceInputSchema).default([]),

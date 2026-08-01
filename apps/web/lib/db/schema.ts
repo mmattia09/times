@@ -135,32 +135,44 @@ export type SessionWorkout = {
 };
 
 // ── Domain: sessions ─────────────────────────────────────────────────────────
-export const sessions = pgTable("sessions", {
-  id: text("id")
-    .primaryKey()
-    .$defaultFn(() => createId()),
-  userId: text("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  date: timestamp("date", { withTimezone: true }).notNull(),
-  // Multi-day competitions (e.g. CSI nazionali 6→8 Sep) keep an optional end.
-  endDate: timestamp("end_date", { withTimezone: true }),
-  type: sessionTypeEnum("type").notNull().default("training"),
-  tempo: tempoEnum("tempo"),
-  livello: livelloEnum("livello"),
-  luogo: text("luogo"),
-  organizzatore: organizzatoreEnum("organizzatore"),
-  tipo: tipoEnum("tipo"),
-  note: text("note"),
-  // Hash of (date+distance+result) used to dedup FIDAL imports.
-  fidalId: text("fidal_id").unique(),
-  // Optional structured workout (snapshot — editing a template never rewrites history).
-  workout: jsonb("workout").$type<SessionWorkout>(),
-  // Strava activities, race videos, start lists — whatever belongs to that day.
-  links: jsonb("links").$type<SessionLink[]>().notNull().default([]),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-});
+export const sessions = pgTable(
+  "sessions",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => createId()),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    date: timestamp("date", { withTimezone: true }).notNull(),
+    // Multi-day competitions (e.g. CSI nazionali 6→8 Sep) keep an optional end.
+    endDate: timestamp("end_date", { withTimezone: true }),
+    type: sessionTypeEnum("type").notNull().default("training"),
+    tempo: tempoEnum("tempo"),
+    livello: livelloEnum("livello"),
+    luogo: text("luogo"),
+    organizzatore: organizzatoreEnum("organizzatore"),
+    tipo: tipoEnum("tipo"),
+    note: text("note"),
+    // Hash of (date+distance+result) used to dedup FIDAL imports.
+    fidalId: text("fidal_id").unique(),
+    // Optional structured workout (snapshot — editing a template never rewrites history).
+    workout: jsonb("workout").$type<SessionWorkout>(),
+    // Strava activities, race videos, start lists — whatever belongs to that day.
+    links: jsonb("links").$type<SessionLink[]>().notNull().default([]),
+    /**
+     * Set by the app when a session was written offline and sent later. Unique
+     * per user, so a queued save that gets retried lands once.
+     */
+    clientId: text("client_id"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    // One session per queued save, per user.
+    clientKey: uniqueIndex("sessions_user_client_key").on(t.userId, t.clientId),
+  }),
+);
 
 // ── Domain: workout templates (the athlete's scheme library) ─────────────────
 export const workoutTemplates = pgTable("workout_templates", {

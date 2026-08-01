@@ -37,6 +37,16 @@ function toDate(value?: string | null): Date | null {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
+/** The session a queued offline save already created, if it arrived before. */
+export async function findByClientId(userId: string, clientId: string): Promise<string | null> {
+  const [row] = await db
+    .select({ id: sessions.id })
+    .from(sessions)
+    .where(and(eq(sessions.userId, userId), eq(sessions.clientId, clientId)))
+    .limit(1);
+  return row?.id ?? null;
+}
+
 /** Create a session and its performances, then recompute PBs (unless opted out). */
 export async function createSession(
   userId: string,
@@ -63,6 +73,7 @@ export async function createSession(
         note: input.note ?? null,
         workout: input.workout ?? null,
         links: input.links ?? [],
+        clientId: input.clientId ?? null,
         fidalId: fidalId ?? null,
       })
       .returning({ id: sessions.id });

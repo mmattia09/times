@@ -20,6 +20,7 @@ import {
 import { WorkoutTable } from "@/components/workouts/workout-table";
 import { LinkIcon } from "@/components/sessions/link-icon";
 import { toast } from "@/hooks/use-toast";
+import { enqueue, isOffline } from "@/lib/offline-queue";
 import { cn } from "@/lib/utils";
 import type { WorkoutTemplate } from "@/lib/db/schema";
 import { RUN_DISTANCES, disciplineOptions, eventOptionsFor, isTimed } from "@/lib/athletics";
@@ -110,14 +111,34 @@ export function SessionForm({
 
   async function onSubmit(values: FormValues) {
     setSubmitting(true);
-    const res = await fetch(
-      sessionId ? `/api/internal/sessions/${sessionId}` : "/api/internal/sessions",
-      {
-        method: sessionId ? "PUT" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
-      },
-    );
+    let res: Response;
+    try {
+      res = await fetch(
+        sessionId ? `/api/internal/sessions/${sessionId}` : "/api/internal/sessions",
+        {
+          method: sessionId ? "PUT" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(values),
+        },
+      );
+    } catch (err) {
+      setSubmitting(false);
+      // No network. A new session is kept on the device and sent later; an
+      // edit is not, because it would need the session that is already there.
+      if (!sessionId && isOffline(err)) {
+        enqueue(values);
+        toast({ title: t("offline.queued"), description: t("offline.queuedDescription") });
+        router.push("/sessions");
+        router.refresh();
+        return;
+      }
+      toast({
+        variant: "destructive",
+        title: t("common.error"),
+        description: t("common.saveFailed"),
+      });
+      return;
+    }
     setSubmitting(false);
     if (!res.ok) {
       toast({ variant: "destructive", title: t("common.error"), description: t("common.saveFailed") });

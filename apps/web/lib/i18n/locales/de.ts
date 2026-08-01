@@ -107,6 +107,15 @@ export const de: Dictionary = {
     today: "Heute",
     emptyMonth: "Keine Einheiten in diesem Monat.",
   },
+  offline: {
+    queued: "Auf dem Gerät gespeichert",
+    queuedDescription: "Kein Netz. Sie wird gesendet, sobald wieder eins da ist.",
+    synced: "Einheiten gesendet",
+    syncedDescription: "{count} wartende Einheiten haben den Server erreicht.",
+    stillOffline: "Immer noch kein Netz.",
+    rejected: "Eine wartende Einheit wurde vom Server abgelehnt und verworfen.",
+    pendingTitle: "{count} warten auf den Versand — zum Wiederholen antippen",
+  },
   common: {
     close: "Schließen",
     save: "Speichern",

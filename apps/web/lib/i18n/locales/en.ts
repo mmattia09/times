@@ -107,6 +107,15 @@ export const en: Dictionary = {
     today: "Today",
     emptyMonth: "No sessions this month.",
   },
+  offline: {
+    queued: "Saved on this device",
+    queuedDescription: "There was no network. It will be sent as soon as there is one.",
+    synced: "Sessions sent",
+    syncedDescription: "{count} waiting sessions reached the server.",
+    stillOffline: "Still no network.",
+    rejected: "A waiting session was refused by the server and has been dropped.",
+    pendingTitle: "{count} waiting to be sent — tap to try now",
+  },
   common: {
     close: "Close",
     save: "Save",

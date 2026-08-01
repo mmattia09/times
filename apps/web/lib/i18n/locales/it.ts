@@ -109,6 +109,15 @@ export const it = {
     today: "Oggi",
     emptyMonth: "Nessuna sessione in questo mese.",
   },
+  offline: {
+    queued: "Salvata sul telefono",
+    queuedDescription: "Non c'era rete. Verrà inviata appena torna la connessione.",
+    synced: "Sessioni inviate",
+    syncedDescription: "{count} sessioni in attesa sono state salvate sul server.",
+    stillOffline: "Ancora senza rete.",
+    rejected: "Una sessione in attesa è stata rifiutata dal server ed è stata scartata.",
+    pendingTitle: "{count} in attesa di essere inviate — tocca per riprovare",
+  },
   common: {
     close: "Chiudi",
     save: "Salva",

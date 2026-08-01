@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ClipboardList, Plus } from "lucide-react";
 import { BottomNav, Sidebar } from "@/components/layout/sidebar";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
+import { PendingSessions } from "@/components/pwa/pending-sessions";
 import { UserMenu } from "@/components/layout/user-menu";
 import { Button } from "@/components/ui/button";
 import { redirect } from "next/navigation";
@@ -34,6 +35,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
                 <span className="hidden sm:inline">{t("nav.newWorkout")}</span>
               </Link>
             </Button>
+            <PendingSessions />
             <ThemeToggle />
             <UserMenu userName={user.name ?? undefined} userEmail={user.email} isAdmin={isAdmin} />
           </div>
