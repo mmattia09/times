@@ -121,6 +121,13 @@ export type WorkoutBlock = {
   note: string | null;
 };
 
+/** A link hung off a session: a Strava activity, a race video, a start list. */
+export type SessionLink = {
+  url: string;
+  /** What to call it. Falls back to the service name, then the host. */
+  label: string | null;
+};
+
 export type SessionWorkout = {
   templateId: string | null;
   name: string | null;
@@ -149,6 +156,8 @@ export const sessions = pgTable("sessions", {
   fidalId: text("fidal_id").unique(),
   // Optional structured workout (snapshot — editing a template never rewrites history).
   workout: jsonb("workout").$type<SessionWorkout>(),
+  // Strava activities, race videos, start lists — whatever belongs to that day.
+  links: jsonb("links").$type<SessionLink[]>().notNull().default([]),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });

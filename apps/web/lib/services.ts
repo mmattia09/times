@@ -62,6 +62,7 @@ export async function createSession(
         tipo: input.tipo ?? null,
         note: input.note ?? null,
         workout: input.workout ?? null,
+        links: input.links ?? [],
         fidalId: fidalId ?? null,
       })
       .returning({ id: sessions.id });
@@ -120,6 +121,7 @@ export async function updateSession(
         tipo: input.tipo ?? null,
         note: input.note ?? null,
         workout: input.workout ?? null,
+        links: input.links ?? [],
         updatedAt: new Date(),
       })
       .where(eq(sessions.id, sessionId));

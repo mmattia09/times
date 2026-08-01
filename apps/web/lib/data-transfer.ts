@@ -14,6 +14,7 @@ import { recomputePersonalBests } from "@/lib/records";
 import { createSession, listSessions } from "@/lib/services";
 import {
   goalInputSchema,
+  sessionLinkSchema,
   sessionInputSchema,
   workoutTemplateInputSchema,
   sessionWorkoutSchema,
@@ -32,6 +33,8 @@ export const EXPORT_VERSION = 1;
 const exportSessionSchema = sessionInputSchema.extend({
   fidalId: z.string().nullable().optional(),
   workout: sessionWorkoutSchema.nullable().optional(),
+  // Optional so an export taken before links existed still imports.
+  links: z.array(sessionLinkSchema).max(20).default([]),
 });
 
 const exportApiKeySchema = z.object({
@@ -123,6 +126,7 @@ export async function buildExport(userId: string): Promise<ExportFile> {
       organizzatore: s.organizzatore,
       tipo: s.tipo,
       note: s.note,
+      links: s.links ?? [],
       fidalId: s.fidalId,
       workout: s.workout ?? null,
       performances: s.performances.map((p) => ({

@@ -7,6 +7,7 @@ export const de: Dictionary = {
     shortDescription: "Training, Wettkämpfe und Bestleistungen in der Leichtathletik.",
   },
   validation: {
+    linkUrl: "Der Link muss mit http:// oder https:// beginnen",
     passwordRequired: "Passwort erforderlich",
     emailInvalid: "Ungültige E-Mail",
     passwordShort: "Das Passwort muss mindestens 8 Zeichen haben",
@@ -101,6 +102,10 @@ export const de: Dictionary = {
     submit: "Passwort ändern und fortfahren",
     updated: "Passwort aktualisiert",
     updatedDescription: "Du kannst die App jetzt normal nutzen.",
+  },
+  calendar: {
+    today: "Heute",
+    emptyMonth: "Keine Einheiten in diesem Monat.",
   },
   common: {
     close: "Schließen",
@@ -201,6 +206,14 @@ export const de: Dictionary = {
     trainingsLegend: "Training",
   },
   sessions: {
+    links: "Links",
+    linkUrl: "Adresse",
+    linkUrlPlaceholder: "https://www.strava.com/activities/…",
+    linkLabel: "Bezeichnung",
+    linkLabelPlaceholder: "Wie es heißen soll (optional)",
+    filters: "Filter",
+    viewList: "Liste",
+    viewCalendar: "Kalender",
     searchPlaceholder: "Ort oder Notizen suchen",
     repeat: "Wiederholen",
     repeatTitle: "Einheit wiederholen",
@@ -258,6 +271,7 @@ export const de: Dictionary = {
     metres: "Meter",
   },
   workouts: {
+    noBlocks: "Keine Blöcke in diesem Plan.",
     title: "Trainingspläne",
     libraryEmptyDescription: "Deine Trainingsbibliothek.",
     summary: "{count} {schede} in der Bibliothek, in {categories} {categorie}.",

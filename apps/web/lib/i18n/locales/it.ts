@@ -9,6 +9,7 @@ export const it = {
     shortDescription: "Allenamenti, gare e record di atletica leggera.",
   },
   validation: {
+    linkUrl: "Il link deve iniziare con http:// o https://",
     passwordRequired: "Password richiesta",
     emailInvalid: "Email non valida",
     passwordShort: "La password deve avere almeno 8 caratteri",
@@ -103,6 +104,10 @@ export const it = {
     submit: "Cambia password e continua",
     updated: "Password aggiornata",
     updatedDescription: "Ora puoi usare l'app normalmente.",
+  },
+  calendar: {
+    today: "Oggi",
+    emptyMonth: "Nessuna sessione in questo mese.",
   },
   common: {
     close: "Chiudi",
@@ -203,6 +208,14 @@ export const it = {
     trainingsLegend: "Allenamenti",
   },
   sessions: {
+    links: "Link",
+    linkUrl: "Indirizzo",
+    linkUrlPlaceholder: "https://www.strava.com/activities/…",
+    linkLabel: "Etichetta",
+    linkLabelPlaceholder: "Come chiamarlo (opzionale)",
+    filters: "Filtri",
+    viewList: "Lista",
+    viewCalendar: "Calendario",
     searchPlaceholder: "Cerca luogo o note",
     repeat: "Ripeti",
     repeatTitle: "Ripeti sessione",
@@ -259,6 +272,7 @@ export const it = {
     metres: "metri",
   },
   workouts: {
+    noBlocks: "Nessun blocco in questa scheda.",
     title: "Schede",
     libraryEmptyDescription: "La tua libreria di allenamenti.",
     summary: "{count} {schede} in libreria, in {categories} {categorie}.",

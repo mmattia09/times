@@ -1,10 +1,11 @@
 import { cache } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Pencil, Repeat } from "lucide-react";
+import { ExternalLink, Pencil, Repeat } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { DeleteSessionButton } from "@/components/sessions/delete-session-button";
 import { WorkoutTable } from "@/components/workouts/workout-table";
+import { LinkIcon } from "@/components/sessions/link-icon";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,6 +21,7 @@ import { requireUser } from "@/lib/current-user";
 import { getSessionById } from "@/lib/services";
 import { eventLabel, formatResult, isWindLegal } from "@/lib/athletics";
 import { formatDateLong, formatOrganizzatore } from "@/lib/format";
+import { defaultLabel } from "@/lib/links";
 import { getT } from "@/lib/i18n/server";
 import type { Locale } from "@/lib/i18n";
 
@@ -98,6 +100,26 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
           )}
         </CardContent>
       </Card>
+
+      {session.links?.length > 0 && (
+        <Card className="mt-6">
+          <CardContent className="flex flex-wrap gap-2 p-4">
+            {session.links.map((link, i) => (
+              <a
+                key={`${link.url}-${i}`}
+                href={link.url}
+                target="_blank"
+                rel="noopener noreferrer nofollow"
+                className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm transition-colors hover:bg-secondary"
+              >
+                <LinkIcon url={link.url} className="text-muted-foreground" />
+                <span className="max-w-[14rem] truncate">{link.label || defaultLabel(link.url)}</span>
+                <ExternalLink className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+              </a>
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       {session.workout && (
         <>
@@ -182,7 +204,7 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
         </>
       )}
 
-      {session.performances.length === 0 && !session.workout && (
+      {session.performances.length === 0 && !session.workout && !session.links?.length && (
         <Card className="mt-6">
           <CardContent className="py-8 text-center text-sm text-muted-foreground">
             {t("sessions.emptySessionNote")}

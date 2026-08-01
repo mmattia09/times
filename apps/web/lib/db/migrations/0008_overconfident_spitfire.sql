@@ -1,0 +1,1 @@
+ALTER TABLE "sessions" ADD COLUMN "links" jsonb DEFAULT '[]'::jsonb NOT NULL;

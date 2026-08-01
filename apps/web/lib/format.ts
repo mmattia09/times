@@ -4,7 +4,8 @@ import type { Locale as DateFnsLocale } from "date-fns";
 import { DEFAULT_LOCALE, getDictionary, type Dictionary, type Locale } from "@/lib/i18n";
 import { CALENDAR_ZONE, DEFAULT_TIME_ZONE } from "@/lib/timezone";
 
-const DATE_LOCALES: Record<Locale, DateFnsLocale> = {
+/** date-fns locales, also handed to the calendar for its own labels. */
+export const DATE_LOCALES: Record<Locale, DateFnsLocale> = {
   it: itLocale,
   en: enGB,
   de: deLocale,

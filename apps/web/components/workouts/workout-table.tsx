@@ -17,9 +17,17 @@ import { useI18n } from "@/lib/i18n/client";
  * A client component because it translates its own headers: the session detail
  * page is a server component, and rendering a hook there throws.
  */
-export function WorkoutTable({ blocks }: { blocks: WorkoutBlock[] }) {
+export function WorkoutTable({ blocks }: { blocks: WorkoutBlock[] | null | undefined }) {
   const { t } = useI18n();
-  const hasNotes = blocks.some((b) => b.note);
+  // The column is jsonb: its shape is a promise the database doesn't keep, and
+  // a workout saved without blocks should render as empty, not as an error.
+  const rows = Array.isArray(blocks) ? blocks : [];
+  const hasNotes = rows.some((b) => b.note);
+  if (rows.length === 0) {
+    return (
+      <p className="px-4 py-6 text-center text-sm text-muted-foreground">{t("workouts.noBlocks")}</p>
+    );
+  }
   return (
     <Table>
       <TableHeader>
@@ -33,7 +41,7 @@ export function WorkoutTable({ blocks }: { blocks: WorkoutBlock[] }) {
         </TableRow>
       </TableHeader>
       <TableBody>
-        {blocks.map((b, i) => (
+        {rows.map((b, i) => (
           <TableRow key={i}>
             <TableCell className="text-muted-foreground">{b.label ?? ""}</TableCell>
             <TableCell className="font-medium">{b.ripetute}</TableCell>

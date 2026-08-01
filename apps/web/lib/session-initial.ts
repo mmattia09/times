@@ -23,6 +23,7 @@ export function toSessionInitial(session: SessionWithPerformances): SessionFormI
     organizzatore: session.organizzatore,
     tipo: session.tipo,
     note: session.note,
+    links: session.links ?? [],
     workout: session.workout ?? null,
     performances: session.performances.map((p) => ({
       discipline: p.discipline,
@@ -50,6 +51,9 @@ export function toRepeatInitial(session: SessionWithPerformances): SessionFormIn
     // day the athlete is actually living in.
     date: undefined,
     endDate: null,
+    // A Strava activity or a race video belongs to the day it happened on,
+    // not to the next time you do the same session.
+    links: [],
     performances: base.performances?.map((p) => ({
       discipline: p.discipline,
       distance: p.distance,

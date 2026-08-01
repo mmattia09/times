@@ -81,6 +81,17 @@ const dateString = z
   .min(1, { message: "validation.dateRequired" })
   .refine((s) => !Number.isNaN(Date.parse(s)), { message: "validation.dateInvalid" });
 
+/** A link hung off a session. http(s) only: the URL ends up in an href. */
+export const sessionLinkSchema = z.object({
+  url: z
+    .string()
+    .trim()
+    .min(1)
+    .max(2048)
+    .refine((v) => /^https?:\/\//i.test(v), { message: "validation.linkUrl" }),
+  label: emptyToNull(z.string().max(64)),
+});
+
 export const sessionInputSchema = z.object({
   date: dateString,
   endDate: emptyToNull(dateString),
@@ -94,6 +105,7 @@ export const sessionInputSchema = z.object({
   workout: z
     .preprocess((v) => (v === "" || v === undefined ? null : v), sessionWorkoutSchema.nullable())
     .optional(),
+  links: z.array(sessionLinkSchema).max(20).default([]),
   // May be empty: a session can just mark that you trained (or a multi-day
   // competition you attended) without any measured result.
   performances: z.array(performanceInputSchema).default([]),

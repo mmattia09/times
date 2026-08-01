@@ -303,6 +303,7 @@ export function toImportItems(rows: FidalRow[]): FidalImportItem[] {
         organizzatore: "fidal",
         tipo: r.tipo,
         note: r.specialita ? `FIDAL · ${r.specialita}` : null,
+        links: [],
         performances: [
           {
             discipline: ev.discipline,

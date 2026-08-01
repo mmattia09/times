@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { WorkoutTable } from "@/components/workouts/workout-table";
+import { LinkIcon } from "@/components/sessions/link-icon";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import type { WorkoutTemplate } from "@/lib/db/schema";
@@ -84,12 +85,14 @@ export function SessionForm({
       tipo: initial?.tipo ?? null,
       note: initial?.note ?? null,
       workout: initial?.workout ?? null,
+      links: initial?.links ?? [],
       // Starts empty: a session may record just the date(s) you trained.
       performances: initial?.performances ?? [],
     },
   });
 
   const { fields, append, remove } = useFieldArray({ control: form.control, name: "performances" });
+  const links = useFieldArray({ control: form.control, name: "links" });
   const type = form.watch("type");
 
   useEffect(() => {
@@ -291,6 +294,68 @@ export function SessionForm({
           <p className="text-xs text-muted-foreground">
             {t("sessions.noWorkoutsYet")}
           </p>
+        )}
+      </div>
+
+      {/* Links — a Strava activity, a video, a start list. */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold">
+            {t("sessions.links")}{" "}
+            <span className="font-normal text-muted-foreground">({t("common.optional")})</span>
+          </h2>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => links.append({ url: "", label: null })}
+          >
+            <Plus className="h-4 w-4" /> {t("common.add")}
+          </Button>
+        </div>
+        {links.fields.length > 0 && (
+          <Card>
+            <CardContent className="space-y-3 p-4">
+              {links.fields.map((field, index) => (
+                <div key={field.id} className="flex items-end gap-2">
+                  <span className="mb-2.5 shrink-0 text-muted-foreground">
+                    <LinkIcon url={form.watch(`links.${index}.url`) ?? ""} />
+                  </span>
+                  <div className="grid min-w-0 flex-1 gap-2 sm:grid-cols-[1fr_12rem]">
+                    <div className="space-y-1.5">
+                      <Label className="sr-only">{t("sessions.linkUrl")}</Label>
+                      <Input
+                        type="url"
+                        inputMode="url"
+                        placeholder={t("sessions.linkUrlPlaceholder")}
+                        {...form.register(`links.${index}.url`)}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="sr-only">{t("sessions.linkLabel")}</Label>
+                      <Input
+                        placeholder={t("sessions.linkLabelPlaceholder")}
+                        {...form.register(`links.${index}.label`)}
+                      />
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="mb-0.5 shrink-0 text-muted-foreground hover:text-destructive"
+                    aria-label={t("common.remove")}
+                    onClick={() => links.remove(index)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+              {typeof errors.links?.message === "string" && (
+                <p className="text-xs text-destructive">{t(errors.links.message)}</p>
+              )}
+            </CardContent>
+          </Card>
         )}
       </div>
 

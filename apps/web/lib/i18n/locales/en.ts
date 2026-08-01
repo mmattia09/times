@@ -7,6 +7,7 @@ export const en: Dictionary = {
     shortDescription: "Training, competitions and personal bests in track & field.",
   },
   validation: {
+    linkUrl: "The link must start with http:// or https://",
     passwordRequired: "Password required",
     emailInvalid: "Invalid email",
     passwordShort: "The password must be at least 8 characters",
@@ -101,6 +102,10 @@ export const en: Dictionary = {
     submit: "Change password and continue",
     updated: "Password updated",
     updatedDescription: "You can use the app normally now.",
+  },
+  calendar: {
+    today: "Today",
+    emptyMonth: "No sessions this month.",
   },
   common: {
     close: "Close",
@@ -201,6 +206,14 @@ export const en: Dictionary = {
     trainingsLegend: "Training",
   },
   sessions: {
+    links: "Links",
+    linkUrl: "Address",
+    linkUrlPlaceholder: "https://www.strava.com/activities/…",
+    linkLabel: "Label",
+    linkLabelPlaceholder: "What to call it (optional)",
+    filters: "Filters",
+    viewList: "List",
+    viewCalendar: "Calendar",
     searchPlaceholder: "Search venue or notes",
     repeat: "Repeat",
     repeatTitle: "Repeat session",
@@ -257,6 +270,7 @@ export const en: Dictionary = {
     metres: "metres",
   },
   workouts: {
+    noBlocks: "No blocks in this workout.",
     title: "Workouts",
     libraryEmptyDescription: "Your training library.",
     summary: "{count} {schede} in the library, across {categories} {categorie}.",
