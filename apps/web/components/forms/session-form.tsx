@@ -20,6 +20,7 @@ import {
 import { WorkoutTable } from "@/components/workouts/workout-table";
 import { LinkIcon } from "@/components/sessions/link-icon";
 import { toast } from "@/hooks/use-toast";
+import { useSubmitShortcut } from "@/hooks/use-submit-shortcut";
 import { enqueue, isOffline } from "@/lib/offline-queue";
 import { cn } from "@/lib/utils";
 import type { WorkoutTemplate } from "@/lib/db/schema";
@@ -150,21 +151,18 @@ export function SessionForm({
     router.refresh();
   }
 
+  useSubmitShortcut(() => void form.handleSubmit(onSubmit)());
+
   const errors = form.formState.errors;
 
   return (
     <form
       onSubmit={form.handleSubmit(onSubmit)}
       onKeyDown={(e) => {
-        // ⌘/Ctrl+Invio salva; Invio da solo dentro un input non invia il form
-        // a metà compilazione (comportamento coerente con l'editor delle schede).
-        if (e.key !== "Enter") return;
-        if (e.metaKey || e.ctrlKey) {
-          e.preventDefault();
-          form.handleSubmit(onSubmit)();
-        } else if ((e.target as HTMLElement).tagName === "INPUT") {
-          e.preventDefault();
-        }
+        // Enter on its own inside a field must not submit a half-filled form.
+        // ⌘/Ctrl+Enter is handled on the document — see useSubmitShortcut.
+        if (e.key !== "Enter" || e.metaKey || e.ctrlKey) return;
+        if ((e.target as HTMLElement).tagName === "INPUT") e.preventDefault();
       }}
       className="space-y-6"
     >

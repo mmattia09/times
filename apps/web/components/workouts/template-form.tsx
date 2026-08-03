@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
+import { useSubmitShortcut } from "@/hooks/use-submit-shortcut";
 import type { WorkoutBlock, WorkoutTemplate } from "@/lib/db/schema";
 import { useI18n } from "@/lib/i18n/client";
 
@@ -44,6 +45,8 @@ export function TemplateForm({ template }: { template?: WorkoutTemplate }) {
   const [pendingFocus, setPendingFocus] = useState<{ row: number; col: number } | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
 
+  useSubmitShortcut(save);
+
   // Focus after React has committed the (possibly new) row.
   useEffect(() => {
     if (!pendingFocus) return;
@@ -71,14 +74,11 @@ export function TemplateForm({ template }: { template?: WorkoutTemplate }) {
     focusCell(at, 1); // ripetute of the new row
   }
 
-  /** Enter → next row (adding one at the end); ⌘/Ctrl+Enter → save. */
+  /** Enter → next row, adding one at the end. Saving is the document shortcut. */
   function onGridKeyDown(e: React.KeyboardEvent) {
-    if (e.key !== "Enter") return;
+    // ⌘/Ctrl+Enter belongs to useSubmitShortcut; handling it here too would save twice.
+    if (e.key !== "Enter" || e.metaKey || e.ctrlKey) return;
     e.preventDefault();
-    if (e.metaKey || e.ctrlKey) {
-      save();
-      return;
-    }
     const target = e.target as HTMLElement;
     const row = Number(target.dataset.row ?? "-1");
     const col = Number(target.dataset.col ?? "0");
@@ -126,13 +126,6 @@ export function TemplateForm({ template }: { template?: WorkoutTemplate }) {
       onSubmit={(e) => {
         e.preventDefault();
         save();
-      }}
-      onKeyDown={(e) => {
-        // ⌘/Ctrl+Enter saves from anywhere in the form.
-        if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-          e.preventDefault();
-          save();
-        }
       }}
       className="space-y-6"
     >
