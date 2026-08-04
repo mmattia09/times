@@ -124,12 +124,12 @@ export function SessionForm({
       );
     } catch (err) {
       setSubmitting(false);
-      // No network. A new session is kept on the device and sent later; an
-      // edit is not, because it would need the session that is already there.
-      if (!sessionId && isOffline(err)) {
-        enqueue(values);
+      // No network: keep it on the device and send it later. A change is a PUT
+      // that replaces the whole session, so it can wait exactly like a new one.
+      if (isOffline(err)) {
+        enqueue(values, sessionId ?? null);
         toast({ title: t("offline.queued"), description: t("offline.queuedDescription") });
-        router.push("/sessions");
+        router.push(sessionId ? `/sessions/${sessionId}` : "/sessions");
         router.refresh();
         return;
       }

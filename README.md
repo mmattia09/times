@@ -57,8 +57,8 @@ on a phone as a PWA, and works the same in any time zone.
   24th whether the server runs in Rome, London or UTC. Timestamps (last sync, API-key
   activity) render in your own zone, taken from the browser or set in Settings.
 - **Installable (PWA)** — add it to the home screen and log times at the track. With no
-  signal the logging page still opens and the session is kept on the phone, then sent
-  by itself when the network comes back.
+  signal the logging page still opens; sessions you write, and changes you make to ones
+  already there, are kept on the phone and sent by themselves when the network returns.
 - **Repeat a session** — reopen a past session with its venue, timing, level and
   workout, dated today and with the results blank, ready to fill in.
 
@@ -217,13 +217,6 @@ message never changes with the caller's language.
 
 Questions and bug reports → [GitHub Issues](https://github.com/mmattia09/times/issues).
 
-## Roadmap
-
-- **Offline editing** — changing an existing session still needs the network; only new
-  ones are queued.
-- **More languages** — the dictionaries are typed against Italian, so adding one is a
-  single file under `apps/web/lib/i18n/locales`.
-
 ## Contributing
 
 Issues and pull requests are welcome. To get a dev environment running:
@@ -262,4 +255,4 @@ Made by [@mmattia09](https://github.com/mmattia09). Developed with the help of
 ## Project status
 
 **Stable / maintenance** — the app covers its author's day-to-day needs. Bug fixes and
-small improvements land as needed; the roadmap above is best-effort.
+small improvements land as needed.

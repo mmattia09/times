@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { DeleteSessionButton } from "@/components/sessions/delete-session-button";
 import { WorkoutTable } from "@/components/workouts/workout-table";
 import { LinkIcon } from "@/components/sessions/link-icon";
+import { PendingEditNotice } from "@/components/sessions/pending-edit-notice";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -80,6 +81,8 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
         </Button>
         <DeleteSessionButton sessionId={id} />
       </PageHeader>
+
+      <PendingEditNotice sessionId={id} />
 
       <Card>
         <CardContent className="p-5">

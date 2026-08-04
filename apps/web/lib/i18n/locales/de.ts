@@ -108,6 +108,7 @@ export const de: Dictionary = {
     emptyMonth: "Keine Einheiten in diesem Monat.",
   },
   offline: {
+    editWaiting: "Für diese Einheit wartet eine Änderung auf den Versand — unten steht noch, was der Server hat.",
     queued: "Auf dem Gerät gespeichert",
     queuedDescription: "Kein Netz. Sie wird gesendet, sobald wieder eins da ist.",
     synced: "Einheiten gesendet",

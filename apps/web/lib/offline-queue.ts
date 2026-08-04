@@ -3,7 +3,7 @@
 import type { SessionInput } from "@/lib/validation";
 
 /**
- * Sessions written without a network, waiting to reach the server.
+ * Sessions written or changed without a network, waiting to reach the server.
  *
  * The app is installed on a phone and used at the track, where there often
  * isn't any signal. Losing what you just typed because of that is the worst
@@ -21,6 +21,12 @@ export type PendingSession = {
   clientId: string;
   /** When it was written, not when it was sent. */
   queuedAt: string;
+  /**
+   * The session being changed, or null for one being created. A change is a
+   * PUT that replaces the whole session, so sending it twice is harmless and
+   * needs no id of its own.
+   */
+  sessionId: string | null;
   input: SessionInput;
 };
 
@@ -53,14 +59,23 @@ export function pendingCount(): number {
   return read().length;
 }
 
-export function enqueue(input: SessionInput): PendingSession {
+export function enqueue(input: SessionInput, sessionId: string | null = null): PendingSession {
   const entry: PendingSession = {
     clientId: crypto.randomUUID(),
     queuedAt: new Date().toISOString(),
+    sessionId,
     input,
   };
-  write([...read(), entry]);
+  // Only the newest change to a session is worth sending: an earlier one would
+  // just be overwritten by it a moment later.
+  const rest = sessionId ? read().filter((p) => p.sessionId !== sessionId) : read();
+  write([...rest, entry]);
   return entry;
+}
+
+/** The queued change to this session, if there is one waiting. */
+export function pendingFor(sessionId: string): PendingSession | undefined {
+  return read().find((p) => p.sessionId === sessionId);
 }
 
 export function remove(clientId: string): void {
@@ -90,11 +105,17 @@ export async function flush(): Promise<FlushResult> {
 
   for (const item of items) {
     try {
-      const res = await fetch("/api/internal/sessions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...item.input, clientId: item.clientId }),
-      });
+      const res = item.sessionId
+        ? await fetch(`/api/internal/sessions/${item.sessionId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(item.input),
+          })
+        : await fetch("/api/internal/sessions", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ...item.input, clientId: item.clientId }),
+          });
       if (res.ok || res.status === 409) {
         // 409: the server already has this clientId, so it arrived after all.
         remove(item.clientId);

@@ -108,6 +108,7 @@ export const en: Dictionary = {
     emptyMonth: "No sessions this month.",
   },
   offline: {
+    editWaiting: "This session has a change waiting to be sent — what you see below is still what the server has.",
     queued: "Saved on this device",
     queuedDescription: "There was no network. It will be sent as soon as there is one.",
     synced: "Sessions sent",

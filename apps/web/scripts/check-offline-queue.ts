@@ -46,13 +46,18 @@ check("each gets its own id", new Set(pending().map((p) => p.clientId)).size ===
 check("the input survives", pending()[0].input.date === "2026-07-01");
 
 // Every attempt carries the client id, so a retry can be recognised.
-const seen: Array<{ clientId: string; status: number }> = [];
+const seen: Array<{ clientId: string; status: number; url: string; method: string }> = [];
 const respondWith = (statusFor: (n: number) => number) => {
   let n = 0;
-  (globalThis as unknown as { fetch: unknown }).fetch = async (_url: string, init: RequestInit) => {
-    const body = JSON.parse(String(init.body)) as { clientId: string };
+  (globalThis as unknown as { fetch: unknown }).fetch = async (url: string, init: RequestInit) => {
+    const body = JSON.parse(String(init.body)) as { clientId?: string };
     const status = statusFor(n++);
-    seen.push({ clientId: body.clientId, status });
+    seen.push({
+      clientId: body.clientId ?? "",
+      status,
+      url: String(url),
+      method: String(init.method),
+    });
     return { ok: status >= 200 && status < 300, status } as Response;
   };
 };
@@ -88,6 +93,43 @@ check("a server error keeps it queued", result.remaining === 1, JSON.stringify(r
 };
 result = await flush();
 check("no network loses nothing", result.sent === 0 && pendingCount() === 1);
+
+// A change to an existing session goes as a PUT to that session.
+store.clear();
+seen.length = 0;
+enqueue(session("2026-07-05"), "sess-abc");
+respondWith(() => 200);
+result = await flush();
+check("a queued change is sent", result.sent === 1 && pendingCount() === 0, JSON.stringify(result));
+check("as a PUT to its own session", seen[0]?.method === "PUT" && seen[0]?.url.endsWith("/sess-abc"), JSON.stringify(seen[0]));
+
+// Editing the same session twice offline should send the later version, once.
+store.clear();
+seen.length = 0;
+enqueue(session("2026-07-06"), "sess-abc");
+enqueue(session("2026-07-07"), "sess-abc");
+check("only the newest change is held", pendingCount() === 1, String(pendingCount()));
+check("and it is the newer one", pending()[0].input.date === "2026-07-07", pending()[0].input.date);
+respondWith(() => 200);
+result = await flush();
+check("it is sent once", seen.length === 1 && result.sent === 1, JSON.stringify(result));
+
+// A change to a session that has since been deleted is dropped, not retried.
+store.clear();
+enqueue(session("2026-07-08"), "sess-gone");
+respondWith(() => 404);
+result = await flush();
+check("a change to a deleted session is dropped", result.failed === 1 && result.remaining === 0, JSON.stringify(result));
+
+// New sessions and changes queue side by side without colliding.
+store.clear();
+seen.length = 0;
+enqueue(session("2026-07-09"));
+enqueue(session("2026-07-10"), "sess-xyz");
+respondWith(() => 200);
+result = await flush();
+check("a new one and a change both go", result.sent === 2, JSON.stringify(result));
+check("each by its own method", seen.map((s) => s.method).join(",") === "POST,PUT", seen.map((s) => s.method).join(","));
 
 // Flushing an empty queue is a no-op, not a request.
 store.clear();

@@ -110,6 +110,7 @@ export const it = {
     emptyMonth: "Nessuna sessione in questo mese.",
   },
   offline: {
+    editWaiting: "Questa sessione ha una modifica in attesa di essere inviata: qui sotto vedi ancora i dati sul server.",
     queued: "Salvata sul telefono",
     queuedDescription: "Non c'era rete. Verrà inviata appena torna la connessione.",
     synced: "Sessioni inviate",
