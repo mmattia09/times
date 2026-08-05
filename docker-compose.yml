@@ -21,7 +21,7 @@ services:
 
   app:
     # The image is built by GitHub Actions and published to GHCR — no local
-    # build. Override APP_IMAGE in .env to pin a version (e.g. :v1.0.0).
+    # build. Override APP_IMAGE in .env to pin a version (e.g. :1.5.0).
     image: ${APP_IMAGE:-ghcr.io/mmattia09/times:latest}
     restart: unless-stopped
     ports:

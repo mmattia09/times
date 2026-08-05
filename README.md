@@ -113,7 +113,8 @@ account, then serves at <http://localhost:3000>. Everything runs on an isolated
 `127.0.0.1:5432` (handy for development, remove the mapping in production).
 
 To update: `docker compose pull app && docker compose up -d`. To pin a version,
-set `APP_IMAGE=ghcr.io/mmattia09/times:vX.Y.Z` in `.env`.
+set `APP_IMAGE=ghcr.io/mmattia09/times:1.5.0` in `.env` — image tags carry no
+leading `v`, and `:1.5` follows the patches of a minor release.
 
 ### Configuration
 
