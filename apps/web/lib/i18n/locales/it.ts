@@ -280,6 +280,9 @@ export const it = {
     optionalShort: "opz.",
     finalExample: "es. finale",
     metres: "metri",
+    addResult: "Aggiungi prestazione",
+    newResult: "Nuova prestazione",
+    placingFields: "Corsia, posizione, batteria",
   },
   workouts: {
     noBlocks: "Nessun blocco in questa scheda.",
@@ -334,6 +337,7 @@ export const it = {
     speciality: "Specialità",
     record: "Record",
     seasonBest: "{season} (SB)",
+    seasonBestShort: "SB",
     deltaVsPb: "Δ vs PB",
     equalsPb: "= PB",
     charts: "Grafici",

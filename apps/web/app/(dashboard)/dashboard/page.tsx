@@ -18,6 +18,7 @@ import {
   type EventKey,
 } from "@/lib/athletics";
 import { formatDate } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import { currentSeason, seasonLabel, seasonRange } from "@/lib/season";
 import { listSessions } from "@/lib/services";
 import { getT } from "@/lib/i18n/server";
@@ -170,17 +171,20 @@ export default async function DashboardPage() {
     <>
       <PageHeader title={t("dashboard.title")} description={t("dashboard.season", { season: seasonLabel(season, dict) })} />
 
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-        {stats.map((s) => {
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-5">
+        {stats.map((s, i) => {
           const Icon = s.icon;
+          // An odd number of stats leaves the last one alone in a two-column
+          // row; let it take the whole width instead of hanging there.
+          const orphan = stats.length % 2 === 1 && i === stats.length - 1;
           return (
-            <Card key={s.label}>
-              <CardContent className="flex items-center justify-between p-5">
-                <div>
-                  <p className="text-sm text-muted-foreground">{s.label}</p>
-                  <p className="mt-1 text-2xl font-semibold tabular-nums">{s.value}</p>
+            <Card key={s.label} className={cn(orphan && "col-span-2 sm:col-span-1")}>
+              <CardContent className="flex items-center justify-between gap-2 p-4 sm:p-5">
+                <div className="min-w-0">
+                  <p className="truncate text-xs text-muted-foreground sm:text-sm">{s.label}</p>
+                  <p className="mt-0.5 text-2xl font-semibold tabular-nums">{s.value}</p>
                 </div>
-                <Icon className="h-5 w-5 text-muted-foreground" />
+                <Icon className="h-5 w-5 shrink-0 text-muted-foreground" />
               </CardContent>
             </Card>
           );
@@ -224,15 +228,17 @@ export default async function DashboardPage() {
             ) : (
               <ul className="divide-y">
                 {recent.map((s) => (
-                  <li key={s.id} className="py-2">
-                    <Link href={`/sessions/${s.id}`} className="flex items-center justify-between gap-2 text-sm hover:underline">
-                      <span className="flex items-center gap-2">
+                  <li key={s.id}>
+                    {/* The padding lives on the link, not the row: on a phone
+                        the whole line should be the tap target. */}
+                    <Link href={`/sessions/${s.id}`} className="flex items-center justify-between gap-2 py-2.5 text-sm hover:underline">
+                      <span className="flex shrink-0 items-center gap-2">
                         <Badge variant={s.type === "competition" ? "default" : "muted"}>
                           {s.type === "competition" ? t("common.competition") : t("common.training")}
                         </Badge>
                         <span className="text-muted-foreground">{formatDate(s.date, undefined, locale)}</span>
                       </span>
-                      <span className="truncate text-muted-foreground">
+                      <span className="min-w-0 truncate text-muted-foreground">
                         {s.performances.length > 0
                           ? s.performances.map((p) => eventLabel(p, dict)).join(", ")
                           : (s.workout?.name ?? "—")}
@@ -269,7 +275,7 @@ export default async function DashboardPage() {
                         <span className="font-medium text-foreground">{formatResult(g.target, g.ek)}</span>
                       </span>
                       {g.achieved ? (
-                        <Badge variant="success">raggiunto</Badge>
+                        <Badge variant="success">{t("records.achieved")}</Badge>
                       ) : g.gap != null ? (
                         <span className="text-xs tabular-nums text-muted-foreground">
                           −{resultUnit(g.ek) === "cm" ? g.gap.toFixed(0) : g.gap.toFixed(2)}
@@ -293,16 +299,16 @@ export default async function DashboardPage() {
             ) : (
               <ul className="divide-y">
                 {latestPbs.map((pb) => (
-                  <li key={pb.id} className="py-2">
+                  <li key={pb.id}>
                     <Link
                       href={`/sessions/${pb.sessionId}`}
-                      className="flex items-center justify-between gap-2 text-sm hover:underline"
+                      className="flex items-center justify-between gap-2 py-2.5 text-sm hover:underline"
                     >
-                      <span className="flex items-center gap-2">
+                      <span className="flex min-w-0 items-center gap-2">
                         <Badge variant="success">PB</Badge>
-                        <span className="font-medium">{eventLabel(pb, dict)}</span>
+                        <span className="truncate font-medium">{eventLabel(pb, dict)}</span>
                       </span>
-                      <span className="flex items-center gap-3">
+                      <span className="flex shrink-0 items-center gap-3">
                         <span className="tabular-nums font-medium">{formatResult(pb.result, pb)}</span>
                         <span className="text-xs text-muted-foreground">{formatDate(pb.achievedAt, undefined, locale)}</span>
                       </span>

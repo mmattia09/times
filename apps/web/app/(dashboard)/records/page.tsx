@@ -147,7 +147,53 @@ export default async function RecordsPage() {
 
       <Card>
         <CardContent className="p-0">
-          <Table>
+          {/* Seven columns don't fit a phone, and the ones that fall off the
+              right — venue, season best, gap — are half the point of the
+              table. Below md the same row is stacked instead. */}
+          <ul className="divide-y md:hidden">
+            {pbRows.map(({ best, sb }) => {
+              const lower = lowerIsBetter(best.discipline);
+              const gap = sb ? sbGap(best.resultNum, sb.resultNum, best, lower) : null;
+              const sbIsPb = sb != null && gap === "";
+              return (
+                <li key={best.id}>
+                  <Link href={`/sessions/${best.sessionId}`} className="block px-4 py-3">
+                    <span className="flex items-baseline gap-2">
+                      <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                        {eventLabel(best, dict)}
+                      </span>
+                      <span className="shrink-0 tabular-nums text-sm font-semibold">
+                        {formatResult(best.resultNum, best)}
+                      </span>
+                      {best.windNum != null && (
+                        <span className="shrink-0 tabular-nums text-xs text-muted-foreground">
+                          {best.windNum > 0 ? "+" : ""}
+                          {best.windNum.toFixed(1)}
+                        </span>
+                      )}
+                    </span>
+                    <span className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
+                      <span className="min-w-0 truncate">
+                        {formatDate(best.date, undefined, locale)}
+                        {best.luogo ? ` · ${best.luogo}` : ""}
+                      </span>
+                      <span className="ml-auto shrink-0">
+                        {sb == null ? null : sbIsPb ? (
+                          <Badge variant="success">{t("records.equalsPb")}</Badge>
+                        ) : (
+                          <span className="tabular-nums">
+                            {t("records.seasonBestShort")} {formatResult(sb.resultNum, sb)} ({gap})
+                          </span>
+                        )}
+                      </span>
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+
+          <Table className="hidden md:table">
             <TableHeader>
               <TableRow>
                 <TableHead>{t("records.speciality")}</TableHead>

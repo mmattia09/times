@@ -74,6 +74,15 @@ export function GoalsCard({ pbs }: { pbs: PbSummary[] }) {
               // vs a 5% budget of the target — simple, monotone, honest enough for a meter.
               const pct =
                 pb == null ? 0 : achieved ? 100 : Math.max(0, Math.min(96, 100 - (gap! / (target * 0.05)) * 100));
+              const status = achieved ? (
+                <Badge variant="success">{t("records.achieved")}</Badge>
+              ) : gap != null ? (
+                <span className="text-xs tabular-nums text-muted-foreground">
+                  {formatGap(gap, ek, t)}
+                </span>
+              ) : (
+                <span className="text-xs text-muted-foreground">{t("records.noPb")}</span>
+              );
               return (
                 <li key={g.id} className="flex items-center gap-3 py-2.5">
                   <div className="min-w-0 flex-1">
@@ -86,22 +95,20 @@ export function GoalsCard({ pbs }: { pbs: PbSummary[] }) {
                     <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-primary/15">
                       <div className="h-full rounded-full bg-primary" style={{ width: `${pct}%` }} />
                     </div>
-                    {g.note && <p className="mt-1 text-xs text-muted-foreground">{g.note}</p>}
+                    {/* Under the meter on a phone: a fixed side column left the
+                        event name so little room it broke mid-word. */}
+                    <p className="mt-1 flex items-center gap-2 text-xs text-muted-foreground sm:hidden">
+                      {status}
+                      {g.note && <span className="min-w-0 truncate">· {g.note}</span>}
+                    </p>
+                    {g.note && <p className="mt-1 hidden text-xs text-muted-foreground sm:block">{g.note}</p>}
                   </div>
-                  <div className="flex w-28 shrink-0 items-center justify-end gap-1">
-                    {achieved ? (
-                      <Badge variant="success">{t("records.achieved")}</Badge>
-                    ) : gap != null ? (
-                      <span className="text-xs tabular-nums text-muted-foreground">
-                        {formatGap(gap, ek, t)}
-                      </span>
-                    ) : (
-                      <span className="text-xs text-muted-foreground">{t("records.noPb")}</span>
-                    )}
+                  <div className="flex shrink-0 items-center justify-end gap-1 sm:w-28">
+                    <span className="hidden sm:inline">{status}</span>
                     <button
                       type="button"
                       onClick={() => setToDelete(g)}
-                      className="text-muted-foreground transition-colors hover:text-destructive"
+                      className="-m-2 inline-flex h-9 w-9 items-center justify-center text-muted-foreground transition-colors hover:text-destructive"
                       aria-label={t("records.deleteGoalAria")}
                     >
                       <Trash2 className="h-3.5 w-3.5" />

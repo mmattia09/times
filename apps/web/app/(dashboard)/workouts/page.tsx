@@ -97,8 +97,8 @@ export default function WorkoutsPage() {
               <div className="grid gap-4 xl:grid-cols-2">
                 {list.map((tpl) => (
                   <Card key={tpl.id}>
-                    <CardHeader className="flex-row items-start justify-between space-y-0 pb-3">
-                      <div>
+                    <CardHeader className="flex-row items-start justify-between gap-2 space-y-0 pb-3">
+                      <div className="min-w-0">
                         <CardTitle className="text-base">{tpl.name}</CardTitle>
                         {tpl.description && (
                           <p className="mt-1 text-xs text-muted-foreground">{tpl.description}</p>

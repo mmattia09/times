@@ -178,23 +178,25 @@ export function PerformanceCharts({ points }: { points: ChartPoint[] }) {
           </SelectContent>
         </Select>
         <Tabs value={ctx} onValueChange={(v) => setCtx(v as typeof ctx)}>
-          <TabsList className="h-8">
-            <TabsTrigger value="all" className="text-xs">{t("records.all")}</TabsTrigger>
-            <TabsTrigger value="competition" className="text-xs">{t("records.competitionsOnly")}</TabsTrigger>
-            <TabsTrigger value="training" className="text-xs">{t("records.trainingsOnly")}</TabsTrigger>
+          <TabsList className="h-10 sm:h-8">
+            <TabsTrigger value="all" className="h-full text-xs">{t("records.all")}</TabsTrigger>
+            <TabsTrigger value="competition" className="h-full text-xs">{t("records.competitionsOnly")}</TabsTrigger>
+            <TabsTrigger value="training" className="h-full text-xs">{t("records.trainingsOnly")}</TabsTrigger>
           </TabsList>
         </Tabs>
         <Tabs value={ambiente} onValueChange={(v) => setAmbiente(v as typeof ambiente)}>
-          <TabsList className="h-8">
-            <TabsTrigger value="all" className="text-xs">{t("records.allEnvironments")}</TabsTrigger>
-            <TabsTrigger value="outdoor" className="text-xs">{t("records.outdoor")}</TabsTrigger>
-            <TabsTrigger value="indoor" className="text-xs">{t("records.indoor")}</TabsTrigger>
+          <TabsList className="h-10 sm:h-8">
+            <TabsTrigger value="all" className="h-full text-xs">{t("records.allEnvironments")}</TabsTrigger>
+            <TabsTrigger value="outdoor" className="h-full text-xs">{t("records.outdoor")}</TabsTrigger>
+            <TabsTrigger value="indoor" className="h-full text-xs">{t("records.indoor")}</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
 
       <Card>
-        <CardHeader className="flex-row items-center justify-between space-y-0">
+        {/* The legend drops under the title on a phone: side by side it
+            squeezed a long event name into three broken lines. */}
+        <CardHeader className="gap-2 space-y-0 sm:flex-row sm:items-center sm:justify-between">
           <CardTitle className="text-base">{t("records.trendTitle", { event: current?.label ?? "" })}</CardTitle>
           <ChartLegend tokens={tokens} />
         </CardHeader>

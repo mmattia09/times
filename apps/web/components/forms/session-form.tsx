@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useFieldArray, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Trash2 } from "lucide-react";
+import { ChevronDown, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -24,7 +24,15 @@ import { useSubmitShortcut } from "@/hooks/use-submit-shortcut";
 import { enqueue, isOffline } from "@/lib/offline-queue";
 import { cn } from "@/lib/utils";
 import type { WorkoutTemplate } from "@/lib/db/schema";
-import { RUN_DISTANCES, disciplineOptions, eventOptionsFor, isTimed } from "@/lib/athletics";
+import {
+  RUN_DISTANCES,
+  disciplineOptions,
+  eventLabel,
+  eventOptionsFor,
+  formatResult,
+  isTimed,
+  isWindAffected,
+} from "@/lib/athletics";
 import { useI18n } from "@/lib/i18n/client";
 import { sessionInputCheckedSchema, type SessionInput } from "@/lib/validation";
 import { localTodayInputValue } from "@/lib/format";
@@ -110,6 +118,18 @@ export function SessionForm({
 
   const workout = form.watch("workout");
 
+  const addPerformance = () =>
+    append({
+      discipline: "sprint",
+      distance: 100,
+      event: null,
+      result: 0,
+      wind: null,
+      lane: null,
+      position: null,
+      heat: null,
+    });
+
   async function onSubmit(values: FormValues) {
     setSubmitting(true);
     let res: Response;
@@ -169,18 +189,20 @@ export function SessionForm({
       <div className="space-y-3">
       <h2 className="text-sm font-semibold">{t("sessions.details")}</h2>
       <Card>
-        <CardContent className="grid gap-5 p-5 sm:grid-cols-2">
+        <CardContent className="grid grid-cols-2 gap-4 p-4 sm:gap-5 sm:p-5">
           {/* Type toggle */}
-          <div className="flex items-center gap-4 sm:col-span-2">
+          {/* Full-width on a phone: this is the first choice you make, and two
+              half-screen targets beat two small ones next to a label. */}
+          <div className="col-span-2 space-y-1.5 sm:flex sm:items-center sm:gap-4 sm:space-y-0">
             <Label>{t("common.type")}</Label>
-            <div className="inline-flex rounded-md border p-0.5">
+            <div className="grid grid-cols-2 rounded-md border p-0.5 sm:inline-flex">
               {(["training", "competition"] as const).map((option) => (
                 <button
                   key={option}
                   type="button"
                   onClick={() => form.setValue("type", option)}
                   className={cn(
-                    "rounded px-4 py-1.5 text-sm font-medium transition-colors",
+                    "rounded px-4 py-2 text-sm font-medium transition-colors sm:py-1.5",
                     type === option ? "bg-primary text-primary-foreground" : "text-muted-foreground",
                   )}
                 >
@@ -214,7 +236,17 @@ export function SessionForm({
             ]}
           />
 
-          <div className="space-y-1.5">
+          <EnumSelect
+            label={t("common.environment")}
+            value={form.watch("tipo")}
+            onChange={(v) => form.setValue("tipo", v as FormValues["tipo"])}
+            options={[
+              { value: "outdoor", label: t("enums.tipo.outdoor") },
+              { value: "indoor", label: t("enums.tipo.indoor") },
+            ]}
+          />
+
+          <div className="col-span-2 space-y-1.5">
             <Label htmlFor="luogo">{t("common.place")}</Label>
             <Input id="luogo" list="luoghi" placeholder={t("sessions.placePlaceholder")} {...form.register("luogo")} />
             <datalist id="luoghi">
@@ -250,17 +282,7 @@ export function SessionForm({
             </>
           )}
 
-          <EnumSelect
-            label={t("common.environment")}
-            value={form.watch("tipo")}
-            onChange={(v) => form.setValue("tipo", v as FormValues["tipo"])}
-            options={[
-              { value: "outdoor", label: t("enums.tipo.outdoor") },
-              { value: "indoor", label: t("enums.tipo.indoor") },
-            ]}
-          />
-
-          <div className="space-y-1.5 sm:col-span-2">
+          <div className="col-span-2 space-y-1.5">
             <Label htmlFor="note">{t("common.notes")}</Label>
             <Textarea id="note" placeholder={t("sessions.notesPlaceholder")} {...form.register("note")} />
           </div>
@@ -385,14 +407,7 @@ export function SessionForm({
             {t("sessions.performancesOptional")}{" "}
             <span className="font-normal text-muted-foreground">({t("common.optional")})</span>
           </h2>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() =>
-              append({ discipline: "sprint", distance: 100, event: null, result: 0, wind: null, lane: null, position: null, heat: null })
-            }
-          >
+          <Button type="button" variant="outline" size="sm" onClick={addPerformance}>
             <Plus className="h-4 w-4" /> {t("common.add")}
           </Button>
         </div>
@@ -407,24 +422,37 @@ export function SessionForm({
             </CardContent>
           </Card>
         ) : (
-          fields.map((field, idx) => (
-            <PerformanceRow
-              key={field.id}
-              index={idx}
-              form={form}
-              onRemove={() => remove(idx)}
-              canRemove
-            />
-          ))
+          <>
+            {fields.map((field, idx) => (
+              <PerformanceRow
+                key={field.id}
+                index={idx}
+                form={form}
+                onRemove={() => remove(idx)}
+                canRemove
+                sessionType={type}
+              />
+            ))}
+            {/* Also here: after filling one result you are at the bottom of the
+                list, and scrolling back up to the heading to add the next one
+                is the whole reason logging a race felt tedious. */}
+            <Button type="button" variant="outline" className="w-full" onClick={addPerformance}>
+              <Plus className="h-4 w-4" /> {t("sessions.addResult")}
+            </Button>
+          </>
         )}
       </div>
 
-      <div className="flex items-center justify-end gap-3">
-        <span className="mr-auto text-xs text-muted-foreground">{t("common.saveShortcut")}</span>
+      {/* Pinned above the tab bar on a phone: with three results the form is
+          several screens long, and the save button was at the far end of it. */}
+      <div className="sticky bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-20 -mx-4 flex items-center gap-3 border-t bg-background/95 px-4 py-3 backdrop-blur md:static md:mx-0 md:border-0 md:bg-transparent md:px-0 md:backdrop-blur-none">
+        <span className="mr-auto hidden text-xs text-muted-foreground md:inline">
+          {t("common.saveShortcut")}
+        </span>
         <Button type="button" variant="ghost" onClick={() => router.back()}>
           {t("common.cancel")}
         </Button>
-        <Button type="submit" disabled={submitting}>
+        <Button type="submit" disabled={submitting} className="flex-1 md:flex-none">
           {submitting ? t("common.saving") : sessionId ? t("sessions.updateSession") : t("sessions.createSession")}
         </Button>
       </div>
@@ -465,27 +493,53 @@ function EnumSelect({
   );
 }
 
+/**
+ * One result inside a session.
+ *
+ * On a phone this is where the form used to fall apart: eight stacked
+ * full-width fields per result, three results to a race, and nothing to tell
+ * one card from the next — you scrolled through twenty-four identical boxes.
+ *
+ * So the card leads with what it *is* (an index and a live summary of the
+ * event and mark), keeps the three fields that always matter, and folds the
+ * placings away. Wind appears only for events where wind is measured at all,
+ * which is most of the decluttering on its own.
+ */
 function PerformanceRow({
   index,
   form,
   onRemove,
   canRemove,
+  sessionType,
 }: {
   index: number;
   form: ReturnType<typeof useForm<FormValues>>;
   onRemove: () => void;
   canRemove: boolean;
+  sessionType: FormValues["type"];
 }) {
   const { t, dict } = useI18n();
   const discipline = form.watch(`performances.${index}.discipline`);
+  const distance = form.watch(`performances.${index}.distance`);
+  const event = form.watch(`performances.${index}.event`);
+  const result = form.watch(`performances.${index}.result`);
   const isJump = discipline === "jump";
   const isThrow = discipline === "throw";
-  const isRelay = discipline === "relay";
   const isCombined = discipline === "combined";
   const isTest = discipline === "test";
-  const timed = isTimed(discipline);
   const eventOptions = eventOptionsFor(discipline, dict);
   const resultErr = form.formState.errors.performances?.[index]?.result;
+
+  const ek = { discipline, distance: distance ?? null, event: event ?? null };
+  const windMatters = isWindAffected(ek);
+
+  // Placings belong to a race. Open them when this is one, or when something
+  // is already in there — editing a session must never hide its own data.
+  const hasPlacing =
+    form.watch(`performances.${index}.lane`) != null ||
+    form.watch(`performances.${index}.position`) != null ||
+    !!form.watch(`performances.${index}.heat`);
+  const [showPlacing, setShowPlacing] = useState(sessionType === "competition" || hasPlacing);
 
   const resultLabel = isThrow
     ? t("sessions.resultM")
@@ -495,116 +549,168 @@ function PerformanceRow({
         ? t("sessions.resultPoints")
         : t("sessions.resultSeconds");
 
+  // The card's own title: what you'd call this result out loud.
+  const marked = Number(result) > 0;
+  const summary = [eventLabel(ek, dict), marked ? formatResult(Number(result), ek) : null]
+    .filter(Boolean)
+    .join(" · ");
+
   return (
     <Card>
-      <CardContent className="grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="space-y-1.5">
-          <Label>{t("common.discipline")}</Label>
-          <Select
-            value={discipline}
-            onValueChange={(v) => {
-              const d = v as Discipline;
-              const def = disciplineDefaults(d);
-              form.setValue(`performances.${index}.discipline`, d);
-              form.setValue(`performances.${index}.distance`, def.distance);
-              form.setValue(`performances.${index}.event`, def.event);
-            }}
+      <CardContent className="space-y-4 p-4">
+        <div className="flex items-center justify-between gap-2 border-b pb-3">
+          <p className="min-w-0 truncate text-sm font-medium">
+            <span className="mr-1.5 text-muted-foreground tabular-nums">{index + 1}.</span>
+            {summary || t("sessions.newResult")}
+          </p>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={onRemove}
+            disabled={!canRemove}
+            aria-label={t("common.remove")}
+            className="-my-1 shrink-0 text-muted-foreground hover:text-destructive"
           >
-            <SelectTrigger>
-              <SelectValue>
-                {disciplineOptions(dict).find((o) => o.value === discipline)?.label}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {disciplineOptions(dict).map((o) => (
-                <SelectItem key={o.value} value={o.value}>
-                  {o.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            <Trash2 className="h-4 w-4" />
+          </Button>
         </div>
 
-        {eventOptions ? (
+        {/* Two across even on a phone: these fields are short, and one per row
+            turned a three-result race into several screens of scrolling. */}
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
           <div className="space-y-1.5">
-            <Label>{t("common.event")}</Label>
+            <Label>{t("common.discipline")}</Label>
             <Select
-              value={form.watch(`performances.${index}.event`) ?? ""}
-              onValueChange={(v) => form.setValue(`performances.${index}.event`, v)}
+              value={discipline}
+              onValueChange={(v) => {
+                const d = v as Discipline;
+                const def = disciplineDefaults(d);
+                form.setValue(`performances.${index}.discipline`, d);
+                form.setValue(`performances.${index}.distance`, def.distance);
+                form.setValue(`performances.${index}.event`, def.event);
+              }}
             >
               <SelectTrigger>
                 <SelectValue>
-                  {eventOptions.find(
-                    (o) => o.event === form.watch(`performances.${index}.event`),
-                  )?.label}
+                  {disciplineOptions(dict).find((o) => o.value === discipline)?.label}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                {eventOptions.map((o) => (
-                  <SelectItem key={o.event} value={o.event}>
+                {disciplineOptions(dict).map((o) => (
+                  <SelectItem key={o.value} value={o.value}>
                     {o.label}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
-        ) : isCombined ? (
-          <div className="space-y-1.5">
-            <Label>{t("common.event")}</Label>
-            <Input placeholder={t("events.proveMultiple")} {...form.register(`performances.${index}.event`)} />
-          </div>
-        ) : (
-          <div className="space-y-1.5">
-            <Label>{t("common.distance")} (m)</Label>
+
+          {eventOptions ? (
+            <div className="space-y-1.5">
+              <Label>{t("common.event")}</Label>
+              <Select
+                value={event ?? ""}
+                onValueChange={(v) => form.setValue(`performances.${index}.event`, v)}
+              >
+                <SelectTrigger>
+                  <SelectValue>{eventOptions.find((o) => o.event === event)?.label}</SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {eventOptions.map((o) => (
+                    <SelectItem key={o.event} value={o.event}>
+                      {o.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          ) : isCombined ? (
+            <div className="space-y-1.5">
+              <Label>{t("common.event")}</Label>
+              <Input placeholder={t("events.proveMultiple")} {...form.register(`performances.${index}.event`)} />
+            </div>
+          ) : (
+            <div className="space-y-1.5">
+              <Label>{t("common.distance")} (m)</Label>
+              <Input
+                type="number"
+                inputMode="numeric"
+                list={`distances-${index}`}
+                placeholder={t("sessions.metres")}
+                {...form.register(`performances.${index}.distance`)}
+              />
+              <datalist id={`distances-${index}`}>
+                {RUN_DISTANCES.map((d) => (
+                  <option key={d} value={d} />
+                ))}
+              </datalist>
+            </div>
+          )}
+
+          <div className={cn("space-y-1.5", !windMatters && "col-span-2")}>
+            <Label>
+              {t("common.result")} {resultLabel}
+            </Label>
             <Input
               type="number"
-              list={`distances-${index}`}
-              placeholder={t("sessions.metres")}
-              {...form.register(`performances.${index}.distance`)}
+              inputMode="decimal"
+              step="0.01"
+              {...form.register(`performances.${index}.result`)}
             />
-            <datalist id={`distances-${index}`}>
-              {RUN_DISTANCES.map((d) => (
-                <option key={d} value={d} />
-              ))}
-            </datalist>
+            {resultErr && <p className="text-xs text-destructive">{t(resultErr.message ?? "")}</p>}
           </div>
-        )}
 
-        <div className="space-y-1.5">
-          <Label>{t("common.result")} {resultLabel}</Label>
-          <Input type="number" step="0.01" {...form.register(`performances.${index}.result`)} />
-          {resultErr && <p className="text-xs text-destructive">{t(resultErr.message ?? "")}</p>}
-        </div>
-
-        <div className="space-y-1.5">
-          <Label>{t("common.wind")} (m/s)</Label>
-          <Input type="number" step="0.1" placeholder={t("sessions.optionalShort")} {...form.register(`performances.${index}.wind`)} />
-        </div>
-
-        <div className="space-y-1.5">
-          <Label>{t("common.lane")}</Label>
-          <Input type="number" placeholder={t("sessions.optionalShort")} {...form.register(`performances.${index}.lane`)} />
-        </div>
-        <div className="space-y-1.5">
-          <Label>{t("common.position")}</Label>
-          <Input type="number" placeholder={t("sessions.optionalShort")} {...form.register(`performances.${index}.position`)} />
-        </div>
-        <div className="space-y-1.5">
-          <Label>{t("common.heat")}</Label>
-          <Input placeholder={t("sessions.finalExample")} {...form.register(`performances.${index}.heat`)} />
+          {windMatters && (
+            <div className="space-y-1.5">
+              <Label>{t("common.wind")} (m/s)</Label>
+              <Input
+                type="number"
+                inputMode="decimal"
+                step="0.1"
+                placeholder={t("sessions.optionalShort")}
+                {...form.register(`performances.${index}.wind`)}
+              />
+            </div>
+          )}
         </div>
 
-        <div className="flex items-end">
-          <Button
+        <div>
+          <button
             type="button"
-            variant="ghost"
-            size="sm"
-            onClick={onRemove}
-            disabled={!canRemove}
-            className="text-muted-foreground"
+            onClick={() => setShowPlacing((v) => !v)}
+            aria-expanded={showPlacing}
+            className="-my-1 flex items-center gap-1 py-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
           >
-            <Trash2 className="h-4 w-4" /> {t("common.remove")}
-          </Button>
+            <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", showPlacing && "rotate-180")} />
+            {t("sessions.placingFields")}
+          </button>
+          {showPlacing && (
+            <div className="mt-3 grid grid-cols-2 gap-4 lg:grid-cols-4">
+              <div className="space-y-1.5">
+                <Label>{t("common.lane")}</Label>
+                <Input
+                  type="number"
+                  inputMode="numeric"
+                  placeholder={t("sessions.optionalShort")}
+                  {...form.register(`performances.${index}.lane`)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>{t("common.position")}</Label>
+                <Input
+                  type="number"
+                  inputMode="numeric"
+                  placeholder={t("sessions.optionalShort")}
+                  {...form.register(`performances.${index}.position`)}
+                />
+              </div>
+              <div className="col-span-2 space-y-1.5 lg:col-span-2">
+                <Label>{t("common.heat")}</Label>
+                <Input placeholder={t("sessions.finalExample")} {...form.register(`performances.${index}.heat`)} />
+              </div>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

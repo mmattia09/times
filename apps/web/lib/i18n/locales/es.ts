@@ -279,6 +279,9 @@ export const es: Dictionary = {
     optionalShort: "opc.",
     finalExample: "p. ej. final",
     metres: "metros",
+    addResult: "Añadir resultado",
+    newResult: "Nuevo resultado",
+    placingFields: "Calle, puesto, serie",
   },
   workouts: {
     noBlocks: "Ningún bloque en este plan.",
@@ -333,6 +336,7 @@ export const es: Dictionary = {
     speciality: "Prueba",
     record: "Récord",
     seasonBest: "{season} (MMT)",
+    seasonBestShort: "MMT",
     deltaVsPb: "Δ vs MMP",
     equalsPb: "= MMP",
     charts: "Gráficos",

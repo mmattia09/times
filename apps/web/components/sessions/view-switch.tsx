@@ -28,13 +28,16 @@ export function ViewSwitch({ view }: { view: "list" | "calendar" }) {
 
   return (
     <Tabs value={view} onValueChange={change}>
-      <TabsList className="h-8">
-        <TabsTrigger value="list" className="gap-1.5 text-xs">
-          <List className="h-3.5 w-3.5" />
+      {/* Roomier than the desktop tabs: with the label hidden on a phone this
+          is an icon on its own, and a 38px-wide target is a miss waiting to
+          happen. */}
+      <TabsList className="h-10 sm:h-8">
+        <TabsTrigger value="list" className="h-full gap-1.5 px-4 text-xs sm:px-3">
+          <List className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
           <span className="hidden sm:inline">{t("sessions.viewList")}</span>
         </TabsTrigger>
-        <TabsTrigger value="calendar" className="gap-1.5 text-xs">
-          <CalendarDays className="h-3.5 w-3.5" />
+        <TabsTrigger value="calendar" className="h-full gap-1.5 px-4 text-xs sm:px-3">
+          <CalendarDays className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
           <span className="hidden sm:inline">{t("sessions.viewCalendar")}</span>
         </TabsTrigger>
       </TabsList>

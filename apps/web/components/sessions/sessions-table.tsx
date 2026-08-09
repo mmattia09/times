@@ -31,11 +31,62 @@ function enumLabel(labels: Record<string, string>, value: string | null): string
   return labels[value] ?? value;
 }
 
+/**
+ * The same sessions, as a list you can actually read on a phone.
+ *
+ * Eight columns in a sideways-scrolling table means no row is legible without
+ * dragging it into view, and the results — the reason you opened the page —
+ * are the part that falls off the right edge. So below md the row becomes a
+ * block: date and kind on one line, what you did underneath, venue last.
+ */
+function SessionCards({ rows }: { rows: SessionRow[] }) {
+  const router = useRouter();
+  const { t, dict } = useI18n();
+  return (
+    <ul className="divide-y md:hidden">
+      {rows.map((r) => (
+        <li key={r.id}>
+          <button
+            type="button"
+            onClick={() => router.push(`/sessions/${r.id}`)}
+            className="w-full space-y-1 px-4 py-3 text-left transition-colors active:bg-secondary/60"
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">{r.date}</span>
+              <Badge variant={r.type === "competition" ? "default" : "muted"}>
+                {r.type === "competition" ? t("common.competitionShort") : t("common.trainingShort")}
+              </Badge>
+              {r.luogo && (
+                <span className="ml-auto min-w-0 truncate text-xs text-muted-foreground">
+                  {r.luogo}
+                </span>
+              )}
+            </div>
+            <p className="line-clamp-2 text-sm text-muted-foreground">{r.performances}</p>
+            {(r.livello || r.tipo) && (
+              <p className="text-xs text-muted-foreground">
+                {[
+                  r.livello ? enumLabel(dict.enums.livello, r.livello) : null,
+                  r.tipo ? enumLabel(dict.enums.tipo, r.tipo) : null,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </p>
+            )}
+          </button>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export function SessionsTable({ rows }: { rows: SessionRow[] }) {
   const router = useRouter();
   const { t, dict } = useI18n();
   return (
-    <Table>
+    <>
+    <SessionCards rows={rows} />
+    <Table className="hidden md:table">
       <TableHeader>
         <TableRow>
           <TableHead>{t("common.date")}</TableHead>
@@ -79,5 +130,6 @@ export function SessionsTable({ rows }: { rows: SessionRow[] }) {
         ))}
       </TableBody>
     </Table>
+    </>
   );
 }

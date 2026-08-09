@@ -110,7 +110,7 @@ export function UsersTable({ rows }: { rows: UserRow[] }) {
                   href={`/admin/users/${r.id}`}
                   aria-label={t("admin.openUser")}
                   onClick={(e) => e.stopPropagation()}
-                  className="text-muted-foreground hover:text-foreground"
+                  className="-m-2 inline-flex h-9 w-9 items-center justify-center text-muted-foreground hover:text-foreground"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </Link>

@@ -1,11 +1,16 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
+/**
+ * min-w-0 is part of the base style on purpose: a card is nearly always a grid
+ * or flex item, and without it one long unbreakable line inside the card
+ * widens the whole track and pushes the page sideways on a phone.
+ */
 const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn("rounded-lg border bg-card text-card-foreground", className)}
+      className={cn("min-w-0 rounded-lg border bg-card text-card-foreground", className)}
       {...props}
     />
   ),

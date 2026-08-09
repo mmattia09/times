@@ -76,7 +76,7 @@ export function TimeZoneSwitcher({ saved }: { saved: string | null }) {
               type="button"
               disabled={saving}
               onClick={() => save(z)}
-              className="flex w-full items-center justify-between gap-2 px-3 py-1.5 text-left text-xs hover:bg-muted disabled:opacity-50"
+              className="flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left text-xs hover:bg-muted disabled:opacity-50 sm:py-1.5"
             >
               <span className="truncate">{z.replace(/_/g, " ")}</span>
               <span className="flex items-center gap-1.5 tabular-nums text-muted-foreground">
