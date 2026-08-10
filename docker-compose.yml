@@ -33,6 +33,13 @@ services:
       ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@example.com}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-changeme}
       DISABLE_REGISTRATION: ${DISABLE_REGISTRATION:-false}
+      # Compose only passes what is listed here, so a variable set in .env and
+      # not named below reaches nothing: SECURE_COOKIES=false looked like it was
+      # being ignored by the app because it never arrived. Empty is "unset" —
+      # each of these falls back to its own default inside the app.
+      TRUSTED_ORIGINS: ${TRUSTED_ORIGINS:-}
+      SECURE_COOKIES: ${SECURE_COOKIES:-}
+      UPDATE_CHECKS: ${UPDATE_CHECKS:-}
       NODE_ENV: production
     depends_on:
       db:

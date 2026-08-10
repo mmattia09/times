@@ -134,7 +134,13 @@ leading `v`, and `:1.5` follows the patches of a minor release.
 | `ADMIN_EMAIL`          | Admin login email.                                               |
 | `ADMIN_PASSWORD`       | Admin login password.                                            |
 | `DISABLE_REGISTRATION` | `true` to block new sign-ups once your accounts exist.           |
+| `UPDATE_CHECKS`        | `false` to stop the server asking GitHub for newer releases.      |
 | `APP_IMAGE`            | Optional: pin the image version to run.                          |
+
+The version card in Settings — admins only — says which release the instance is
+running and shows the release notes for anything newer. The server asks GitHub's
+public release list at most once every six hours; nothing about you or your
+training is sent, and `UPDATE_CHECKS=false` stops it asking at all.
 
 **Accounts.** The *owner* is the first user, provisioned from `ADMIN_EMAIL` /
 `ADMIN_PASSWORD`: edit `.env` and restart to change its credentials (they re-sync on

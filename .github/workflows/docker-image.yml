@@ -54,5 +54,9 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          # On a tag this is the version (1.6.0); on main it's the branch name,
+          # which the app treats as "not a release" rather than pretending.
+          build-args: |
+            APP_VERSION=${{ steps.meta.outputs.version }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

@@ -6,6 +6,7 @@ import { FidalSettings } from "@/components/settings/fidal-settings";
 import { LanguageSwitcher } from "@/components/settings/language-switcher";
 import { ProfileSettings } from "@/components/settings/profile-settings";
 import { TimeZoneSwitcher } from "@/components/settings/timezone-switcher";
+import { VersionCard } from "@/components/settings/version-card";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { db } from "@/lib/db";
 import { users, userSettings } from "@/lib/db/schema";
@@ -101,6 +102,20 @@ export default async function SettingsPage() {
             <DataTransferCard />
           </CardContent>
         </Card>
+
+        {/* Admins only: upgrading a self-hosted instance is their job, and the
+            check reaches out to github.com on behalf of whoever loads it. */}
+        {isAdmin && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">{t("settings.version")}</CardTitle>
+              <CardDescription>{t("settings.versionDescription")}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <VersionCard />
+            </CardContent>
+          </Card>
+        )}
         </div>
       </div>
     </>

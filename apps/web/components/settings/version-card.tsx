@@ -109,7 +109,11 @@ function ReleaseEntry({ release, open }: { release: Release; open: boolean }) {
       {expanded && (
         <div className="mt-1 space-y-2 pl-6">
           {release.notes ? (
-            <ReleaseNotes notes={release.notes} />
+            // Capped and scrollable: release notes run long, and this card
+            // shouldn't push the rest of Settings off the page.
+            <div className="max-h-64 overflow-y-auto pr-1">
+              <ReleaseNotes notes={release.notes} />
+            </div>
           ) : (
             <p className="text-xs text-muted-foreground">{t("settings.noNotes")}</p>
           )}

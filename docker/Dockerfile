@@ -30,6 +30,11 @@ RUN cd apps/web && for s in migrate seed repair; do \
 FROM base AS runner
 ENV NODE_ENV=production
 ENV PORT=3000
+# The version this image was built from, so the app can say what it is running
+# and compare it against the latest release. Set by CI from the git tag; an
+# image built by hand simply has nothing to compare and says so.
+ARG APP_VERSION=""
+ENV APP_VERSION=$APP_VERSION
 RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
 
 # Next.js standalone server already bundles the traced production dependencies —
