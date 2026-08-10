@@ -724,9 +724,12 @@ function PerformanceRow({
         ? t("sessions.resultPoints")
         : t("sessions.resultSeconds");
 
-  // The card's own title: what you'd call this result out loud.
+  // The card's own title: what you'd call this result out loud. A row that has
+  // neither a distance nor an event has no name yet — eventLabel answers "—"
+  // for that, which as a heading reads like something went wrong.
+  const named = distance != null || !!event;
   const marked = Number(result) > 0;
-  const summary = [eventLabel(ek, dict), marked ? formatResult(Number(result), ek) : null]
+  const summary = [named ? eventLabel(ek, dict) : null, marked ? formatResult(Number(result), ek) : null]
     .filter(Boolean)
     .join(" · ");
 
