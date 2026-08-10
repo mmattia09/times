@@ -34,10 +34,12 @@ jobs:
       - name: Typecheck
         run: pnpm --filter web exec tsc --noEmit
 
-      # The FIDAL parser reads someone else's HTML into an athlete's records,
-      # and has been wrong about units, event names, separators and the sign of
-      # the wind. These run without a database.
-      - name: Import checks
+      # The rules worth pinning down: the FIDAL parser reads someone else's
+      # HTML into an athlete's records and has been wrong about units, event
+      # names, separators and the sign of the wind; the JSON export is the only
+      # backup there is; and a string that never reaches t() ships in the wrong
+      # language. All of it runs without a database.
+      - name: Checks
         run: pnpm --filter web check
 
       - name: Build

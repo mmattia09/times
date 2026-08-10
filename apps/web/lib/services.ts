@@ -23,6 +23,28 @@ export type SessionFilters = {
   q?: string; // free text over venue and notes
 };
 
+/**
+ * The order results are read in, wherever they are read.
+ *
+ * The list and the detail page used to disagree — the detail page sorted by
+ * distance, the list took whatever order Postgres handed back — so the same
+ * session showed "200m · 100m" in one place and "100m · 200m" in the other,
+ * and the list order could change on its own between two loads. Distance
+ * alone also isn't a total order — a heat and a final over the same distance
+ * tie — so the row's own age breaks it, and the id makes it total.
+ *
+ * Note this does not carry the order you typed two results of the same event
+ * in across an export and import: Postgres gives every row in a transaction
+ * the same now(), so both copies land on the same timestamp and the id decides.
+ * Keeping that would need a column to hold it, which is more than the question
+ * is worth — the results themselves are all there either way.
+ */
+const performanceOrder = [
+  asc(performances.distance),
+  asc(performances.createdAt),
+  asc(performances.id),
+];
+
 export type CreateSessionOptions = {
   fidalId?: string | null;
   /** Skip the PB recompute (callers doing bulk inserts recompute once at the end). */
@@ -185,7 +207,7 @@ export async function getSessionById(
     .select()
     .from(performances)
     .where(eq(performances.sessionId, sessionId))
-    .orderBy(asc(performances.distance));
+    .orderBy(...performanceOrder);
   return { ...session, performances: perfs };
 }
 
@@ -242,7 +264,8 @@ export async function listSessions(
   const perfs = await db
     .select()
     .from(performances)
-    .where(inArray(performances.sessionId, ids));
+    .where(inArray(performances.sessionId, ids))
+    .orderBy(...performanceOrder);
 
   const bySession = new Map<string, typeof perfs>();
   for (const p of perfs) {

@@ -470,6 +470,7 @@ export const es: Dictionary = {
     fidalTooManyRedirects: "Demasiadas redirecciones desde la página de FIDAL.",
     fidalNotConfigured: "No hay ninguna URL de FIDAL configurada en los ajustes.",
     importBadFile: "Archivo no válido: se esperaba una exportación JSON de Times.",
+    importTooNew: "Este archivo viene de una versión más reciente de Times: actualiza la app e inténtalo de nuevo.",
     somethingWrong: "Algo ha ido mal",
     pageError: "Se ha producido un error al cargar esta página.",
     notFound: "Página no encontrada",

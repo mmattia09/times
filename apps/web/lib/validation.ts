@@ -109,8 +109,10 @@ export const sessionInputSchema = z.object({
   /** Set by the app for a session written offline; makes the retry idempotent. */
   clientId: emptyToNull(z.string().max(64)).optional(),
   // May be empty: a session can just mark that you trained (or a multi-day
-  // competition you attended) without any measured result.
-  performances: z.array(performanceInputSchema).default([]),
+  // competition you attended) without any measured result. Capped because
+  // nothing else caps it: a decathlon is ten results and a long meeting a
+  // handful, so anything near this is a file trying to exhaust the server.
+  performances: z.array(performanceInputSchema).max(200).default([]),
 });
 
 /** Shared rule: an end date can't precede the start date. */

@@ -472,6 +472,7 @@ export const it = {
     fidalTooManyRedirects: "Troppi redirect dalla pagina FIDAL.",
     fidalNotConfigured: "Nessun URL FIDAL configurato nelle impostazioni.",
     importBadFile: "File non valido: atteso un export JSON di Times.",
+    importTooNew: "Questo file viene da una versione più recente di Times: aggiorna l'app e riprova.",
     somethingWrong: "Qualcosa è andato storto",
     pageError: "Si è verificato un errore nel caricamento di questa pagina.",
     notFound: "Pagina non trovata",

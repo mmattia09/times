@@ -30,12 +30,19 @@ import {
 
 export const EXPORT_VERSION = 1;
 
-const exportSessionSchema = sessionInputSchema.extend({
-  fidalId: z.string().nullable().optional(),
-  workout: sessionWorkoutSchema.nullable().optional(),
-  // Optional so an export taken before links existed still imports.
-  links: z.array(sessionLinkSchema).max(20).default([]),
-});
+const exportSessionSchema = sessionInputSchema
+  .extend({
+    fidalId: z.string().max(128).nullable().optional(),
+    workout: sessionWorkoutSchema.nullable().optional(),
+    // Optional so an export taken before links existed still imports.
+    links: z.array(sessionLinkSchema).max(20).default([]),
+  })
+  // The same rule the form applies. An imported session that ends before it
+  // starts would otherwise be a period no view can draw.
+  .refine((s) => !s.endDate || Date.parse(s.endDate) >= Date.parse(s.date), {
+    message: "validation.endBeforeStart",
+    path: ["endDate"],
+  });
 
 const exportApiKeySchema = z.object({
   label: z.string().max(64),
@@ -54,7 +61,16 @@ const MAX_KEYS = 100;
 
 export const exportFileSchema = z.object({
   app: z.literal("athletics-tracker"),
-  version: z.number().int(),
+  /**
+   * Refuse a file from a newer version of the app rather than importing the
+   * parts we happen to recognise: a format we don't know is a format we would
+   * silently drop half of, and the person doing it believes their data arrived.
+   */
+  version: z
+    .number()
+    .int()
+    .min(1)
+    .max(EXPORT_VERSION, { message: "errors.importTooNew" }),
   exportedAt: z.string(),
   settings: z
     .object({
@@ -143,17 +159,62 @@ export async function buildExport(userId: string): Promise<ExportFile> {
   };
 }
 
-/** Content signature used to dedup sessions on import (idempotent re-import). */
-function sessionSignature(s: {
+/** The shape sessionSignature needs, from either an export file or the database. */
+export type SignableSession = {
   date: string | Date;
-  performances: Array<{ distance: number | null; event: string | null; result: number | string }>;
-}): string {
-  const d = (typeof s.date === "string" ? new Date(s.date) : s.date).toISOString().slice(0, 10);
+  endDate?: string | Date | null;
+  type?: string | null;
+  luogo?: string | null;
+  note?: string | null;
+  workout?: { name?: string | null; blocks?: Array<{ ripetute?: string | null }> } | null;
+  performances: Array<{
+    discipline?: string | null;
+    distance: number | null;
+    event: string | null;
+    result: number | string;
+  }>;
+};
+
+const day = (v: string | Date): string =>
+  (typeof v === "string" ? new Date(v) : v).toISOString().slice(0, 10);
+
+/**
+ * Content signature used to dedup sessions on import, so re-importing the same
+ * file changes nothing.
+ *
+ * It has to describe the whole session, not just its marks. Keying on date and
+ * results alone made every session with no measured result — a gym session, a
+ * technique session, anything with just a workout attached, which is most of a
+ * training year — collide with every other one on that date: import a Tuesday
+ * with a morning and an afternoon session and only the morning arrived. It
+ * also has to include the discipline, for the same reason the personal-best
+ * key does: 100m flat and 100m hurdles are not the same 100m.
+ *
+ * Two sessions identical in all of this really are indistinguishable, and
+ * treating the second as already-present is the safe way to be wrong.
+ */
+export function sessionSignature(s: SignableSession): string {
   const perfs = s.performances
-    .map((p) => `${p.distance ?? ""}:${p.event ?? ""}:${Number(p.result).toFixed(2)}`)
+    .map(
+      (p) =>
+        `${p.discipline ?? ""}:${p.distance ?? ""}:${p.event ?? ""}:${Number(p.result).toFixed(2)}`,
+    )
     .sort()
     .join(",");
-  return `${d}|${perfs}`;
+  // Two unnamed workouts on the same day are still two different sessions, so
+  // the reps go into the signature as well as the name.
+  const workout = s.workout
+    ? `${s.workout.name ?? ""}~${(s.workout.blocks ?? []).map((b) => b.ripetute ?? "").join("~")}`
+    : "";
+  return [
+    day(s.date),
+    s.endDate ? day(s.endDate) : "",
+    s.type ?? "",
+    (s.luogo ?? "").trim().toLowerCase(),
+    (s.note ?? "").trim(),
+    workout,
+    perfs,
+  ].join("|");
 }
 
 export type ImportReport = {
@@ -264,6 +325,13 @@ export async function importData(userId: string, data: ExportFile): Promise<Impo
         set: {
           fidalUrl: data.settings.fidalUrl,
           seasonStartMonth: data.settings.seasonStartMonth,
+          // Also on the update path: importing into an account that already
+          // has a settings row is the normal case (registering creates one),
+          // so leaving this out of the update meant the default distances were
+          // exported faithfully and then never restored.
+          ...(data.settings.defaultDistances
+            ? { defaultDistances: data.settings.defaultDistances }
+            : {}),
           ...(isLocale(data.settings.locale) ? { locale: data.settings.locale } : {}),
           ...(isValidTimeZone(data.settings.timezone) ? { timezone: data.settings.timezone } : {}),
           updatedAt: new Date(),

@@ -9,8 +9,16 @@ export async function POST(req: Request) {
   const body = await req.json().catch(() => null);
   const parsed = exportFileSchema.safeParse(body);
   if (!parsed.success) {
+    // A schema message that is itself a translation key names a reason worth
+    // telling apart — "this file is from a newer Times" is a different problem
+    // from "this isn't an export", and only one of them is the file's fault.
+    const named = parsed.error.issues.find((i) => i.message.startsWith("errors."));
     return Response.json(
-      { error: "bad_request", message: "errors.importBadFile", issues: parsed.error.flatten() },
+      {
+        error: "bad_request",
+        message: named?.message ?? "errors.importBadFile",
+        issues: parsed.error.flatten(),
+      },
       { status: 400 },
     );
   }
