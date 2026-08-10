@@ -54,7 +54,7 @@ function SessionCards({ rows }: { rows: SessionRow[] }) {
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium">{r.date}</span>
               <Badge variant={r.type === "competition" ? "default" : "muted"}>
-                {r.type === "competition" ? t("common.competitionShort") : t("common.trainingShort")}
+                {r.type === "competition" ? t("common.competition") : t("common.training")}
               </Badge>
               {r.luogo && (
                 <span className="ml-auto min-w-0 truncate text-xs text-muted-foreground">
@@ -109,7 +109,7 @@ export function SessionsTable({ rows }: { rows: SessionRow[] }) {
             <TableCell className="font-medium">{r.date}</TableCell>
             <TableCell>
               <Badge variant={r.type === "competition" ? "default" : "muted"}>
-                {r.type === "competition" ? t("common.competitionShort") : t("common.trainingShort")}
+                {r.type === "competition" ? t("common.competition") : t("common.training")}
               </Badge>
             </TableCell>
             <TableCell className="max-w-[16rem] truncate">{r.performances}</TableCell>

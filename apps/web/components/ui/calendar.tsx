@@ -26,9 +26,13 @@ export function Calendar({ className, classNames, ...props }: DayPickerProps) {
         caption_label: "text-sm font-semibold capitalize",
         nav: "flex items-center justify-between absolute inset-x-0 top-0 h-9 pointer-events-none",
         button_previous:
-          "pointer-events-auto inline-flex h-8 w-8 items-center justify-center rounded-md border border-input text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground disabled:opacity-40",
+          // Filled rather than outlined: a bordered ghost button on a dark card
+          // is nearly invisible, and these two are the only way to move.
+          "pointer-events-auto inline-flex h-9 w-9 items-center justify-center rounded-md border border-input bg-secondary text-foreground shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground disabled:opacity-40",
         button_next:
-          "pointer-events-auto inline-flex h-8 w-8 items-center justify-center rounded-md border border-input text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground disabled:opacity-40",
+          // Filled rather than outlined: a bordered ghost button on a dark card
+          // is nearly invisible, and these two are the only way to move.
+          "pointer-events-auto inline-flex h-9 w-9 items-center justify-center rounded-md border border-input bg-secondary text-foreground shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground disabled:opacity-40",
         month_grid: "w-full border-collapse",
         weekdays: "flex w-full",
         weekday:

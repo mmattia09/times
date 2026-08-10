@@ -76,7 +76,7 @@ export function TemplateUsage({ templateId }: { templateId: string }) {
               >
                 <span className="flex items-center gap-2">
                   <Badge variant={u.type === "competition" ? "default" : "muted"}>
-                    {u.type === "competition" ? t("common.competitionShort") : t("common.trainingShort")}
+                    {u.type === "competition" ? t("common.competition") : t("common.training")}
                   </Badge>
                   {formatDate(u.date, undefined, locale)}
                   {u.endDate && <> → {formatDate(u.endDate, undefined, locale)}</>}

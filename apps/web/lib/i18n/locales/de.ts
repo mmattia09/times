@@ -106,6 +106,8 @@ export const de: Dictionary = {
   calendar: {
     today: "Heute",
     emptyMonth: "Keine Einheiten in diesem Monat.",
+    monthSessions: "{count} Einheiten in diesem Monat",
+    wholeMonth: "Ganzer Monat",
   },
   offline: {
     editWaiting: "Für diese Einheit wartet eine Änderung auf den Versand — unten steht noch, was der Server hat.",
@@ -152,8 +154,6 @@ export const de: Dictionary = {
     event: "Disziplin",
     training: "Training",
     competition: "Wettkampf",
-    trainingShort: "Train.",
-    competitionShort: "Wettk.",
     saveShortcut: "⌘ + Enter: speichern",
     retry: "Erneut versuchen",
   },

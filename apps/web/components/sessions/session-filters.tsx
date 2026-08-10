@@ -80,52 +80,56 @@ export function SessionFilters({ seasons }: { seasons: { key: string; label: str
   const [showFilters, setShowFilters] = useState(activeCount > 0);
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-2">
-        <div className="relative flex-1 sm:flex-none">
-          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={query}
-            onChange={(e) => {
+    // One wrapping row for the search box and the dropdowns together, with the
+    // search as the only thing that stretches: the dropdowns are as wide as
+    // their longest option and no wider, so whatever is left over is space to
+    // read what you typed.
+    <div className="flex flex-wrap items-center gap-2">
+      <div className="relative min-w-[9rem] flex-1">
+        <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={query}
+          onChange={(e) => {
+            typed.current = true;
+            setQuery(e.target.value);
+          }}
+          placeholder={t("sessions.searchPlaceholder")}
+          aria-label={t("sessions.searchPlaceholder")}
+          className="h-8 w-full pl-8 pr-7 text-xs"
+        />
+        {query && (
+          <button
+            type="button"
+            onClick={() => {
               typed.current = true;
-              setQuery(e.target.value);
+              setQuery("");
             }}
-            placeholder={t("sessions.searchPlaceholder")}
-            aria-label={t("sessions.searchPlaceholder")}
-            className="h-8 w-full pl-8 pr-7 text-xs sm:w-44"
-          />
-          {query && (
-            <button
-              type="button"
-              onClick={() => {
-                typed.current = true;
-                setQuery("");
-              }}
-              aria-label={t("sessions.clearFilters")}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-          )}
-        </div>
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-8 shrink-0 gap-1.5 text-xs sm:hidden"
-          onClick={() => setShowFilters((v) => !v)}
-          aria-expanded={showFilters}
-        >
-          <SlidersHorizontal className="h-3.5 w-3.5" />
-          {t("sessions.filters")}
-          {activeCount > 0 && (
-            <span className="rounded-full bg-primary/15 px-1.5 text-[10px] font-medium text-primary">
-              {activeCount}
-            </span>
-          )}
-        </Button>
+            aria-label={t("sessions.clearFilters")}
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        )}
       </div>
+      <Button
+        variant="outline"
+        size="sm"
+        className="h-8 shrink-0 gap-1.5 text-xs sm:hidden"
+        onClick={() => setShowFilters((v) => !v)}
+        aria-expanded={showFilters}
+      >
+        <SlidersHorizontal className="h-3.5 w-3.5" />
+        {t("sessions.filters")}
+        {activeCount > 0 && (
+          <span className="rounded-full bg-primary/15 px-1.5 text-[10px] font-medium text-primary">
+            {activeCount}
+          </span>
+        )}
+      </Button>
 
-      <div className={cn("flex-wrap items-center gap-2 sm:flex", showFilters ? "flex" : "hidden")}>
+      {/* display:contents so the dropdowns wrap in the same row as the search
+          box while still being hideable as a group on a phone. */}
+      <div className={cn(showFilters ? "contents" : "hidden sm:contents")}>
         {filter(
           "season",
           t("sessions.allSeasons"),

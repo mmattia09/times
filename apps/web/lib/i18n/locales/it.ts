@@ -108,6 +108,8 @@ export const it = {
   calendar: {
     today: "Oggi",
     emptyMonth: "Nessuna sessione in questo mese.",
+    monthSessions: "{count} sessioni questo mese",
+    wholeMonth: "Tutto il mese",
   },
   offline: {
     editWaiting: "Questa sessione ha una modifica in attesa di essere inviata: qui sotto vedi ancora i dati sul server.",
@@ -154,8 +156,6 @@ export const it = {
     event: "Specialità",
     training: "Allenamento",
     competition: "Gara",
-    trainingShort: "Allen.",
-    competitionShort: "Gara",
     saveShortcut: "⌘ + Invio: salva",
     retry: "Riprova",
   },

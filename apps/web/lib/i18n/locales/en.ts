@@ -106,6 +106,8 @@ export const en: Dictionary = {
   calendar: {
     today: "Today",
     emptyMonth: "No sessions this month.",
+    monthSessions: "{count} sessions this month",
+    wholeMonth: "Whole month",
   },
   offline: {
     editWaiting: "This session has a change waiting to be sent — what you see below is still what the server has.",
@@ -152,8 +154,6 @@ export const en: Dictionary = {
     event: "Event",
     training: "Training",
     competition: "Competition",
-    trainingShort: "Train.",
-    competitionShort: "Race",
     saveShortcut: "⌘ + Enter: save",
     retry: "Try again",
   },
