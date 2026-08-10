@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useFieldArray, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ChevronDown, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, ListPlus, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -22,6 +22,7 @@ import { LinkIcon } from "@/components/sessions/link-icon";
 import { toast } from "@/hooks/use-toast";
 import { useSubmitShortcut } from "@/hooks/use-submit-shortcut";
 import { enqueue, isOffline } from "@/lib/offline-queue";
+import { disciplineForDistance, repsFromWorkout } from "@/lib/quick-entry";
 import { cn } from "@/lib/utils";
 import type { WorkoutTemplate } from "@/lib/db/schema";
 import {
@@ -83,7 +84,26 @@ export function SessionForm({
   const [templates, setTemplates] = useState<WorkoutTemplate[]>([]);
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(sessionInputCheckedSchema),
+    /**
+     * Rows with no time are dropped, not rejected.
+     *
+     * The quick table lays out every rep of the workout, and you time some of
+     * them — being made to delete the ones you didn't is the friction the table
+     * exists to remove. The schema stays strict for the API, where an explicit
+     * result that isn't a number really is an error; here the empty ones simply
+     * never reach it.
+     */
+    resolver: (values, context, options) =>
+      zodResolver(sessionInputCheckedSchema)(
+        {
+          ...values,
+          performances: (values.performances ?? []).filter(
+            (p) => `${p?.result ?? ""}`.trim() !== "",
+          ),
+        },
+        context,
+        options,
+      ),
     defaultValues: {
       date: initial?.date ?? localTodayInputValue(),
       endDate: initial?.endDate ?? null,
@@ -118,17 +138,53 @@ export function SessionForm({
 
   const workout = form.watch("workout");
 
-  const addPerformance = () =>
-    append({
-      discipline: "sprint",
-      distance: 100,
-      event: null,
-      result: 0,
-      wind: null,
-      lane: null,
-      position: null,
-      heat: null,
-    });
+  /**
+   * A blank row, not a guess.
+   *
+   * It used to arrive as 100m with a result of 0, which reads as data you have
+   * to correct rather than fields you have to fill — and a "0" in the result
+   * box is a mark nobody ran. Empty is coerced to 0 on submit and fails the
+   * positive-number rule, which is exactly the error the person should see.
+   */
+  const blankPerformance = (distance: number | null = null) => ({
+    discipline: distance ? disciplineForDistance(distance) : ("sprint" as const),
+    distance,
+    event: null,
+    result: "" as unknown as number,
+    wind: null,
+    lane: null,
+    position: null,
+    heat: null,
+  });
+
+  const addPerformance = () => append(blankPerformance());
+
+  // The reps of the attached workout, as distances waiting for a time.
+  const workoutReps = useMemo(() => repsFromWorkout(workout?.blocks), [workout]);
+
+  const fillFromWorkout = () => {
+    for (const metres of workoutReps) append(blankPerformance(metres));
+    setEntryMode("quick");
+  };
+
+  /**
+   * Quick is the default because most sessions are a column of distances and a
+   * column of times. A session that already carries a lane, a place, a heat or
+   * a field event opens detailed instead — editing must never hide what is
+   * already there behind a simpler view.
+   */
+  const [entryMode, setEntryMode] = useState<"quick" | "detailed">(() => {
+    const initialPerfs = initial?.performances ?? [];
+    const needsDetail = initialPerfs.some(
+      (p) =>
+        p.lane != null ||
+        p.position != null ||
+        !!p.heat ||
+        p.wind != null ||
+        !isTimed(p.discipline as Discipline),
+    );
+    return needsDetail ? "detailed" : "quick";
+  });
 
   async function onSubmit(values: FormValues) {
     setSubmitting(true);
@@ -402,23 +458,99 @@ export function SessionForm({
 
       {/* Performances */}
       <div className="space-y-3">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-sm font-semibold">
             {t("sessions.performancesOptional")}{" "}
             <span className="font-normal text-muted-foreground">({t("common.optional")})</span>
           </h2>
-          <Button type="button" variant="outline" size="sm" onClick={addPerformance}>
-            <Plus className="h-4 w-4" /> {t("common.add")}
-          </Button>
+          <div className="flex items-center gap-2">
+            {/* Two ways in, because there are two situations. A track session is
+                a column of distances and a column of times and nothing else; a
+                race has lanes, heats and wind. */}
+            <div className="inline-flex rounded-md border p-0.5 text-xs">
+              {(["quick", "detailed"] as const).map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => setEntryMode(option)}
+                  className={cn(
+                    "rounded px-2.5 py-1 font-medium transition-colors",
+                    entryMode === option
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground",
+                  )}
+                >
+                  {option === "quick" ? t("sessions.quickEntry") : t("sessions.detailedEntry")}
+                </button>
+              ))}
+            </div>
+            <Button type="button" variant="outline" size="sm" onClick={addPerformance}>
+              <Plus className="h-4 w-4" /> {t("common.add")}
+            </Button>
+          </div>
         </div>
         {typeof errors.performances?.message === "string" && (
           <p className="text-xs text-destructive">{t(errors.performances.message)}</p>
+        )}
+
+        {workoutReps.length > 0 && (
+          <Button type="button" variant="outline" size="sm" className="w-full" onClick={fillFromWorkout}>
+            <ListPlus className="h-4 w-4" />
+            {t("sessions.fillFromWorkout", { count: workoutReps.length })}
+          </Button>
         )}
 
         {fields.length === 0 ? (
           <Card>
             <CardContent className="py-6 text-center text-sm text-muted-foreground">
               {t("sessions.noPerformancesHint")}
+            </CardContent>
+          </Card>
+        ) : entryMode === "quick" ? (
+          <Card>
+            <CardContent className="p-3 sm:p-4">
+              <div className="grid grid-cols-[1fr_1fr_2.25rem] items-center gap-2 pb-1">
+                <Label className="text-xs text-muted-foreground">
+                  {t("common.distance")} (m)
+                </Label>
+                <Label className="text-xs text-muted-foreground">{t("sessions.timeSeconds")}</Label>
+                <span />
+              </div>
+              <ul className="space-y-2">
+                {fields.map((field, idx) => (
+                  <li key={field.id} className="grid grid-cols-[1fr_1fr_2.25rem] items-center gap-2">
+                    <QuickDistance index={idx} form={form} />
+                    <Input
+                      type="number"
+                      inputMode="decimal"
+                      step="0.01"
+                      placeholder={t("sessions.timeSecondsShort")}
+                      aria-label={t("sessions.timeSeconds")}
+                      {...form.register(`performances.${idx}.result`)}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => remove(idx)}
+                      aria-label={t("common.remove")}
+                      className="text-muted-foreground hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="mt-2 w-full"
+                onClick={addPerformance}
+              >
+                <Plus className="h-4 w-4" /> {t("sessions.addResult")}
+              </Button>
+              <p className="mt-2 text-xs text-muted-foreground">{t("sessions.quickEntryHint")}</p>
             </CardContent>
           </Card>
         ) : (
@@ -457,6 +589,49 @@ export function SessionForm({
         </Button>
       </div>
     </form>
+  );
+}
+
+/**
+ * The distance cell of the quick table.
+ *
+ * It also decides the discipline, because the person typing is entering "400"
+ * or "800" and thinking "a run" — but 800m is middle distance and 400m is a
+ * sprint, and the personal-best key is per discipline. Getting that wrong here
+ * would file the mark under the wrong event and never show it as a record.
+ */
+function QuickDistance({
+  index,
+  form,
+}: {
+  index: number;
+  form: ReturnType<typeof useForm<FormValues>>;
+}) {
+  const { t } = useI18n();
+  const registration = form.register(`performances.${index}.distance`);
+  return (
+    <>
+      <Input
+        type="number"
+        inputMode="numeric"
+        list={`quick-distances-${index}`}
+        placeholder={t("sessions.metres")}
+        aria-label={t("common.distance")}
+        {...registration}
+        onChange={(e) => {
+          void registration.onChange(e);
+          const metres = Number(e.target.value);
+          if (metres > 0) {
+            form.setValue(`performances.${index}.discipline`, disciplineForDistance(metres));
+          }
+        }}
+      />
+      <datalist id={`quick-distances-${index}`}>
+        {RUN_DISTANCES.map((d) => (
+          <option key={d} value={d} />
+        ))}
+      </datalist>
+    </>
   );
 }
 
