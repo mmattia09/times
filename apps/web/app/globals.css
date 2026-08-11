@@ -58,3 +58,31 @@
     font-feature-settings: "cv11", "ss01";
   }
 }
+
+/**
+ * The corners of the screen the system has already taken.
+ *
+ * Installed to a home screen the app draws edge to edge (viewport-fit=cover in
+ * the viewport export), which is what lets the header colour reach the top of
+ * the display — but it also means the notch, the status bar and the home
+ * indicator sit on top of the page unless something leaves room for them. On
+ * anything that isn't an iPhone these insets are 0 and the classes do nothing,
+ * so they are safe to use unconditionally.
+ */
+@layer utilities {
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  /* Landscape: the notch eats one of the long edges. */
+  .px-safe {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+  /* A 3.5rem bar plus whatever the system is using above it. */
+  .h-bar-safe {
+    height: calc(3.5rem + env(safe-area-inset-top));
+  }
+}

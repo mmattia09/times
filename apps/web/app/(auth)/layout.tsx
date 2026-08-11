@@ -11,7 +11,11 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
   const { t } = await getT();
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/30 p-6">
+    // The sign-in card is centred, but on a short screen in landscape centring
+    // still puts it under the status bar. The insets are added to the padding
+    // rather than replacing it — the safe utilities would fight p-6 for the
+    // same property, and which won would depend on stylesheet order.
+    <div className="flex min-h-screen items-center justify-center bg-muted/30 p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pl-[calc(1.5rem+env(safe-area-inset-left))] pr-[calc(1.5rem+env(safe-area-inset-right))] pt-[calc(1.5rem+env(safe-area-inset-top))]">
       <div className="w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center text-center">
           <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10">

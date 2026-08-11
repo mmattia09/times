@@ -45,7 +45,8 @@ export function Sidebar({ isAdmin = false }: { isAdmin?: boolean }) {
     // Sticky + full-height so the nav (and Impostazioni) stays visible while
     // the main content scrolls.
     <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r bg-card md:flex">
-      <div className="flex h-14 items-center gap-2 border-b px-5">
+      {/* Matches the main header's height so the two line up, inset included. */}
+      <div className="pt-safe flex h-bar-safe items-center gap-2 border-b px-5">
         <Timer className="h-5 w-5 text-primary" />
         <span className="font-semibold tracking-tight">Times</span>
       </div>
@@ -66,9 +67,10 @@ export function BottomNav() {
   const pathname = usePathname();
   const { t } = useI18n();
   return (
-    // pb-[env(safe-area-inset-bottom)] keeps the tabs above the iOS home
-    // indicator when the app is installed to the home screen.
-    <nav className="fixed inset-x-0 bottom-0 z-40 flex border-t bg-card pb-[env(safe-area-inset-bottom)] md:hidden">
+    // pb-safe keeps the tabs above the iOS home indicator when the app is
+    // installed to the home screen; px-safe keeps them clear of the notch in
+    // landscape, which the fixed position puts them back in reach of.
+    <nav className="pb-safe px-safe fixed inset-x-0 bottom-0 z-40 flex border-t bg-card md:hidden">
       {[...navItems, settingsItem].map((item) => {
         const Icon = item.icon;
         const active = isActive(pathname, item.href);

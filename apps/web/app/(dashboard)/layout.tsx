@@ -17,10 +17,16 @@ export default async function DashboardLayout({ children }: { children: React.Re
   if (mustChangePassword) redirect("/change-password");
   const { t } = await getT();
   return (
-    <div className="flex min-h-screen">
+    // px-safe: in landscape the notch takes one of the long edges, so the whole
+    // shell moves in rather than every card learning about it separately.
+    <div className="px-safe flex min-h-screen">
       <Sidebar isAdmin={isAdmin} />
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-2 border-b bg-background/95 px-4 backdrop-blur md:px-6">
+        {/* h-bar-safe + pt-safe: installed to a home screen the page runs under
+            the status bar, so the header grows by whatever the system is using
+            up there and keeps its own row 3.5rem tall — otherwise the buttons
+            sit inside the notch. */}
+        <header className="pt-safe sticky top-0 z-30 flex h-bar-safe items-center justify-between gap-2 border-b bg-background/95 px-4 backdrop-blur md:px-6">
           <span className="text-sm font-semibold md:hidden">Times</span>
           <div className="ml-auto flex items-center gap-2">
             <Button asChild size="sm">
