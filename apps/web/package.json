@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "check": "tsx scripts/check-client-components.ts && tsx --conditions=react-server scripts/check-i18n.ts && tsx --conditions=react-server scripts/check-origins.ts && tsx --conditions=react-server scripts/check-import.ts && tsx --conditions=react-server scripts/check-calendar.ts && tsx --conditions=react-server scripts/check-links.ts && tsx --conditions=react-server scripts/check-offline-queue.ts && tsx --conditions=react-server scripts/check-data-transfer.ts && tsx --conditions=react-server scripts/check-updates.ts && tsx --conditions=react-server scripts/check-quick-entry.ts && tsx --conditions=react-server scripts/check-repair.ts",
+    "check": "tsx scripts/check-client-components.ts && tsx --conditions=react-server scripts/check-i18n.ts && tsx --conditions=react-server scripts/check-origins.ts && tsx --conditions=react-server scripts/check-import.ts && tsx --conditions=react-server scripts/check-calendar.ts && tsx --conditions=react-server scripts/check-links.ts && tsx --conditions=react-server scripts/check-offline-queue.ts && tsx --conditions=react-server scripts/check-data-transfer.ts && tsx --conditions=react-server scripts/check-updates.ts && tsx --conditions=react-server scripts/check-quick-entry.ts && tsx --conditions=react-server scripts/check-backup.ts && tsx --conditions=react-server scripts/check-repair.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx lib/db/migrate.ts",
     "db:push": "drizzle-kit push",

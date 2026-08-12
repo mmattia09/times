@@ -94,7 +94,9 @@ export default function WorkoutsPage() {
               <h2 className="mb-3 text-sm font-semibold capitalize">
                 {category} <span className="font-normal text-muted-foreground">· {list.length}</span>
               </h2>
-              <div className="grid gap-4 xl:grid-cols-2">
+              {/* items-start: grid rows stretch by default, so a four-row
+                  workout was drawn as tall as the six-row one beside it. */}
+              <div className="grid items-start gap-4 xl:grid-cols-2">
                 {list.map((tpl) => (
                   <Card key={tpl.id}>
                     <CardHeader className="flex-row items-start justify-between gap-2 space-y-0 pb-3">

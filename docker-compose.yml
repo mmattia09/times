@@ -40,7 +40,14 @@ services:
       TRUSTED_ORIGINS: ${TRUSTED_ORIGINS:-}
       SECURE_COOKIES: ${SECURE_COOKIES:-}
       UPDATE_CHECKS: ${UPDATE_CHECKS:-}
+      # off by default: an instance that says nothing about backups gets none.
+      BACKUP_SCHEDULE: ${BACKUP_SCHEDULE:-off}
       NODE_ENV: production
+    volumes:
+      # Backups live outside the app: a named volume by default, or set
+      # BACKUP_PATH to a host directory (anything with a slash in it) to put
+      # them on a disk you already back up elsewhere.
+      - ${BACKUP_PATH:-backups}:/backups
     depends_on:
       db:
         condition: service_healthy
@@ -52,3 +59,4 @@ networks:
 
 volumes:
   postgres_data:
+  backups:

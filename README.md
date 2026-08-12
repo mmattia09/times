@@ -135,6 +135,8 @@ leading `v`, and `:1.5` follows the patches of a minor release.
 | `ADMIN_PASSWORD`       | Admin login password.                                            |
 | `DISABLE_REGISTRATION` | `true` to block new sign-ups once your accounts exist.           |
 | `UPDATE_CHECKS`        | `false` to stop the server asking GitHub for newer releases.      |
+| `BACKUP_SCHEDULE`      | `off` (default), `daily`, `weekly`, `biweekly`, `monthly`, `bimonthly`, `quarterly`, `yearly`. |
+| `BACKUP_PATH`          | Optional: host directory for backups instead of a Docker volume.  |
 | `APP_IMAGE`            | Optional: pin the image version to run.                          |
 
 The version card in Settings — admins only — says which release the instance is
@@ -194,6 +196,46 @@ on stdout as one line, with a timestamp and key=value fields:
 Emails are masked and passwords and tokens are never logged. Follow along with
 `docker compose logs -f app`, or pick out one kind with
 `docker compose logs app | grep auth.signin`.
+
+### Backups
+
+Off unless you ask for them. Pick an interval and they happen:
+
+```bash
+BACKUP_SCHEDULE=weekly
+```
+
+Anything from `daily`, `weekly`, `biweekly`, `monthly`, `bimonthly`,
+`quarterly`, `yearly` — or `off`, which is also what an unset variable means. An
+interval is a number of days, so `monthly` is every 30 days rather than a
+calendar month.
+
+A run writes one file per user, in the same JSON format as **Settings → Export**,
+so restoring is **Settings → Import** on the file for that account — no database
+client needed. The files land in a dated folder on a volume of their own, with a
+manifest saying which file belongs to which account:
+
+```
+/backups/2026-08-11/manifest.json
+/backups/2026-08-11/<user-id>.json
+```
+
+By default that volume is a Docker one named `backups`. To put the files on a
+disk you already back up elsewhere, point `BACKUP_PATH` at a host directory:
+
+```bash
+BACKUP_PATH=/mnt/nas/times-backups
+```
+
+The app runs as a non-root user, so a host directory has to be writable by
+uid 1001 (`chown 1001:1001 /mnt/nas/times-backups`). If it isn't, the log says
+so and the app carries on serving — a backup that can't be written never stops
+anyone logging a session.
+
+Nothing is ever deleted, so an old backup is only removed when you remove it.
+The interval is measured from the newest folder present, which means a restart
+neither forgets the last run nor repeats it, and a run that fails is retried at
+the next check rather than counting as done.
 
 ## Usage
 

@@ -13,5 +13,11 @@ node seed.cjs || true
 echo "▶ Checking imported data…"
 node repair.cjs || true
 
+# Scheduled backups, if BACKUP_SCHEDULE asks for any. The script exits at once
+# when it doesn't, so this costs nothing on an instance that never set it, and
+# it runs beside the app rather than in front of it: a backup that can't be
+# written must not stop the app from starting.
+node backup.cjs loop &
+
 echo "▶ Starting app…"
 exec "$@"
