@@ -210,15 +210,41 @@ Anything from `daily`, `weekly`, `biweekly`, `monthly`, `bimonthly`,
 interval is a number of days, so `monthly` is every 30 days rather than a
 calendar month.
 
-A run writes one file per user, in the same JSON format as **Settings → Export**,
-so restoring is **Settings → Import** on the file for that account — no database
-client needed. The files land in a dated folder on a volume of their own, with a
-manifest saying which file belongs to which account:
+A run writes one file per user, in the same JSON format as **Settings → Export**.
+The files land in a dated folder on a volume of their own, with a manifest saying
+which file belongs to which account:
 
 ```
 /backups/2026-08-11/manifest.json
 /backups/2026-08-11/<user-id>.json
 ```
+
+#### Restoring
+
+One account, by the person who owns it: **Settings → Import**, on their file.
+
+The whole instance, including accounts that no longer exist:
+
+```bash
+docker compose exec app node restore.cjs 2026-08-11   # a folder
+docker compose exec app node restore.cjs              # the newest one
+docker compose exec app node restore.cjs --dry-run    # say what it would do
+```
+
+It matches each file to an account by email, falling back to the id in the file
+name, and creates the accounts that aren't there — with their name and their
+admin flag, but no password, since a backup deliberately contains no
+credentials. Those accounts are flagged as needing a password: set one from the
+admin area and their data is already waiting. A file that can't be attributed to
+anyone is skipped rather than guessed at.
+
+Restoring only ever adds. Sessions are deduplicated by content, so running it
+twice changes nothing the second time and restoring onto an instance that has
+moved on merges rather than overwrites — nothing already there is deleted.
+
+A restore is a command rather than a button on purpose: it has to work on the
+day nobody can sign in, and letting a browser session restore every account is
+not a power a web page should have.
 
 By default that volume is a Docker one named `backups`. To put the files on a
 disk you already back up elsewhere, point `BACKUP_PATH` at a host directory:

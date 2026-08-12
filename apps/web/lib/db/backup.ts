@@ -17,6 +17,7 @@ import { db } from "./index";
 import { users } from "./schema";
 import { buildExport } from "../data-transfer";
 import { isBackupDue, latestRun, parseSchedule, runFolderName } from "../backup";
+import type { BackupManifest } from "../restore";
 
 const CHECK_EVERY_MS = 6 * 60 * 60 * 1000;
 
@@ -72,28 +73,36 @@ async function takeBackup(dir: string): Promise<void> {
   await rm(staging, { recursive: true, force: true });
   await mkdir(staging, { recursive: true });
 
-  const everyone = await db.select({ id: users.id, email: users.email }).from(users);
-  const written: Array<{ user: string; file: string; sessions: number }> = [];
+  const everyone = await db
+    .select({ id: users.id, email: users.email, name: users.name, isAdmin: users.isAdmin })
+    .from(users);
+  const written: BackupManifest["users"] = [];
 
   for (const person of everyone) {
     const data = await buildExport(person.id);
     const file = `${person.id}.json`;
     await writeFile(join(staging, file), JSON.stringify(data), "utf8");
-    written.push({ user: person.email, file, sessions: data.sessions.length });
+    written.push({
+      file,
+      id: person.id,
+      user: person.email,
+      name: person.name,
+      isAdmin: person.isAdmin,
+      sessions: data.sessions.length,
+    });
   }
 
-  // Which file belongs to whom: the exports themselves carry no account, and an
-  // admin restoring one needs to know which is which.
-  await writeFile(
-    join(staging, "manifest.json"),
-    JSON.stringify({ takenAt: new Date().toISOString(), users: written }, null, 2),
-    "utf8",
-  );
+  // Which file belongs to whom, and enough of the account to recreate it.
+  // An export carries training data and deliberately no credentials, so
+  // without this a restore onto an empty instance would have data and nobody
+  // to give it to. Passwords are still never written here.
+  const manifest: BackupManifest = { takenAt: new Date().toISOString(), users: written };
+  await writeFile(join(staging, "manifest.json"), JSON.stringify(manifest, null, 2), "utf8");
 
   await rm(folder, { recursive: true, force: true });
   await rename(staging, folder);
 
-  const sessions = written.reduce((n, w) => n + w.sessions, 0);
+  const sessions = written.reduce((n, w) => n + (w.sessions ?? 0), 0);
   log(`wrote ${written.length} user(s), ${sessions} session(s) to ${folder}`);
 }
 
