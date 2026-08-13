@@ -3,7 +3,10 @@ import { Activity, ShieldCheck, Timer, Users } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { CreateUserDialog } from "@/components/admin/create-user-dialog";
 import { UsersTable, type UserRow } from "@/components/admin/users-table";
-import { Card, CardContent } from "@/components/ui/card";
+import { BackupsCard } from "@/components/admin/backups-card";
+import { VersionCard } from "@/components/settings/version-card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { getBackupOverview } from "@/lib/backup-listing";
 import { getInstanceStats, getRole, listUsers } from "@/lib/admin";
 import { getT } from "@/lib/i18n/server";
 
@@ -22,7 +25,11 @@ export default async function AdminPage() {
   if (!isAdmin) notFound();
 
   const { t } = await getT();
-  const [users, stats] = await Promise.all([listUsers(), getInstanceStats()]);
+  const [users, stats, backups] = await Promise.all([
+    listUsers(),
+    getInstanceStats(),
+    getBackupOverview(),
+  ]);
   const registrationOpen = process.env.DISABLE_REGISTRATION !== "true";
 
   const rows: UserRow[] = users.map((u) => ({
@@ -73,6 +80,22 @@ export default async function AdminPage() {
           <UsersTable rows={rows} />
         </CardContent>
       </Card>
+
+      {/* Instance housekeeping, not anybody's preferences: which release is
+          running and whether the backups are really happening. */}
+      <div className="mt-6 grid items-start gap-6 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">{t("settings.version")}</CardTitle>
+            <CardDescription>{t("settings.versionDescription")}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <VersionCard />
+          </CardContent>
+        </Card>
+
+        <BackupsCard overview={backups} />
+      </div>
     </>
   );
 }
