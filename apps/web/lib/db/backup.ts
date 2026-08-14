@@ -127,6 +127,17 @@ async function checkOnce(): Promise<void> {
     await takeBackup(dir);
   } catch (err) {
     log(`failed: ${describe(err)} — will try again at the next check`);
+    // The one failure with a fix worth naming. A named volume takes its
+    // ownership from the image the first time it is mounted, so one created by
+    // a version of Times that predates backups belongs to root and this
+    // container — which is not root, on purpose — can't write to it.
+    if ((err as { code?: string }).code === "EACCES") {
+      log(
+        `${dir} isn't writable by uid 1001, which is the user the app runs as. ` +
+          `For a host directory: chown 1001:1001 <dir>. For a Docker volume made ` +
+          `by an older version: remove the empty volume and let this one recreate it.`,
+      );
+    }
   }
 }
 
