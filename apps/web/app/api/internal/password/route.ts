@@ -5,7 +5,7 @@ import { auth } from "@/lib/auth";
 import { getSession } from "@/lib/current-user";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
-import { clientIp, rateLimit, tooManyRequests } from "@/lib/rate-limit";
+import { clientIp, enforceRateLimit } from "@/lib/rate-limit";
 import { logEvent, maskEmail } from "@/lib/log";
 
 const schema = z.object({
@@ -24,7 +24,8 @@ export async function POST(req: Request) {
   if (!session?.user) return Response.json({ error: "unauthorized" }, { status: 401 });
 
   // Guessing the temporary password here would be as good as knowing it.
-  if (!rateLimit(`password:${clientIp(req)}`, 10, 60_000)) return tooManyRequests(60);
+  const limited = await enforceRateLimit(`password:${clientIp(req)}`, 10, 60_000);
+  if (limited) return limited;
 
   const parsed = schema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {

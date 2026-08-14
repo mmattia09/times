@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth";
 import { requireAdminApi } from "@/lib/admin";
 import { db } from "@/lib/db";
 import { authSessions, userSettings, users } from "@/lib/db/schema";
-import { clientIp, rateLimit, tooManyRequests } from "@/lib/rate-limit";
+import { clientIp, enforceRateLimit } from "@/lib/rate-limit";
 import { logEvent, maskEmail } from "@/lib/log";
 
 const createUserSchema = z.object({
@@ -27,7 +27,8 @@ export async function POST(req: Request) {
   if ("error" in auth_) return auth_.error;
 
   // Creating accounts is cheap to script; keep it to a sane rate per admin.
-  if (!rateLimit(`admin-create:${clientIp(req)}`, 10, 60_000)) return tooManyRequests(60);
+  const limited = await enforceRateLimit(`admin-create:${clientIp(req)}`, 10, 60_000);
+  if (limited) return limited;
 
   const parsed = createUserSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {

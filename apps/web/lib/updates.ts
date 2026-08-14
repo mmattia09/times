@@ -14,6 +14,8 @@
  * and no reader's own address handed to GitHub.
  */
 
+import { cached, invalidate } from "@/lib/cache";
+
 /** Releases of this project. Public API, no token, 60 requests an hour per IP. */
 const RELEASES_URL = "https://api.github.com/repos/mmattia09/times/releases?per_page=10";
 
@@ -124,7 +126,8 @@ export function newestRelease(raw: unknown): string | null {
   return all[0]?.version ?? null;
 }
 
-let cache: { at: number; status: UpdateStatus } | null = null;
+/** One key for the whole instance — the answer is the same for every admin. */
+const CACHE_KEY = "updates:latest";
 
 /**
  * Ask GitHub, at most once every few hours per instance.
@@ -147,8 +150,11 @@ export async function getUpdateStatus(force = false): Promise<UpdateStatus> {
     };
   }
 
-  if (!force && cache && Date.now() - cache.at < CACHE_TTL_MS) return cache.status;
+  if (force) await invalidate(CACHE_KEY);
+  return cached(CACHE_KEY, CACHE_TTL_MS, () => askGitHub(current));
+}
 
+async function askGitHub(current: string | null): Promise<UpdateStatus> {
   let status: UpdateStatus;
   try {
     const res = await fetch(RELEASES_URL, {
@@ -181,6 +187,5 @@ export async function getUpdateStatus(force = false): Promise<UpdateStatus> {
     };
   }
 
-  cache = { at: Date.now(), status };
   return status;
 }
