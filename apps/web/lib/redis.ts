@@ -42,10 +42,13 @@ export function getRedis(): Redis | null {
 
   try {
     client = new Redis(url, {
-      // Fail a command rather than queue it forever: every caller has a
-      // fallback, and waiting is worse than not using the cache.
+      // Queue while connecting, but only briefly: a command issued in the first
+      // moments after startup should wait for the connection rather than miss
+      // it — otherwise the rate limiter falls back to memory during exactly the
+      // restart it is meant to survive. maxRetriesPerRequest bounds the wait, so
+      // a Redis that is simply gone fails fast and every caller falls back.
       maxRetriesPerRequest: 1,
-      enableOfflineQueue: false,
+      enableOfflineQueue: true,
       connectTimeout: 2_000,
       lazyConnect: false,
       retryStrategy: (times) => Math.min(times * 500, 10_000),

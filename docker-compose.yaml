@@ -53,7 +53,7 @@ services:
   # Optional. Only starts with `docker compose --profile redis up -d`, and only
   # does anything once REDIS_URL=redis://redis:6379 is in .env.
   redis:
-    image: redis:7-alpine
+    image: redis:8-alpine
     restart: unless-stopped
     profiles: [redis]
     command: ["redis-server", "--save", "", "--appendonly", "no"]
