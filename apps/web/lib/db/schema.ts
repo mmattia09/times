@@ -8,6 +8,7 @@ import {
   pgTable,
   text,
   timestamp,
+  index,
   uniqueIndex,
   varchar,
 } from "drizzle-orm/pg-core";
@@ -171,6 +172,9 @@ export const sessions = pgTable(
   (t) => ({
     // One session per queued save, per user.
     clientKey: uniqueIndex("sessions_user_client_key").on(t.userId, t.clientId),
+    // Every list, calendar and dashboard query is "this user's sessions, newest
+    // first". Postgres does not index a foreign key on its own.
+    userDate: index("sessions_user_date_idx").on(t.userId, t.date),
   }),
 );
 
@@ -232,7 +236,11 @@ export const performances = pgTable("performances", {
   isPersonalBest: boolean("is_personal_best").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-});
+}, (t) => ({
+  // Read by session on the detail page, and by user for records and charts.
+  sessionIdx: index("performances_session_idx").on(t.sessionId),
+  userIdx: index("performances_user_idx").on(t.userId),
+}));
 
 // ── Domain: personal_bests (recomputed table) ────────────────────────────────
 export const personalBests = pgTable(

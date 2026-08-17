@@ -94,9 +94,13 @@ export default function WorkoutsPage() {
               <h2 className="mb-3 text-sm font-semibold capitalize">
                 {category} <span className="font-normal text-muted-foreground">· {list.length}</span>
               </h2>
-              {/* items-start: grid rows stretch by default, so a four-row
-                  workout was drawn as tall as the six-row one beside it. */}
-              <div className="grid items-start gap-4 xl:grid-cols-2">
+              {/* Columns, not a grid. A grid gives every card in a row the
+                  height of the tallest one, so a four-row workout next to a
+                  seven-row one left a hole underneath it before the next card
+                  could start. CSS columns fill downwards and pack tight; the
+                  order reads down each column instead of across, which for a
+                  library sorted by name is no loss. */}
+              <div className="columns-1 gap-4 xl:columns-2 [&>*]:mb-4 [&>*]:break-inside-avoid">
                 {list.map((tpl) => (
                   <Card key={tpl.id}>
                     <CardHeader className="flex-row items-start justify-between gap-2 space-y-0 pb-3">

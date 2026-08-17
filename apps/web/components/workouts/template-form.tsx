@@ -227,11 +227,13 @@ export function TemplateForm({ template }: { template?: WorkoutTemplate }) {
         </p>
       </div>
 
-      <div className="flex justify-end gap-2">
+      {/* Pinned, like the session form: a workout with a dozen blocks is longer
+          than the screen, and saving shouldn't mean scrolling to the end. */}
+      <div className="sticky bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-20 -mx-4 flex items-center justify-end gap-2 border-t bg-background/95 px-4 py-3 backdrop-blur md:bottom-0 md:-mx-6 md:px-6">
         <Button type="button" variant="ghost" onClick={() => router.push("/workouts")}>
           {t("common.cancel")}
         </Button>
-        <Button type="submit" disabled={saving}>
+        <Button type="submit" disabled={saving} className="flex-1 md:flex-none">
           {saving ? t("common.saving") : template ? t("workouts.updateWorkout") : t("workouts.createWorkout")}
         </Button>
       </div>

@@ -17,6 +17,23 @@ const nextConfig = {
   outputFileTracingRoot: monorepoRoot,
   serverExternalPackages: ["pg"],
   poweredByHeader: false,
+  experimental: {
+    /**
+     * Reuse a page the browser already has, for half a minute.
+     *
+     * Every page here is rendered per request, so moving between Sessions,
+     * Records and the dashboard used to mean a full round trip each time —
+     * noticeable on an instance reached through a tunnel, where most of the wait
+     * is the network rather than the queries (the sessions list takes about two
+     * milliseconds in Postgres).
+     *
+     * Safe because every write already calls router.refresh(), which drops this
+     * cache: you always see your own changes immediately. The only thing that
+     * can lag is a change made somewhere else — another tab, another device —
+     * and only until the thirty seconds are up.
+     */
+    staleTimes: { dynamic: 30 },
+  },
   async headers() {
     return [
       {

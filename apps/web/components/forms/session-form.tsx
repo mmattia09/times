@@ -275,9 +275,14 @@ export function SessionForm({
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="endDate">{t("sessions.endDate", { optional: t("common.optional") })}</Label>
+            {/* The note belongs on the label line: as a line of its own under the
+                field it pushed everything below it down to explain a field most
+                sessions never use. */}
+            <Label htmlFor="endDate">
+              {t("sessions.endDate")}{" "}
+              <span className="font-normal text-muted-foreground">{t("sessions.endDateNote")}</span>
+            </Label>
             <Input id="endDate" type="date" min={form.watch("date") || undefined} {...form.register("endDate")} />
-            <p className="text-xs text-muted-foreground">{t("sessions.endDateHint")}</p>
             {errors.endDate && <p className="text-xs text-destructive">{t(errors.endDate.message ?? "")}</p>}
           </div>
 
@@ -575,9 +580,11 @@ export function SessionForm({
         )}
       </div>
 
-      {/* Pinned above the tab bar on a phone: with three results the form is
-          several screens long, and the save button was at the far end of it. */}
-      <div className="sticky bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-20 -mx-4 flex items-center gap-3 border-t bg-background/95 px-4 py-3 backdrop-blur md:static md:mx-0 md:border-0 md:bg-transparent md:px-0 md:backdrop-blur-none">
+      {/* Pinned at every size: with three results the form is several screens
+          long, and having to scroll to the end to save is the same annoyance on
+          a laptop as on a phone. On a phone it sits above the tab bar; on
+          desktop there is no tab bar, so it sits on the bottom edge. */}
+      <div className="sticky bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-20 -mx-4 flex items-center gap-3 border-t bg-background/95 px-4 py-3 backdrop-blur md:bottom-0 md:-mx-6 md:px-6">
         <span className="mr-auto hidden text-xs text-muted-foreground md:inline">
           {t("common.saveShortcut")}
         </span>
