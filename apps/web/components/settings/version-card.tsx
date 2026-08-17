@@ -17,8 +17,8 @@ import type { Release, UpdateStatus } from "@/lib/updates";
  * headings, bullets, and `code` or **emphasis** inside a line.
  */
 function inline(text: string, keyPrefix: string) {
-  // Split on `code` and **bold**, keeping the delimiters' contents.
-  const parts = text.split(/(`[^`]+`|\*\*[^*]+\*\*)/g).filter(Boolean);
+  // Split on `code`, **bold** and [links](…), keeping the delimiters' contents.
+  const parts = text.split(/(`[^`]+`|\*\*[^*]+\*\*|\[[^\]]+\]\([^)]+\))/g).filter(Boolean);
   return parts.map((part, i) => {
     const key = `${keyPrefix}-${i}`;
     if (part.startsWith("`") && part.endsWith("`") && part.length > 2) {
@@ -35,6 +35,25 @@ function inline(text: string, keyPrefix: string) {
         </strong>
       );
     }
+    const link = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+    if (link) {
+      const [, label, href] = link;
+      // Only https, and only rendered as a link at all if it is: release notes
+      // come from outside the instance and end up in an href.
+      return href.startsWith("https://") ? (
+        <a
+          key={key}
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary hover:underline"
+        >
+          {label}
+        </a>
+      ) : (
+        <span key={key}>{label}</span>
+      );
+    }
     return <span key={key}>{part}</span>;
   });
 }
@@ -43,6 +62,8 @@ function ReleaseNotes({ notes }: { notes: string }) {
   const lines = notes.replace(/\r/g, "").split("\n");
   const blocks: React.ReactNode[] = [];
   let bullets: string[] = [];
+  // Inside a ``` fence: the lines are a command, not prose.
+  let fence: string[] | null = null;
 
   const flush = () => {
     if (bullets.length === 0) return;
@@ -56,8 +77,41 @@ function ReleaseNotes({ notes }: { notes: string }) {
     bullets = [];
   };
 
+  const closeFence = () => {
+    if (!fence) return;
+    const code = fence.join("\n").trim();
+    if (code) {
+      blocks.push(
+        <pre
+          key={`pre-${blocks.length}`}
+          className="my-2 overflow-x-auto rounded-md bg-muted px-3 py-2 text-[0.85em] leading-relaxed"
+        >
+          <code>{code}</code>
+        </pre>,
+      );
+    }
+    fence = null;
+  };
+
   for (const raw of lines) {
     const line = raw.trimEnd();
+
+    // A fence opens on ``` (with an optional language) and closes on the next
+    // one. Without this the notes showed their own backticks, and the command
+    // inside came out as a sentence.
+    if (/^\s*```/.test(line)) {
+      if (fence) closeFence();
+      else {
+        flush();
+        fence = [];
+      }
+      continue;
+    }
+    if (fence) {
+      fence.push(raw);
+      continue;
+    }
+
     if (!line.trim()) {
       flush();
       continue;
@@ -85,6 +139,8 @@ function ReleaseNotes({ notes }: { notes: string }) {
       ),
     );
   }
+  // A release whose notes end inside a fence still gets the code shown.
+  closeFence();
   flush();
 
   return <div className="space-y-1.5 text-xs leading-relaxed text-muted-foreground">{blocks}</div>;
