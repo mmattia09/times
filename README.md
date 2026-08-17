@@ -285,10 +285,28 @@ disk you already back up elsewhere, point `BACKUP_PATH` at a host directory:
 BACKUP_PATH=/mnt/nas/times-backups
 ```
 
-The app runs as a non-root user, so a host directory has to be writable by
-uid 1001 (`chown 1001:1001 /mnt/nas/times-backups`). If it isn't, the log says
-so and the app carries on serving — a backup that can't be written never stops
-anyone logging a session.
+The app runs as a non-root user, so the directory has to be writable by uid 1001:
+`chown 1001:1001 /mnt/nas/times-backups`.
+
+On a network share that won't work — SMB and NFS decide ownership at mount time,
+not with `chown`. Either mount it as the right user:
+
+```
+//nas/backups /mnt/nas/times cifs credentials=…,uid=1001,gid=1001,dir_mode=0775,file_mode=0664 0 0
+```
+
+or leave the mount alone and run the app as whoever owns it, by adding one line
+to the `app` service:
+
+```yaml
+    user: "1000:1000"
+```
+
+That is safe here because the app writes nothing except backups — everything
+else it needs from the image it only reads.
+
+If the directory isn't writable either way, the log says so and the app carries
+on serving: a backup that can't be written never stops anyone logging a session.
 
 Nothing is ever deleted, so an old backup is only removed when you remove it.
 The interval is measured from the newest folder present, which means a restart

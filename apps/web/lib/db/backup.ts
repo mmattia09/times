@@ -134,8 +134,11 @@ async function checkOnce(): Promise<void> {
     if ((err as { code?: string }).code === "EACCES") {
       log(
         `${dir} isn't writable by uid 1001, which is the user the app runs as. ` +
-          `For a host directory: chown 1001:1001 <dir>. For a Docker volume made ` +
-          `by an older version: remove the empty volume and let this one recreate it.`,
+          `A local directory: chown 1001:1001 <dir>. A network share (SMB/NFS): ` +
+          `chown won't work there — mount it with uid=1001,gid=1001, or run the ` +
+          `app as the owning uid by adding user: "1000:1000" to the app service. ` +
+          `A Docker volume left by a version that predates backups: remove the ` +
+          `empty volume and let this one recreate it.`,
       );
     }
   }
