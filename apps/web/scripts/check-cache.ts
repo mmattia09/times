@@ -1,13 +1,14 @@
 import { cached, invalidate } from "@/lib/cache";
-import { redisStatus, redisUrl } from "@/lib/redis";
+import { enforceRateLimit, rateLimit } from "@/lib/rate-limit";
 
 /**
- * Redis is optional here, and the rule that matters is that it stays optional:
- * with no REDIS_URL every caller behaves exactly as it did before, and with one
- * that doesn't answer nothing fails — a cache having a bad day must never stop
- * an athlete opening their own log.
+ * Two small things the app leans on and nobody would notice breaking.
  *
- * This runs without a Redis, which is the case worth pinning down.
+ * The cache exists so the update check stays inside GitHub's rate limit — a
+ * cache that silently never hits would look fine and quietly burn the quota.
+ * And the limiter is a security control that was, for two of its four callers,
+ * dead code: `if (!rateLimit(…))` is always false, because an object is always
+ * truthy. The guard below is the shape that can't be written that way.
  */
 
 let failures = 0;
@@ -16,42 +17,31 @@ const check = (what: string, ok: boolean, detail = "") => {
   console.log(`  ${ok ? "ok  " : "FAIL"} ${what}${detail && !ok ? `  ← ${detail}` : ""}`);
 };
 
-delete process.env.REDIS_URL;
+// ── The cache ───────────────────────────────────────────────────────────────
 
-check("no REDIS_URL means no Redis", redisUrl() === null);
-check("and the boot line says off", redisStatus() === "off");
-
-// Falling back to memory has to behave like a cache, not like a no-op: the
-// update check leans on it to stay inside GitHub's rate limit.
 let calls = 0;
-const fetcher = async () => {
-  calls++;
-  return { value: calls };
-};
+const fetcher = async () => ({ n: ++calls });
 
 const first = await cached("check:one", 60_000, fetcher);
 const second = await cached("check:one", 60_000, fetcher);
-check("the first call fetches", first.value === 1);
-check("the second is served from cache", second.value === 1 && calls === 1, String(calls));
+check("the first call fetches", first.n === 1);
+check("the second is served from cache", second.n === 1 && calls === 1, String(calls));
 
 await invalidate("check:one");
 const third = await cached("check:one", 60_000, fetcher);
-check("invalidate makes the next call fetch again", third.value === 2 && calls === 2, String(calls));
+check("invalidate makes the next call fetch again", third.n === 2 && calls === 2, String(calls));
 
-// An expired entry is a miss, not a stale answer.
 await cached("check:ttl", 1, fetcher);
 await new Promise((r) => setTimeout(r, 20));
 const before = calls;
 await cached("check:ttl", 1, fetcher);
 check("an expired entry is refetched", calls === before + 1);
 
-// Two keys are two answers — a shared namespace would serve one instance's
-// release list for another's.
 await cached("check:a", 60_000, async () => "a");
-const b = await cached("check:b", 60_000, async () => "b");
-check("keys don't collide", b === "b");
+check("keys don't collide", (await cached("check:b", 60_000, async () => "b")) === "b");
 
-// A fetch that throws must not be remembered as an answer.
+// A fetch that throws must not be remembered as an answer, or one bad moment
+// would be cached for as long as a good one.
 let threw = false;
 try {
   await cached("check:boom", 60_000, async () => {
@@ -61,8 +51,38 @@ try {
   threw = true;
 }
 check("a failed fetch propagates", threw);
-const after = await cached("check:boom", 60_000, async () => "recovered");
-check("and is not cached, so the next call can succeed", after === "recovered");
+check(
+  "and is not cached, so the next call can succeed",
+  (await cached("check:boom", 60_000, async () => "recovered")) === "recovered",
+);
+
+// ── The limiter ─────────────────────────────────────────────────────────────
+
+const key = `check:rl:${Date.now()}`;
+const results = [1, 2, 3, 4].map(() => rateLimit(key, 3, 60_000));
+check(
+  "three go through and the fourth doesn't",
+  results.slice(0, 3).every((r) => r.ok) && !results[3].ok,
+  JSON.stringify(results),
+);
+check(
+  "the refusal says how long to wait",
+  !results[3].ok && results[3].retryAfter > 0 && results[3].retryAfter <= 60,
+);
+
+// The window is per key: one address hitting its limit must not lock out another.
+check("a different key has its own window", rateLimit(`${key}:other`, 3, 60_000).ok);
+
+// The guard: null while under the limit, a 429 once over it. Never an object,
+// which is the trap that made two of these do nothing at all.
+const guardKey = `check:guard:${Date.now()}`;
+check("the guard lets the first through", enforceRateLimit(guardKey, 1, 60_000) === null);
+const blocked = enforceRateLimit(guardKey, 1, 60_000);
+check("and answers 429 after that", blocked instanceof Response && blocked.status === 429);
+check(
+  "with a Retry-After header",
+  blocked instanceof Response && Number(blocked.headers.get("Retry-After")) > 0,
+);
 
 console.log(failures === 0 ? "\nALL PASS" : `\n${failures} FAILURES`);
 process.exit(failures === 0 ? 0 : 1);

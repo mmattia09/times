@@ -38,7 +38,6 @@ services:
       SECURE_COOKIES: ${SECURE_COOKIES:-}
       UPDATE_CHECKS: ${UPDATE_CHECKS:-}
       BACKUP_SCHEDULE: ${BACKUP_SCHEDULE:-off}
-      REDIS_URL: ${REDIS_URL-redis://redis:6379}
       NODE_ENV: production
     volumes:
       # A Docker volume by default. Set BACKUP_PATH to a host directory to keep
@@ -47,24 +46,6 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      redis:
-        condition: service_healthy
-    networks:
-      - times
-
-  # Holds the rate-limit windows and a few cached lookups, so they survive a
-  # restart. Nothing here is durable data — no volume, and nothing written to
-  # disk. Set REDIS_URL= (empty) in .env to run without it; the app then keeps
-  # the same state in its own memory.
-  redis:
-    image: redis:8-alpine
-    restart: unless-stopped
-    command: ["redis-server", "--save", "", "--appendonly", "no"]
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
     networks:
       - times
 

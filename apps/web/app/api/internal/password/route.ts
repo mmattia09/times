@@ -24,7 +24,7 @@ export async function POST(req: Request) {
   if (!session?.user) return Response.json({ error: "unauthorized" }, { status: 401 });
 
   // Guessing the temporary password here would be as good as knowing it.
-  const limited = await enforceRateLimit(`password:${clientIp(req)}`, 10, 60_000);
+  const limited = enforceRateLimit(`password:${clientIp(req)}`, 10, 60_000);
   if (limited) return limited;
 
   const parsed = schema.safeParse(await req.json().catch(() => null));

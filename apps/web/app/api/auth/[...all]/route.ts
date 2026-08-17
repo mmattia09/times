@@ -29,7 +29,7 @@ export async function POST(req: Request) {
   if (guarded) {
     // 10 attempts per IP per 5 minutes — invisible in normal use, kills
     // credential stuffing against a publicly reachable instance.
-    const limit = await rateLimit(`auth:${clientIp(req)}`, 10, 5 * 60_000);
+    const limit = rateLimit(`auth:${clientIp(req)}`, 10, 5 * 60_000);
     if (!limit.ok) {
       logEvent("auth.ratelimited", { path: pathname, ip, origin });
       return tooManyRequests(limit.retryAfter);

@@ -27,7 +27,7 @@ export async function POST(req: Request) {
   if ("error" in auth_) return auth_.error;
 
   // Creating accounts is cheap to script; keep it to a sane rate per admin.
-  const limited = await enforceRateLimit(`admin-create:${clientIp(req)}`, 10, 60_000);
+  const limited = enforceRateLimit(`admin-create:${clientIp(req)}`, 10, 60_000);
   if (limited) return limited;
 
   const parsed = createUserSchema.safeParse(await req.json().catch(() => null));

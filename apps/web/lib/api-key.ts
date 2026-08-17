@@ -47,7 +47,7 @@ export async function requireApiKey(req: Request): Promise<{ userId: string } | 
   const userId = await authenticateApiKey(req);
   if (userId) return { userId };
 
-  const limit = await rateLimit(`apikey:${clientIp(req)}`, 20, 5 * 60_000);
+  const limit = rateLimit(`apikey:${clientIp(req)}`, 20, 5 * 60_000);
   if (!limit.ok) return tooManyRequests(limit.retryAfter);
   return unauthorized();
 }

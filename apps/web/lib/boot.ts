@@ -1,6 +1,5 @@
 import "server-only";
 import { configuredOrigins } from "@/lib/origins";
-import { redisStatus } from "@/lib/redis";
 import { logEvent } from "@/lib/log";
 
 /**
@@ -25,6 +24,5 @@ export function announceConfig(): void {
         ? secure
         : `auto (${(process.env.BETTER_AUTH_URL ?? "").startsWith("https://") ? "on" : "off"})`,
     registration: process.env.DISABLE_REGISTRATION === "true" ? "closed" : "open",
-    redis: redisStatus(),
   });
 }
