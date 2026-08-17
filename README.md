@@ -95,10 +95,12 @@ and monthly training volume.
 
 ## How it works
 
-Two containers: a Next.js app and a Postgres database, talking over a private
-Docker network. Nothing else is required — no cache, no queue, no object store.
-The app image is prebuilt; on boot it migrates the database and provisions the
-admin account from the environment.
+Three containers on a private Docker network: a Next.js app, a Postgres database
+holding everything that matters, and a Redis that holds nothing that matters —
+rate-limit windows and a couple of cached lookups, which is why it has no volume
+and can be removed without losing anything. No queue, no object store, no
+external service. The app image is prebuilt; on boot it migrates the database and
+provisions the admin account from the environment.
 
 The data model is small on purpose:
 
@@ -164,7 +166,7 @@ leading `v`, and `:1.7` follows the patches of a minor release.
 | `BACKUP_SCHEDULE`      | `off` (default), `daily`, `weekly`, `biweekly`, `monthly`, `bimonthly`, `quarterly`, `yearly`. |
 | `BACKUP_PATH`          | Optional: host directory for backups instead of a Docker volume.  |
 | `APP_PORT`             | Optional: host port to serve on (default `3000`).                |
-| `REDIS_URL`            | Optional: see *Redis* below. Without it the app uses its own memory. |
+| `REDIS_URL`            | Set by Compose. Empty to run without Redis (see *Redis*).        |
 | `APP_IMAGE`            | Optional: pin the image version to run.                          |
 
 The version card in Settings — admins only — says which release the instance is
@@ -229,29 +231,25 @@ The first line at startup says how the instance is configured — which public U
 it answers to, whether cookies are marked Secure, whether Redis is in use. It is
 the quickest answer to "why won't it let me log in".
 
-### Redis (optional)
+### Redis
 
-Not needed. Without it the app keeps rate limits and the odd cached lookup in its
-own memory, which is enough for one container next to one database — the training
-data itself is never cached, so nothing can go stale.
+Runs by default and needs no configuration. It holds the rate-limit windows and a
+few cached lookups — the sign-in limiter above all, which would otherwise forget
+every attempt each time the container restarts, handing a restart loop a fresh
+allowance. Nothing durable lives there: no volume, nothing written to disk, and
+the training data is never cached, so nothing can go stale.
 
-It earns its place in two cases: the rate limiter on sign-in currently forgets
-everything when the container restarts, and several replicas would each keep
-their own count. With Redis both survive.
+To run without it, set the variable to nothing:
 
 ```bash
 # .env
-REDIS_URL=redis://redis:6379
+REDIS_URL=
 ```
 
-```bash
-docker compose --profile redis up -d
-```
-
-The profile means the container only starts when you ask for it, so existing
-setups are untouched. If Redis stops answering the app falls back to its own
-memory rather than failing — a cache is never allowed to keep an athlete out of
-their own log.
+The app then keeps the same state in its own memory, which is enough for a single
+container. Either way, if Redis stops answering the app falls back to memory
+rather than failing — a cache is never allowed to keep an athlete out of their
+own log.
 
 ### Backups
 
