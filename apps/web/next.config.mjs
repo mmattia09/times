@@ -19,7 +19,7 @@ const nextConfig = {
   poweredByHeader: false,
   experimental: {
     /**
-     * Reuse a page the browser already has, for half a minute.
+     * Reuse a page the browser already has, for three minutes.
      *
      * Every page here is rendered per request, so moving between Sessions,
      * Records and the dashboard used to mean a full round trip each time —
@@ -27,12 +27,15 @@ const nextConfig = {
      * is the network rather than the queries (the sessions list takes about two
      * milliseconds in Postgres).
      *
+     * The nav links prefetch as well, so the four pages you might go to next
+     * are already in hand before you click.
+     *
      * Safe because every write already calls router.refresh(), which drops this
      * cache: you always see your own changes immediately. The only thing that
      * can lag is a change made somewhere else — another tab, another device —
-     * and only until the thirty seconds are up.
+     * and only until the three minutes are up. Reloading always refetches.
      */
-    staleTimes: { dynamic: 30 },
+    staleTimes: { dynamic: 180, static: 180 },
   },
   async headers() {
     return [

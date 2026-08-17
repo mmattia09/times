@@ -1,43 +1,24 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { CalendarDays, ChevronDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n/client";
+import type { TemplateUse } from "@/lib/workouts";
 
-type Usage = {
-  id: string;
-  date: string;
-  endDate: string | null;
-  type: "training" | "competition";
-  luogo: string | null;
-};
-
-/** "Svolta N volte" summary for a scheda, expandable into the session list. */
-export function TemplateUsage({ templateId }: { templateId: string }) {
+/**
+ * "Svolta N volte" summary for a scheda, expandable into the session list.
+ *
+ * The sessions arrive as a prop, from the page's own query. This used to fetch
+ * them itself, once per card — so a library of six workouts made seven requests
+ * and the line appeared a beat after the rest of the card.
+ */
+export function TemplateUsage({ usage }: { usage: TemplateUse[] }) {
   const { t, locale } = useI18n();
-  const [usage, setUsage] = useState<Usage[] | null>(null);
   const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    let alive = true;
-    fetch(`/api/internal/templates/${templateId}/usage`)
-      .then((r) => r.json())
-      .then((j) => {
-        if (alive) setUsage(j.data ?? []);
-      })
-      .catch(() => {
-        if (alive) setUsage([]);
-      });
-    return () => {
-      alive = false;
-    };
-  }, [templateId]);
-
-  if (usage === null) return null;
 
   if (usage.length === 0) {
     return (
