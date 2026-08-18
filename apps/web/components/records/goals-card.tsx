@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Plus, Target, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,25 +24,25 @@ import { useI18n } from "@/lib/i18n/client";
 
 export type PbSummary = EventKey & { keyStr: string; label: string; result: number };
 
-export function GoalsCard({ pbs }: { pbs: PbSummary[] }) {
+/**
+ * The goals belong to the page, not to this card.
+ *
+ * It used to fetch them itself on mount, so the Records page arrived and the
+ * goals turned up a moment later — the same second wave the workout library
+ * had. They come as a prop now; only adding and deleting still need a browser,
+ * and both ask the page to refresh rather than keeping a copy of the list here.
+ */
+export function GoalsCard({ pbs, goals }: { pbs: PbSummary[]; goals: Goal[] }) {
+  const router = useRouter();
   const { t, dict } = useI18n();
-  const [goals, setGoals] = useState<Goal[] | null>(null);
   const [open, setOpen] = useState(false);
   const [toDelete, setToDelete] = useState<Goal | null>(null);
 
-  const load = useCallback(async () => {
-    const res = await fetch("/api/internal/goals");
-    const json = await res.json();
-    setGoals(json.data ?? []);
-  }, []);
-
-  useEffect(() => {
-    load();
-  }, [load]);
+  const load = () => router.refresh();
 
   async function remove(id: string) {
     const res = await fetch(`/api/internal/goals/${id}`, { method: "DELETE" });
-    if (res.ok) load();
+    if (res.ok) router.refresh();
   }
 
   return (
@@ -55,9 +56,7 @@ export function GoalsCard({ pbs }: { pbs: PbSummary[] }) {
         </Button>
       </CardHeader>
       <CardContent>
-        {goals === null ? (
-          <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
-        ) : goals.length === 0 ? (
+        {goals.length === 0 ? (
           <p className="text-sm text-muted-foreground">
             {t("records.noGoals")}
           </p>

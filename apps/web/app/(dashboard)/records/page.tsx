@@ -14,7 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { db } from "@/lib/db";
-import { performances, sessions } from "@/lib/db/schema";
+import { goals as goalsTable, performances, sessions } from "@/lib/db/schema";
 import { requireUser } from "@/lib/current-user";
 import {
   eventKey,
@@ -49,6 +49,13 @@ export async function generateMetadata() {
 export default async function RecordsPage() {
   const user = await requireUser();
   const { t, dict, locale } = await getT();
+  // Loaded here rather than by the card: it used to fetch them itself on mount,
+  // so the page arrived and the goals appeared a beat later.
+  const goals = await db
+    .select()
+    .from(goalsTable)
+    .where(eq(goalsTable.userId, user.id))
+    .orderBy(asc(goalsTable.distance));
 
   const rows = await db
     .select({
@@ -254,7 +261,7 @@ export default async function RecordsPage() {
       </Card>
 
       <div className="mt-6">
-        <GoalsCard pbs={pbSummaries} />
+        <GoalsCard pbs={pbSummaries} goals={goals} />
       </div>
 
       <h2 className="mb-3 mt-8 text-sm font-semibold">{t("records.charts")}</h2>

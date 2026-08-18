@@ -25,6 +25,10 @@ function NavLink({
   return (
     <Link
       href={item.href}
+      // Fetch the page with its data, not just the skeleton. Left to itself the
+      // default stops at the nearest loading.tsx, so Records and Sessions were
+      // prefetched as empty shells and still paid for the data on click.
+      prefetch
       className={cn(
         "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
         active
