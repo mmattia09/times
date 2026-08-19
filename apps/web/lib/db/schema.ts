@@ -234,6 +234,15 @@ export const performances = pgTable("performances", {
   position: integer("position"),
   heat: varchar("heat", { length: 32 }),
   isPersonalBest: boolean("is_personal_best").notNull().default(false),
+  /**
+   * The order they were written in, within their session.
+   *
+   * Postgres gives every row in a transaction the same now(), so a timestamp
+   * can't tell the heat from the final when both were saved together — the
+   * order came back as whatever the ids happened to sort to, which is to say
+   * arbitrary. This is the only thing that remembers "I typed the 60 first".
+   */
+  sortOrder: integer("sort_order").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({

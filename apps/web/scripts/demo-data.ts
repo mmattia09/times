@@ -442,10 +442,11 @@ async function main(): Promise<void> {
       })
       .returning({ id: sessions.id });
 
-    for (const p of s.perfs ?? []) {
+    for (const [order, p] of (s.perfs ?? []).entries()) {
       await db.insert(performances).values({
         sessionId: row.id,
         userId,
+        sortOrder: order,
         discipline: p.discipline,
         distance: p.distance ?? null,
         event: p.event ?? null,

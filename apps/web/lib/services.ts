@@ -29,18 +29,16 @@ export type SessionFilters = {
  * The list and the detail page used to disagree — the detail page sorted by
  * distance, the list took whatever order Postgres handed back — so the same
  * session showed "200m · 100m" in one place and "100m · 200m" in the other,
- * and the list order could change on its own between two loads. Distance
- * alone also isn't a total order — a heat and a final over the same distance
- * tie — so the row's own age breaks it, and the id makes it total.
+ * and the list order could change on its own between two loads.
  *
- * Note this does not carry the order you typed two results of the same event
- * in across an export and import: Postgres gives every row in a transaction
- * the same now(), so both copies land on the same timestamp and the id decides.
- * Keeping that would need a column to hold it, which is more than the question
- * is worth — the results themselves are all there either way.
+ * The order is the one they were written in — sortOrder, set from the position
+ * in the form — because that is the order they happened: a heat before its
+ * final, the 60 before the 150. Sorting by distance instead reshuffled a race
+ * into something nobody ran. The timestamp and the id are only tie-breakers,
+ * for rows written before this column existed.
  */
 const performanceOrder = [
-  asc(performances.distance),
+  asc(performances.sortOrder),
   asc(performances.createdAt),
   asc(performances.id),
 ];
@@ -103,9 +101,10 @@ export async function createSession(
     // A session can have no measured results (e.g. "I trained that day").
     if (input.performances.length > 0) {
       await tx.insert(performances).values(
-        input.performances.map((p) => ({
+        input.performances.map((p, i) => ({
           sessionId: row.id,
           userId,
+          sortOrder: i,
           discipline: p.discipline,
           distance: p.distance ?? null,
           event: p.event ?? null,
@@ -162,9 +161,10 @@ export async function updateSession(
     await tx.delete(performances).where(eq(performances.sessionId, sessionId));
     if (input.performances.length > 0) {
       await tx.insert(performances).values(
-        input.performances.map((p) => ({
+        input.performances.map((p, i) => ({
           sessionId,
           userId,
+          sortOrder: i,
           discipline: p.discipline,
           distance: p.distance ?? null,
           event: p.event ?? null,

@@ -157,7 +157,22 @@ export function SessionForm({
     heat: null,
   });
 
-  const addPerformance = () => append(blankPerformance());
+  /**
+   * Add a row and put the cursor in its distance, not wherever the browser
+   * fancies. On a phone that difference is the keyboard opening on the field
+   * you are about to fill instead of the one after it.
+   */
+  const addPerformance = () => {
+    append(blankPerformance());
+    // The last distance on the page, not a computed index: two quick taps on
+    // "add" both read the old length and would send the cursor back to row one.
+    requestAnimationFrame(() => {
+      const boxes = document.querySelectorAll<HTMLInputElement>(
+        'input[name^="performances."][name$=".distance"]',
+      );
+      boxes[boxes.length - 1]?.focus();
+    });
+  };
 
   // The reps of the attached workout, as distances waiting for a time.
   const workoutReps = useMemo(() => repsFromWorkout(workout?.blocks), [workout]);
@@ -280,7 +295,10 @@ export function SessionForm({
                 sessions never use. */}
             <Label htmlFor="endDate">
               {t("sessions.endDate")}{" "}
-              <span className="font-normal text-muted-foreground">{t("sessions.endDateNote")}</span>
+              <span className="font-normal text-muted-foreground">
+                <span className="sm:hidden">({t("common.optional")})</span>
+                <span className="hidden sm:inline">{t("sessions.endDateNote")}</span>
+              </span>
             </Label>
             <Input id="endDate" type="date" min={form.watch("date") || undefined} {...form.register("endDate")} />
             {errors.endDate && <p className="text-xs text-destructive">{t(errors.endDate.message ?? "")}</p>}
@@ -584,7 +602,7 @@ export function SessionForm({
           long, and having to scroll to the end to save is the same annoyance on
           a laptop as on a phone. On a phone it sits above the tab bar; on
           desktop there is no tab bar, so it sits on the bottom edge. */}
-      <div className="sticky bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-20 -mx-4 flex items-center gap-3 border-t bg-background/95 px-4 py-3 backdrop-blur md:bottom-0 md:-mx-6 md:px-6">
+      <div className="sticky bottom-[calc(3.5rem_-_1px_+_env(safe-area-inset-bottom))] z-20 -mx-4 flex items-center gap-3 border-t bg-background/95 px-4 py-3 backdrop-blur md:bottom-0 md:-mx-6 md:px-6">
         <span className="mr-auto hidden text-xs text-muted-foreground md:inline">
           {t("common.saveShortcut")}
         </span>

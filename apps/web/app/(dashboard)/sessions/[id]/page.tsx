@@ -66,6 +66,16 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
 
   const dateLabel = dateRange(session, locale);
 
+  // A training session has a distance and a time and nothing else, so four
+  // columns of dashes were most of the table. Each one appears only if some
+  // result actually fills it.
+  const shows = {
+    wind: session.performances.some((p) => p.wind != null),
+    lane: session.performances.some((p) => p.lane != null),
+    position: session.performances.some((p) => p.position != null),
+    heat: session.performances.some((p) => !!p.heat),
+  };
+
   return (
     <div className="mx-auto max-w-3xl">
       <PageHeader title={dateLabel}>
@@ -158,10 +168,10 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
                   <TableRow>
                     <TableHead>{t("common.event")}</TableHead>
                     <TableHead>{t("common.result")}</TableHead>
-                    <TableHead>{t("common.wind")}</TableHead>
-                    <TableHead>{t("common.lane")}</TableHead>
-                    <TableHead>{t("common.position")}</TableHead>
-                    <TableHead>{t("common.heat")}</TableHead>
+                    {shows.wind && <TableHead>{t("common.wind")}</TableHead>}
+                    {shows.lane && <TableHead>{t("common.lane")}</TableHead>}
+                    {shows.position && <TableHead>{t("common.position")}</TableHead>}
+                    {shows.heat && <TableHead>{t("common.heat")}</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -191,12 +201,16 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
                           {formatResult(p.result, p)}
                           {windy && <sup className="ml-0.5 text-muted-foreground">w</sup>}
                         </TableCell>
-                        <TableCell className="tabular-nums">
-                          {wind != null ? `${wind > 0 ? "+" : ""}${wind.toFixed(1)}` : "—"}
-                        </TableCell>
-                        <TableCell className="tabular-nums">{p.lane ?? "—"}</TableCell>
-                        <TableCell className="tabular-nums">{p.position ?? "—"}</TableCell>
-                        <TableCell>{p.heat ?? "—"}</TableCell>
+                        {shows.wind && (
+                          <TableCell className="tabular-nums">
+                            {wind != null ? `${wind > 0 ? "+" : ""}${wind.toFixed(1)}` : "—"}
+                          </TableCell>
+                        )}
+                        {shows.lane && <TableCell className="tabular-nums">{p.lane ?? "—"}</TableCell>}
+                        {shows.position && (
+                          <TableCell className="tabular-nums">{p.position ?? "—"}</TableCell>
+                        )}
+                        {shows.heat && <TableCell>{p.heat ?? "—"}</TableCell>}
                       </TableRow>
                     );
                   })}
