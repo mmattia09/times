@@ -144,9 +144,12 @@ account, then serves at <http://localhost:3000>. Change the host port with
 Postgres is not exposed to the host at all — uncomment its `ports` in
 `docker-compose.yaml` only if you want to reach it with `psql`.
 
-To update: `docker compose pull app && docker compose up -d`. To pin a version,
-set `APP_IMAGE=ghcr.io/mmattia09/times:1.7.0` in `.env` — image tags carry no
-leading `v`, and `:1.7` follows the patches of a minor release.
+To update: `docker compose pull app && docker compose up -d`. `:latest` is the
+newest release, never an untagged commit, so pulling it never lands you on
+work in progress. To pin a version, set `APP_IMAGE=ghcr.io/mmattia09/times:1.7.0`
+in `.env` — image tags carry no leading `v`, and `:1.7` follows the patches of a
+minor release. `:main` exists too, for following the branch on purpose; it is
+unreleased code and the admin page reports it as a development build.
 
 ### Configuration
 

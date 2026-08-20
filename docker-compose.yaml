@@ -22,7 +22,8 @@ services:
 
   app:
     # Built by GitHub Actions and published to GHCR — nothing is built locally.
-    # Pin a version with APP_IMAGE in .env, e.g. ghcr.io/mmattia09/times:1.7.0
+    # latest is the newest release. Pin a version with APP_IMAGE in .env,
+    # e.g. ghcr.io/mmattia09/times:1.7.0
     image: ${APP_IMAGE:-ghcr.io/mmattia09/times:latest}
     restart: unless-stopped
     ports:
