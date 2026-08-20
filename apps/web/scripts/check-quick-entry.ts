@@ -1,4 +1,5 @@
-import { disciplineForDistance, repsFromWorkout } from "@/lib/quick-entry";
+import { disciplineForDistance, dropBlankRows, repsFromWorkout } from "@/lib/quick-entry";
+import { sessionInputSchema } from "@/lib/validation";
 
 /**
  * The quick table fills itself from the workout attached to the session, so the
@@ -87,6 +88,51 @@ check("400m is still a sprint", disciplineForDistance(400) === "sprint");
 check("800m is middle distance", disciplineForDistance(800) === "middle_distance");
 check("1500m is middle distance", disciplineForDistance(1500) === "middle_distance");
 check("3000m is long distance", disciplineForDistance(3000) === "long_distance");
+
+// ── Rows started and left empty ────────────────────────────────────────────
+
+// Both editors hand out empty rows on purpose, so both must be able to throw
+// them away — a blank one used to fail validation on a field the page doesn't
+// render, and the form refused to save without saying why.
+
+const cleaned = dropBlankRows({
+  performances: [
+    { distance: 60, result: "7.12" },
+    { distance: 100, result: "   " },
+    { distance: 150, result: "" },
+  ],
+  links: [
+    { url: "https://strava.com/x", label: null },
+    { url: "", label: "un'etichetta senza indirizzo" },
+    { url: "  ", label: null },
+  ],
+});
+
+check("a timed rep is kept", cleaned.performances.length === 1, String(cleaned.performances.length));
+check("an untimed rep is dropped", cleaned.performances.every((p) => p.result.trim() !== ""));
+check("a link with an address is kept", cleaned.links.length === 1, String(cleaned.links.length));
+check("a link row with no address is dropped", cleaned.links.every((l) => l.url.trim() !== ""));
+check("a label without an address goes too", !cleaned.links.some((l) => l.label?.includes("senza")));
+
+// Absent arrays are the create form before you touch anything.
+const empty = dropBlankRows({});
+check("nothing in, nothing out", empty.performances.length === 0 && empty.links.length === 0);
+
+// The whole point: what survives the cleaning is what the schema accepts.
+const blankLinkLeftBehind = {
+  date: "2026-08-20",
+  type: "training" as const,
+  links: [{ url: "", label: null }],
+  performances: [],
+};
+check(
+  "a blank link row is rejected by the schema",
+  !sessionInputSchema.safeParse(blankLinkLeftBehind).success,
+);
+check(
+  "and passes once the form has cleaned it",
+  sessionInputSchema.safeParse(dropBlankRows(blankLinkLeftBehind)).success,
+);
 
 console.log(failures === 0 ? "\nALL PASS" : `\n${failures} FAILURES`);
 process.exit(failures === 0 ? 0 : 1);

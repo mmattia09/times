@@ -22,7 +22,7 @@ import { LinkIcon } from "@/components/sessions/link-icon";
 import { toast } from "@/hooks/use-toast";
 import { useSubmitShortcut } from "@/hooks/use-submit-shortcut";
 import { enqueue, isOffline } from "@/lib/offline-queue";
-import { disciplineForDistance, repsFromWorkout } from "@/lib/quick-entry";
+import { disciplineForDistance, dropBlankRows, repsFromWorkout } from "@/lib/quick-entry";
 import { cn } from "@/lib/utils";
 import type { WorkoutTemplate } from "@/lib/db/schema";
 import {
@@ -84,26 +84,10 @@ export function SessionForm({
   const [templates, setTemplates] = useState<WorkoutTemplate[]>([]);
 
   const form = useForm<FormValues>({
-    /**
-     * Rows with no time are dropped, not rejected.
-     *
-     * The quick table lays out every rep of the workout, and you time some of
-     * them — being made to delete the ones you didn't is the friction the table
-     * exists to remove. The schema stays strict for the API, where an explicit
-     * result that isn't a number really is an error; here the empty ones simply
-     * never reach it.
-     */
+    // Rows you started and left empty are dropped, not rejected — see
+    // dropBlankRows. The schema itself stays strict, for the API.
     resolver: (values, context, options) =>
-      zodResolver(sessionInputCheckedSchema)(
-        {
-          ...values,
-          performances: (values.performances ?? []).filter(
-            (p) => `${p?.result ?? ""}`.trim() !== "",
-          ),
-        },
-        context,
-        options,
-      ),
+      zodResolver(sessionInputCheckedSchema)(dropBlankRows(values), context, options),
     defaultValues: {
       date: initial?.date ?? localTodayInputValue(),
       endDate: initial?.endDate ?? null,
@@ -171,6 +155,22 @@ export function SessionForm({
         'input[name^="performances."][name$=".distance"]',
       );
       boxes[boxes.length - 1]?.focus();
+    });
+  };
+
+  /**
+   * A new link row under the one you are on, focused and ready.
+   *
+   * Enter is the key you already press between one link and the next; left
+   * alone it submitted the form, which is the opposite of what you meant while
+   * still typing. Nothing is added from an empty row: Enter on a blank line
+   * would only stack more blank lines.
+   */
+  const addLinkAfter = (index?: number) => {
+    const at = index != null ? index + 1 : links.fields.length;
+    links.insert(at, { url: "", label: null });
+    requestAnimationFrame(() => {
+      document.querySelector<HTMLInputElement>(`input[name="links.${at}.url"]`)?.focus();
     });
   };
 
@@ -428,7 +428,7 @@ export function SessionForm({
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => links.append({ url: "", label: null })}
+            onClick={() => addLinkAfter()}
           >
             <Plus className="h-4 w-4" /> {t("common.add")}
           </Button>
@@ -437,7 +437,19 @@ export function SessionForm({
           <Card>
             <CardContent className="space-y-3 p-4">
               {links.fields.map((field, index) => (
-                <div key={field.id} className="flex items-end gap-2">
+                <div
+                  key={field.id}
+                  className="flex items-end gap-2"
+                  // Only from the text boxes: Enter on the delete button has to
+                  // stay the way you press the delete button.
+                  onKeyDown={(e) => {
+                    if (e.key !== "Enter" || e.metaKey || e.ctrlKey) return;
+                    if (!(e.target instanceof HTMLInputElement)) return;
+                    e.preventDefault();
+                    if (!form.getValues(`links.${index}.url`)?.trim()) return;
+                    addLinkAfter(index);
+                  }}
+                >
                   <span className="mb-2.5 shrink-0 text-muted-foreground">
                     <LinkIcon url={form.watch(`links.${index}.url`) ?? ""} />
                   </span>

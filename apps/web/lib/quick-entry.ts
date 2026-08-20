@@ -99,3 +99,29 @@ export function repsFromWorkout(
   }
   return out;
 }
+
+/**
+ * What the form actually submits: rows you started and never filled in.
+ *
+ * Both editors hand you an empty row on purpose — the quick table lays out
+ * every rep of the workout so you can time the ones you ran, and Enter in the
+ * links list opens the next line. Rows left blank are not mistakes to report
+ * back, they are lines you didn't need, so they are dropped before validation
+ * rather than rejected by it. The schema stays strict for the API, where an
+ * empty result or a link with no address really is bad input.
+ *
+ * A link row used to survive this far and fail on links.N.url, which nothing on
+ * the page renders: the form refused to save and said nothing at all.
+ */
+export function dropBlankRows<
+  P extends { result?: unknown },
+  L extends { url?: unknown },
+  T extends { performances?: P[] | null; links?: L[] | null },
+>(values: T): T & { performances: P[]; links: L[] } {
+  const filled = (v: unknown) => `${v ?? ""}`.trim() !== "";
+  return {
+    ...values,
+    performances: (values.performances ?? []).filter((p) => filled(p?.result)),
+    links: (values.links ?? []).filter((l) => filled(l?.url)),
+  };
+}
